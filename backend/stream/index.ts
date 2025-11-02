@@ -363,7 +363,8 @@ export async function streamMedia(stream: {
 
         if (packet.streamIndex === videoStream.index) {
             // Write to file output
-            await output.mediaOutput.writePacket(packet, output.videoFileOutputIndex);
+            using cloned = packet.clone();
+            if (cloned) await output.mediaOutput.writePacket(cloned, output.videoFileOutputIndex);
 
             const decodedFrame = await videoDecoder.decode(packet);
 
