@@ -8,10 +8,11 @@ import { logger } from "./backend/logger";
 import type { ServerWebSocket } from "bun";
 import { WsClient } from "./backend/WsClient";
 import { spawn_worker } from "./backend/worker_connect/shared";
-import { start_streams } from "./backend/worker_connect/worker_stream_connector";
+import { start_stream, start_stream_file, start_streams, stop_stream } from "./backend/worker_connect/worker_stream_connector";
 import homepage from "./index.html";
-import type { ClientToServerMessage } from "./shared";
+import type { ClientToServerMessage, RecordingsResponse } from "./shared";
 import { createForwardFunction } from "./backend/forward";
+import { MediaInput } from "node-av";
 
 
 logger.info(`Using runtime directory: ${RUNTIME_DIR}`);
@@ -22,7 +23,6 @@ const server = Bun.serve({
         "/test": async (req) => {
             return new Response("Test endpoint working");
         },
-
         '/media/:id': {
             PUT: async ({ params, body }: { params: { id: string }, body: any }) => {
                 const { id } = params;
@@ -64,7 +64,7 @@ const server = Bun.serve({
         },
         '/recordings': {
             GET: async () => {
-                const recordingsByStream: Record<string, string[]> = {};
+                const recordingsByStream: RecordingsResponse = {};
                 const glob = new Bun.Glob("*/*.mkv");
                 for await (const file of glob.scan(RECORDINGS_DIR)) {
                     const parts = file.split("/");
@@ -72,55 +72,28 @@ const server = Bun.serve({
                         continue;
                     }
                     const streamId = parts[0]!;
-                    const filename = parts[1]!;
+                    // from_1762122447803_ms.mkv
+                    const file_name = parts[1]!;
+
+                    const from_ms = file_name.match(/from_(\d+)_ms\.mkv/)?.[1];
+                    const to_ms = file_name.match(/_to_(\d+)_ms\.mkv/)?.[1];
+
+                    const fromDate = from_ms ? new Date(parseInt(from_ms)) : null;
+                    const toDate = to_ms ? new Date(parseInt(to_ms)) : null;
 
                     if (!recordingsByStream[streamId]) {
                         recordingsByStream[streamId] = [];
                     }
-                    recordingsByStream[streamId].push(filename);
+
+                    recordingsByStream[streamId].push({
+                        file_name: file_name,
+                        from_ms: fromDate?.getTime(),
+                        to_ms: toDate?.getTime(),
+                    });
                 }
                 return Response.json(recordingsByStream);
             }
         },
-        '/recordings/:streamId/:filename': {
-            GET: (req) => {
-                const { streamId, filename } = req.params as { streamId: string, filename: string };
-                const filePath = `${RECORDINGS_DIR}/${streamId}/${filename}`;
-
-                const range = req.headers.get("range");
-                const { size } = statSync(filePath);
-
-                if (range) {
-                    const [startStr, endStr] = range.replace(/bytes=/, "").split("-");
-                    let start = startStr ? parseInt(startStr, 10) : 0;
-                    let end = endStr ? parseInt(endStr, 10) : size - 1;
-
-                    if (!startStr) {
-                        start = size - parseInt(endStr || '0', 10);
-                        end = size - 1;
-                    }
-
-                    const chunkSize = (end - start) + 1;
-                    const file = Bun.file(filePath);
-
-                    const headers = {
-                        "Content-Range": `bytes ${start}-${end}/${size}`,
-                        "Accept-Ranges": "bytes",
-                        "Content-Length": chunkSize.toString(),
-                        "Content-Type": "video/mkv",
-                    };
-
-                    return new Response(file.slice(start, end + 1), { headers, status: 206 });
-                } else {
-                    const headers = {
-                        "Content-Length": size.toString(),
-                        "Content-Type": "video/mkv",
-                        "Accept-Ranges": "bytes",
-                    };
-                    return new Response(Bun.file(filePath), { headers });
-                }
-            }
-        }
     },
     websocket: {
         open(ws) {
@@ -143,8 +116,42 @@ const server = Bun.serve({
                 if (decoded.type === 'set_subscription') {
                     const client = clients.get(ws);
                     if (client) {
+                        const oldFileStreams = client.subscription?.streams.filter(s => s.file_name) || [];
+
                         client.updateSubscription(decoded.subscription);
                         logger.info(`Client subscription updated for ${ws.remoteAddress}: ${JSON.stringify(client.subscription)}`);
+
+                        const newFileStreams = decoded.subscription?.streams.filter(s => s.file_name) || [];
+                        logger.info(`Client file subscriptions for ${ws.remoteAddress}: ${JSON.stringify(newFileStreams)}`);
+
+                        const removedOldFileStreams = oldFileStreams.filter(oldStream =>
+                            !newFileStreams.find(newStream => newStream.id === oldStream.id && newStream.file_name === oldStream.file_name)
+                        );
+
+                        for (const stream of removedOldFileStreams) {
+                            logger.info(`Client unsubscribed from file stream ${stream.id} (file: ${stream.file_name})`);
+                            // Notify the worker about the removed file stream
+                            stop_stream({
+                                worker: worker_stream,
+                                stream_id: stream.id,
+                                file_name: stream.file_name,
+                            });
+                        }
+
+                        const addedNewFileStreams = newFileStreams.filter(newStream =>
+                            !oldFileStreams.find(oldStream => oldStream.id === newStream.id && oldStream.file_name === newStream.file_name)
+                        );
+
+                        for (const stream of addedNewFileStreams) {
+                            logger.info(`Client subscribed to file stream ${stream.id} (file: ${stream.file_name})`);
+                            // Notify the worker about the added file stream
+                            start_stream_file({
+                                worker: worker_stream,
+                                stream_id: stream.id,
+                                file_name: stream.file_name!,
+                            });
+                        }
+
                     }
                 }
             } catch (error) {

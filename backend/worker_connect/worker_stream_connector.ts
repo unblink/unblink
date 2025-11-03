@@ -1,7 +1,6 @@
-import type { ServerToWorkerStreamMessage } from "~/shared";
+import type { ServerToWorkerStreamMessage, ServerToWorkerStreamMessage_Add_File, ServerToWorkerStreamMessage_Add_Stream } from "~/shared";
 import { table_media } from "../database";
 import { logger } from "../logger";
-import { spawn_worker } from "./shared";
 
 export async function start_streams(opts: {
     worker_stream: Worker
@@ -25,29 +24,35 @@ export async function start_streams(opts: {
     }
 }
 
-export function start_stream(opts: {
-    worker: Worker,
-    stream_id: string,
-    uri: string,
-}) {
-
+export function start_stream(opts: Omit<ServerToWorkerStreamMessage_Add_Stream, 'type'> & { worker: Worker }) {
     const start_msg: ServerToWorkerStreamMessage = {
         type: 'start_stream',
         stream_id: opts.stream_id,
-        uri: opts.uri
+        uri: opts.uri,
     }
 
     opts.worker.postMessage(start_msg);
+}
 
+export function start_stream_file(opts: Omit<ServerToWorkerStreamMessage_Add_File, 'type'> & { worker: Worker }) {
+    const start_msg: ServerToWorkerStreamMessage = {
+        type: 'start_stream_file',
+        stream_id: opts.stream_id,
+        file_name: opts.file_name,
+    }
+
+    opts.worker.postMessage(start_msg);
 }
 
 export function stop_stream(opts: {
     worker: Worker,
     stream_id: string,
+    file_name?: string,
 }) {
     const stop_msg: ServerToWorkerStreamMessage = {
         type: 'stop_stream',
         stream_id: opts.stream_id,
+        file_name: opts.file_name,
     }
 
     opts.worker.postMessage(stop_msg);

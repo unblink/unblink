@@ -149,8 +149,9 @@ type OutputFileObject = {
     videoFileOutputIndex: number;
     path: string;
 };
+
 class OutputFile {
-    static async create(streamId: string, videoStream: Stream): Promise<OutputFileObject> {
+    static async create(streamId: string, videoEncoder: Encoder): Promise<OutputFileObject> {
         const from = new Date();
         const dir = `${RECORDINGS_DIR}/${streamId}`;
         await fs.mkdir(dir, { recursive: true });
@@ -158,7 +159,7 @@ class OutputFile {
         const mediaOutput = await MediaOutput.open(filePath, {
             format: 'matroska',  // Always use Matroska/MKV
         });
-        const videoFileOutputIndex = mediaOutput.addStream(videoStream);
+        const videoFileOutputIndex = mediaOutput.addStream(videoEncoder);
         return { from, mediaOutput, videoFileOutputIndex, path: filePath };
     }
 
@@ -174,10 +175,15 @@ class OutputFile {
 }
 
 
-export async function streamMedia(stream: {
+
+export type StartStreamArg = {
     id: string;
+    file_name?: string;
     uri: string;
-}, onMessage: (msg: StreamMessage) => void, signal: AbortSignal) {
+    write_to_file?: boolean;
+}
+
+export async function streamMedia(stream: StartStreamArg, onMessage: (msg: StreamMessage) => void, signal: AbortSignal) {
     logger.info({ uri: stream.uri }, 'Starting streamMedia for');
 
     logger.info(`Opening media input: ${stream.uri}`);
@@ -297,7 +303,15 @@ export async function streamMedia(stream: {
         onMessage(frame_file_msg);
     }
 
-    async function processPacket(packet: Packet, decodedFrame: Frame) {
+
+
+    async function writeToOutputFile(packet: Packet, output: OutputFileObject) {
+        // Write to file output
+        using cloned = packet.clone();
+        if (cloned) await output.mediaOutput.writePacket(cloned, output.videoFileOutputIndex);
+    }
+
+    async function processPacket(packet: Packet, decodedFrame: Frame, output: OutputFileObject | null) {
         let filteredFrame: Frame | null = null;
 
         try {
@@ -316,6 +330,7 @@ export async function streamMedia(stream: {
                 using encodedPacket = await videoEncoder.encode(frameToUse);
                 if (encodedPacket?.data) {
                     await saveFrameForObjectDetection(encodedPacket.data);
+                    if (output) await writeToOutputFile(encodedPacket, output);
                 }
             } else {
                 // Encode once and reuse for both streaming and object detection
@@ -323,6 +338,7 @@ export async function streamMedia(stream: {
                 if (encodedPacket?.data) {
                     await sendFrameMessage(encodedPacket);
                     await saveFrameForObjectDetection(encodedPacket.data);
+                    if (output) await writeToOutputFile(encodedPacket, output);
                 }
             }
         } finally {
@@ -348,24 +364,24 @@ export async function streamMedia(stream: {
 
         const packet = res.value;
 
-        // Initialize rolling file output on first video packet
-        // Or if it has been 1 hour since last output creation
-        const now = Date.now();
-        if (output === null || (now - output.from.getTime() >= OUTPUT_ROLLING_INTERVAL_MS)) {
-            if (output) {
-                logger.info("Closing previous file output due to rolling interval");
-                await OutputFile.close(output);
-            }
+        if (stream.write_to_file) {
+            // Initialize rolling file output on first video packet
+            // Or if it has been 1 hour since last output creation
+            const now = Date.now();
+            if (
 
-            output = await OutputFile.create(stream.id, videoStream);
-            logger.info({ path: output.path }, "Created new rolling output file");
+                output === null || (now - output.from.getTime() >= OUTPUT_ROLLING_INTERVAL_MS)) {
+                if (output) {
+                    logger.info("Closing previous file output due to rolling interval");
+                    await OutputFile.close(output);
+                }
+
+                output = await OutputFile.create(stream.id, videoEncoder);
+                logger.info({ path: output.path }, "Created new rolling output file");
+            }
         }
 
         if (packet.streamIndex === videoStream.index) {
-            // Write to file output
-            using cloned = packet.clone();
-            if (cloned) await output.mediaOutput.writePacket(cloned, output.videoFileOutputIndex);
-
             const decodedFrame = await videoDecoder.decode(packet);
 
             if (!decodedFrame) {
@@ -382,7 +398,7 @@ export async function streamMedia(stream: {
             last_send_time = now;
 
             try {
-                await processPacket(packet, decodedFrame);
+                await processPacket(packet, decodedFrame, output);
             } catch (error) {
                 logger.error({ error: (error as Error).message }, "Error processing packet");
             } finally {

@@ -29,7 +29,10 @@ export type MediaUnit = {
 
 export type Subscription = {
     session_id: string;
-    stream_ids: string[];
+    streams: {
+        id: string;
+        file_name?: string;
+    }[];
 }
 
 export type ClientToServerMessage = {
@@ -42,7 +45,7 @@ export type ServerToClientMessage = WorkerToServerMessage & {
     session_id?: string;
 }
 
-export type WorkerStreamToServerMessage = (StreamMessage & { stream_id: string }) | {
+export type WorkerStreamToServerMessage = (StreamMessage & { stream_id: string, file_name?: string }) | {
     type: "error";
     stream_id: string;
 } | {
@@ -53,13 +56,20 @@ export type WorkerStreamToServerMessage = (StreamMessage & { stream_id: string }
     stream_id: string;
 }
 
-export type ServerToWorkerStreamMessage = WorkerStreamToServerMessage | {
+export type ServerToWorkerStreamMessage_Add_Stream = {
     type: 'start_stream',
     stream_id: string,
     uri: string,
-} | {
+}
+export type ServerToWorkerStreamMessage_Add_File = {
+    type: 'start_stream_file',
+    stream_id: string,
+    file_name: string,
+}
+export type ServerToWorkerStreamMessage = ServerToWorkerStreamMessage_Add_Stream | ServerToWorkerStreamMessage_Add_File | {
     type: 'stop_stream',
     stream_id: string,
+    file_name?: string,
 }
 
 export type ServerToWorkerObjectDetectionMessage = {
@@ -82,3 +92,9 @@ export type WorkerObjectDetectionToServerMessage = {
     stream_id: string;
     objects: DetectionObject[];
 }
+
+export type RecordingsResponse = Record<string, {
+    file_name: string;
+    from_ms?: number;
+    to_ms?: number;
+}[]>;

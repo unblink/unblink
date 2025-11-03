@@ -15,7 +15,10 @@ export const [cameras, setCameras] = createSignal<Camera[]>([]);
 export const [camerasLoading, setCamerasLoading] = createSignal(true);
 export const [subscription, setSubscription] = createSignal<Subscription>();
 export const [conn, setConn] = createSignal<Conn>();
-export const [viewedMedias, setViewedMedias] = createSignal<string[]>([]);
+export const [viewedMedias, setViewedMedias] = createSignal<{
+    stream_id: string;
+    file_name?: string;
+}[]>([]);
 
 export const fetchCameras = async () => {
     setCamerasLoading(true);

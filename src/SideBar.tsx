@@ -32,7 +32,7 @@ function MediaGroup(props: { group: { label: string; cameras: Camera[] } }) {
                         e.stopPropagation();
                         batch(() => {
                             setTabId('view');
-                            setViewedMedias(props.group.cameras.map(c => c.id));
+                            setViewedMedias(props.group.cameras.map(c => ({ stream_id: c.id })));
                         });
                     }}
                     class="p-1.5 rounded hover:bg-neu-700 hover:text-white opacity-0 group-hover:opacity-100 transition-all">
@@ -48,8 +48,12 @@ function MediaGroup(props: { group: { label: string; cameras: Camera[] } }) {
                         return (
                             <div
                                 onClick={() => {
-                                    setTabId('view');
-                                    setViewedMedias([camera.id]);
+                                    batch(() => {
+                                        setTabId('view');
+                                        setViewedMedias([{
+                                            stream_id: camera.id,
+                                        }]);
+                                    })
                                 }}
                                 class="cursor-pointer px-3 py-2 mx-2 space-x-3 rounded-lg hover:bg-neutral-800 flex items-center text-neutral-400 hover:text-white"
                             >
@@ -119,7 +123,7 @@ export default function SideBar() {
         },
     ];
 
-    return <div class="w-80 h-screen p-2">
+    return <div class="w-80 h-screen pl-2 py-2">
         <div class="bg-neu-900 h-full rounded-2xl border border-neu-800 flex flex-col drop-shadow-2xl">
 
             {/* Head */}

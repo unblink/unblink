@@ -23,7 +23,7 @@ export default function App() {
 
     })
 
-    return <div class="h-screen flex items-start bg-neu-925 text-white">
+    return <div class="h-screen flex items-start bg-neu-925 text-white space-x-2">
         <SideBar />
         <div class="flex-1">
             <Show when={tabId() === 'home'}>

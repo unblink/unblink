@@ -3,6 +3,7 @@ import { FaSolidSpinner } from "solid-icons/fa";
 import { createEffect, createSignal, onCleanup, onMount, Show } from "solid-js";
 import { newMessage } from "./video/connection";
 import type { DetectionObject, ServerToClientMessage } from "~/shared";
+import { subscription } from "./shared";
 
 class MjpegPlayer {
     private canvas: HTMLCanvasElement;
@@ -213,7 +214,7 @@ class MjpegPlayer {
     }
 }
 
-export default function createCanvasVideo(props: { stream_id: string }) {
+export default function CanvasVideo(props: { stream_id: string, file_name?: string }) {
     const [canvasRef, setCanvasRef] = createSignal<HTMLCanvasElement>();
     const [containerRef, setContainerRef] = createSignal<HTMLDivElement>();
     const [isDrawing, setIsDrawing] = createSignal(false);
@@ -229,7 +230,9 @@ export default function createCanvasVideo(props: { stream_id: string }) {
 
     createEffect(() => {
         const message = newMessage();
-        if (message?.stream_id === props.stream_id) {
+        const s = subscription();
+        console.log('message', message, props.file_name)
+        if (message?.type == 'frame' && message?.stream_id === props.stream_id && message.file_name === props.file_name && message.session_id == s?.session_id) {
             player?.handleMessage(message);
         }
     });
