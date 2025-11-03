@@ -1,6 +1,6 @@
 import { batch, createResource, For, Show } from "solid-js";
 import LayoutContent from "./LayoutContent";
-import { cameras, setSubscription, setTabId, setViewedMedias } from "./shared";
+import { cameras, setTabId, setViewedMedias } from "./shared";
 import type { RecordingsResponse } from "~/shared";
 import { format } from "date-fns";
 
@@ -17,6 +17,13 @@ export default function HistoryContent() {
         const recs = recordings();
         if (!recs) return true;
         return Object.entries(recs).length == 0
+    }
+
+    const formatDuration = (ms: number) => {
+        const totalSeconds = Math.floor(ms / 1000);
+        const minutes = Math.floor(totalSeconds / 60);
+        const seconds = totalSeconds % 60;
+        return `${minutes}m ${seconds}s`;
     }
 
     return <LayoutContent title="History">
@@ -47,8 +54,8 @@ export default function HistoryContent() {
                                         <p class="font-semibold">{title()}</p>
                                         <div>
                                             <p class="text-sm text-neu-400">{from_ms ? format(from_ms, 'PPpp') : 'N/A'}</p>
-                                            <Show when={to_ms}>
-                                                {t => <p class="text-sm text-neu-400">To: {format(t(), 'PPpp')}</p>}
+                                            <Show when={to_ms && from_ms}>
+                                                {(val) => <p class="text-sm text-neu-400">Duration: {formatDuration(to_ms! - from_ms!)}</p>}
                                             </Show>
                                         </div>
                                     </div>

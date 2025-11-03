@@ -8,6 +8,8 @@ export type Camera = {
     uri: string;
     labels: string[];
     updated_at: string;
+    saveToDisk: boolean;
+    saveDir: string;
 };
 
 export const [tabId, setTabId] = createSignal<string>('home');

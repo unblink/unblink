@@ -21,6 +21,6 @@ export const createForwardFunction = (opts: {
     if (decoded.type === 'frame_file') {
         const msg: ServerToWorkerObjectDetectionMessage = decoded;
         // Forward to object detection worker
-        opts.worker_object_detection().postMessage(msg);
+        // opts.worker_object_detection().postMessage(msg);
     }
 }

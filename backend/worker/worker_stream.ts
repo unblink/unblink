@@ -78,7 +78,8 @@ self.addEventListener("message", async (event) => {
             startFaultTolerantStream({
                 id: msg.stream_id,
                 uri: msg.uri,
-                write_to_file: true, // TODO: make configurable
+                write_to_file: msg.saveToDisk,
+                save_location: msg.saveDir,
             }, abortController.signal);
         }
     }

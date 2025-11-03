@@ -11,11 +11,13 @@ export async function start_streams(opts: {
         for (const media of allMedia) {
             await new Promise(resolve => setTimeout(resolve, 1000)); // stagger starts
             if (media.id && media.uri) {
-                logger.info(`Starting stream for media: ${media.name} (${media.id})`);
+                logger.info({ media }, `Starting stream:`);
                 start_stream({
                     worker: opts.worker_stream,
                     stream_id: media.id as string,
                     uri: media.uri as string,
+                    saveToDisk: media.saveToDisk as boolean,
+                    saveDir: media.saveDir as string,
                 });
             }
         }
@@ -24,11 +26,13 @@ export async function start_streams(opts: {
     }
 }
 
-export function start_stream(opts: Omit<ServerToWorkerStreamMessage_Add_Stream, 'type'> & { worker: Worker }) {
+export function start_stream(opts: Omit<ServerToWorkerStreamMessage_Add_Stream, 'type'> & { worker: Worker, saveToDisk: boolean, saveDir: string }) {
     const start_msg: ServerToWorkerStreamMessage = {
         type: 'start_stream',
         stream_id: opts.stream_id,
         uri: opts.uri,
+        saveToDisk: opts.saveToDisk,
+        saveDir: opts.saveDir,
     }
 
     opts.worker.postMessage(start_msg);

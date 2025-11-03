@@ -27,14 +27,14 @@ const server = Bun.serve({
             PUT: async ({ params, body }: { params: { id: string }, body: any }) => {
                 const { id } = params;
                 const data = await new Response(body).json();
-                const { name, uri, labels } = data;
+                const { name, uri, labels, saveToDisk, saveDir } = data;
                 if (!name || !uri) {
                     return new Response('Missing name or uri', { status: 400 });
                 }
                 const updated_at = new Date().toISOString();
                 await table_media.mergeInsert("id")
                     .whenMatchedUpdateAll()
-                    .execute([{ id, name, uri, labels: labels ?? [], updated_at }]);
+                    .execute([{ id, name, uri, labels: labels ?? [], updated_at, saveToDisk: saveToDisk ?? false, saveDir: saveDir ?? '' }]);
                 return Response.json({ success: true });
             },
             DELETE: async ({ params }: { params: { id: string } }) => {
@@ -52,13 +52,13 @@ const server = Bun.serve({
             },
             POST: async (req: Request) => {
                 const body = await req.json();
-                const { name, uri, labels } = body;
+                const { name, uri, labels, saveToDisk, saveDir } = body;
                 if (!name || !uri) {
                     return new Response('Missing name or uri', { status: 400 });
                 }
                 const id = randomUUID();
                 const updated_at = new Date().toISOString();
-                await table_media.add([{ id, name, uri, labels: labels ?? [], updated_at }]);
+                await table_media.add([{ id, name, uri, labels: labels ?? [], updated_at, saveToDisk: saveToDisk ?? false, saveDir: saveDir ?? '' }]);
                 return Response.json({ success: true, id });
             },
         },

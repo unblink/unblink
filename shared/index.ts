@@ -60,6 +60,8 @@ export type ServerToWorkerStreamMessage_Add_Stream = {
     type: 'start_stream',
     stream_id: string,
     uri: string,
+    saveToDisk: boolean,
+    saveDir: string,
 }
 export type ServerToWorkerStreamMessage_Add_File = {
     type: 'start_stream_file',

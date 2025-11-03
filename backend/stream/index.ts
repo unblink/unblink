@@ -151,9 +151,9 @@ type OutputFileObject = {
 };
 
 class OutputFile {
-    static async create(streamId: string, videoEncoder: Encoder): Promise<OutputFileObject> {
+    static async create(streamId: string, videoEncoder: Encoder, saveDir?: string): Promise<OutputFileObject> {
         const from = new Date();
-        const dir = `${RECORDINGS_DIR}/${streamId}`;
+        const dir = saveDir ? path.join(saveDir, streamId) : `${RECORDINGS_DIR}/${streamId}`;
         await fs.mkdir(dir, { recursive: true });
         const filePath = path.join(dir, `from_${from.getTime()}_ms.mkv`);
         const mediaOutput = await MediaOutput.open(filePath, {
@@ -181,6 +181,7 @@ export type StartStreamArg = {
     file_name?: string;
     uri: string;
     write_to_file?: boolean;
+    save_location?: string;
 }
 
 export async function streamMedia(stream: StartStreamArg, onMessage: (msg: StreamMessage) => void, signal: AbortSignal) {
@@ -376,7 +377,7 @@ export async function streamMedia(stream: StartStreamArg, onMessage: (msg: Strea
                     await OutputFile.close(output);
                 }
 
-                output = await OutputFile.create(stream.id, videoEncoder);
+                output = await OutputFile.create(stream.id, videoEncoder, stream.save_location);
                 logger.info({ path: output.path }, "Created new rolling output file");
             }
         }
