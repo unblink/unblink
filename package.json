@@ -5,6 +5,7 @@
   "private": true,
   "scripts": {
     "dev": "NODE_ENV=development bun index.ts",
+    "dev:lite": "NODE_ENV=development DEV_MODE=lite bun index.ts",
     "build": "bun build.ts",
     "test": "bun test"
   },

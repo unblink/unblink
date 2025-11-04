@@ -1,19 +1,8 @@
-import { decode } from "cbor-x";
+import { decode, encode } from "cbor-x";
 import { randomUUID } from "crypto";
 import { RECORDINGS_DIR, RUNTIME_DIR } from "./backend/appdir";
 import { table_media, table_settings } from "./backend/database";
 import { logger } from "./backend/logger";
-
-let SETTINGS: Record<string, string> = {};
-async function Caches() {
-    const settings_db = await table_settings.query().toArray();
-    for (const setting of settings_db) {
-        SETTINGS[setting.key] = setting.value;
-    }
-    logger.info({ SETTINGS }, "Caches loaded");
-}
-Caches();
-
 
 import type { ServerWebSocket } from "bun";
 import { WsClient } from "./backend/WsClient";
@@ -21,11 +10,62 @@ import { createForwardFunction } from "./backend/forward";
 import { spawn_worker } from "./backend/worker_connect/shared";
 import { start_stream_file, start_streams, stop_stream } from "./backend/worker_connect/worker_stream_connector";
 import homepage from "./index.html";
-import type { ClientToServerMessage, RecordingsResponse } from "./shared";
+import type { ClientToServerMessage, EngineToServer, RecordingsResponse, ServerToEngine } from "./shared";
+import { Conn } from "./shared/Conn";
 
 
 logger.info(`Using runtime directory: ${RUNTIME_DIR}`);
 
+// Check version
+const SUPPORTED_VERSION = "1.0.0";
+const ENGINE_URL = process.env.ENGINE_URL || "api.zapdoslabs.com";
+// Send /version request to engine
+try {
+    const version_response = await fetch(`https://${ENGINE_URL}/version`);
+    if (version_response.ok) {
+        const version_data = await version_response.json();
+        if (version_data.version) {
+            logger.info(`Engine version: ${version_data.version}`);
+            if (version_data.version !== SUPPORTED_VERSION) {
+                logger.warn(`Warning: Newer engine version available: ${version_data.version}. Supported version is ${SUPPORTED_VERSION}. Please consider updating the server.`);
+                logger.warn(`Visit https://github.com/tri2820/unblink for update instructions.`);
+            }
+        }
+    } else {
+        logger.error(`Failed to fetch version from engine: ${version_response.status} ${version_response.statusText}`);
+    }
+} catch (error) {
+    logger.error({ error }, "Error connecting to Zapdos Labs engine");
+}
+
+
+const engine_conn = new Conn<ServerToEngine, EngineToServer>(`wss://${ENGINE_URL}/ws`, {
+    onOpen() {
+        const msg: ServerToEngine = {
+            type: "i_am_server",
+        }
+        engine_conn.send(msg);
+    },
+    onClose() {
+        logger.info("Disconnected from Zapdos Labs engine WebSocket");
+    },
+    onError(event) {
+        logger.error(event, "WebSocket to engine error:");
+    },
+    onMessage(decoded) {
+        logger.info(decoded, "Message from Zapdos Labs engine:");
+    }
+});
+
+// Load settings into memory
+let SETTINGS: Record<string, string> = {};
+const settings_db = await table_settings.query().toArray();
+for (const setting of settings_db) {
+    SETTINGS[setting.key] = setting.value;
+}
+logger.info({ SETTINGS }, "Caches loaded");
+
+// Create Bun server
 const server = Bun.serve({
     port: 3000,
     routes: {
@@ -115,6 +155,7 @@ const server = Bun.serve({
                 return Response.json(settings);
             },
             PUT: async (req: Request) => {
+                // TODO: secure this endpoint
                 const body = await req.json();
                 const { key, value } = body;
                 if (!key || value === undefined) {
@@ -242,18 +283,23 @@ const server = Bun.serve({
 logger.info("Server running on http://localhost:3000");
 
 
-
 const clients = new Map<ServerWebSocket, WsClient>();
 const forward = createForwardFunction({
     clients,
     worker_object_detection: () => worker_object_detection,
     settings: () => SETTINGS,
+    engine_conn: () => engine_conn,
 })
 
 const worker_stream = spawn_worker('worker_stream.js', forward);
 const worker_object_detection = spawn_worker('worker_object_detection.js', forward);
 
-// Start all streams from the database
-start_streams({
-    worker_stream,
-});
+
+if (process.env.DEV_MODE === 'lite') {
+    logger.info("Running in lite development mode - skipping stream startup");
+} else {
+    // Start all streams from the database
+    start_streams({
+        worker_stream,
+    });
+}

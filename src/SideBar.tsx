@@ -1,11 +1,11 @@
 
-import { BsGearFill, BsGithub, BsPencilFill } from 'solid-icons/bs';
+import { BsGithub } from 'solid-icons/bs';
 import { FaSolidChevronDown } from 'solid-icons/fa';
 import { FiClock, FiFilm, FiGrid, FiMonitor, FiSearch, FiSettings } from 'solid-icons/fi';
-import { createSignal, For, Show, createMemo, onMount, batch } from 'solid-js';
+import { createMemo, createSignal, For, onMount, Show } from 'solid-js';
 import logoSVG from '~/assets/logo.svg';
 import AddCameraButton from './AddCameraButton';
-import { cameras, setTabId, tabId, fetchCameras, camerasLoading, type Camera, setViewedMedias, viewedMedias } from './shared';
+import { cameras, camerasLoading, fetchCameras, setTab, tab, type Camera } from './shared';
 
 function MediaGroup(props: { group: { label: string; cameras: Camera[] } }) {
     const [isOpen, setIsOpen] = createSignal(true);
@@ -30,9 +30,9 @@ function MediaGroup(props: { group: { label: string; cameras: Camera[] } }) {
                 <div
                     onClick={(e) => {
                         e.stopPropagation();
-                        batch(() => {
-                            setTabId('view');
-                            setViewedMedias(props.group.cameras.map(c => ({ stream_id: c.id })));
+                        setTab({
+                            type: 'view',
+                            medias: props.group.cameras.map(c => ({ stream_id: c.id })),
                         });
                     }}
                     class="p-1.5 rounded hover:bg-neu-700 hover:text-white opacity-0 group-hover:opacity-100 transition-all">
@@ -45,17 +45,24 @@ function MediaGroup(props: { group: { label: string; cameras: Camera[] } }) {
             >
                 <For each={props.group.cameras}>
                     {(camera) => {
+                        const viewedMedias = () => {
+                            const tab = tab();
+                            if (tab.type === 'view') {
+                                return tab.medias;
+                            }
+                            return [];
+                        };
                         const isViewed = () => viewedMedias().some(m => m.stream_id === camera.id && !m.file_name);
                         const onlyViewed = () => viewedMedias().length === 1 && isViewed();
                         return (
                             <div
                                 onClick={() => {
-                                    batch(() => {
-                                        setTabId('view');
-                                        setViewedMedias([{
+                                    setTab({
+                                        type: 'view',
+                                        medias: [{
                                             stream_id: camera.id,
-                                        }]);
-                                    })
+                                        }],
+                                    });
                                 }}
                                 data-viewed={onlyViewed()}
                                 class="cursor-pointer px-3 py-2 mx-2 space-x-3 rounded-lg hover:bg-neutral-800 flex items-center text-neutral-400 hover:text-white data-[viewed=true]:bg-neu-800 data-[viewed=true]:text-white"
@@ -141,9 +148,11 @@ export default function SideBar() {
             <div class="mx-4 space-y-1 mb-4">
                 <For each={tabs}>
                     {tab => <button
-                        onClick={() => setTabId(tab.id)}
+                        onClick={() => setTab({
+                            type: tab.id as 'home' | 'search' | 'moments' | 'history'
+                        })}
                         data-active={
-                            tabId() === tab.id
+                            tab().type === tab.id
                         }
                         class="w-full flex items-center space-x-3 px-4 py-2 rounded-xl text-neu-400 hover:bg-neu-800 data-[active=true]:bg-neu-800 data-[active=true]:text-white">
                         <tab.icon class="w-4 h-4" />
@@ -186,7 +195,9 @@ export default function SideBar() {
                     <BsGithub class="w-5 h-5" />
                     <div class="ml-2 ">GitHub</div>
                 </div>
-                <div onClick={() => setTabId('settings')} class="flex items-center transition hover:text-white text-neu-500 hover:cursor-pointer">
+                <div onClick={() => setTab({
+                    type: 'settings'
+                })} class="flex items-center transition hover:text-white text-neu-500 hover:cursor-pointer">
                     <FiSettings class="w-5 h-5" />
                     <div class="ml-2 ">Settings</div>
                 </div>

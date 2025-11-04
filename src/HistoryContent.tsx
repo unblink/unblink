@@ -1,8 +1,8 @@
-import { batch, createResource, For, Show } from "solid-js";
-import LayoutContent from "./LayoutContent";
-import { cameras, setTabId, setViewedMedias } from "./shared";
-import type { RecordingsResponse } from "~/shared";
 import { format } from "date-fns";
+import { createResource, For, Show } from "solid-js";
+import type { RecordingsResponse } from "~/shared";
+import LayoutContent from "./LayoutContent";
+import { cameras, setTab } from "./shared";
 
 async function fetchRecordings() {
     const response = await fetch("/recordings");
@@ -42,13 +42,13 @@ export default function HistoryContent() {
                                     const title = () => cameras().find(camera => camera.id === streamId)?.name ?? streamId
                                     return <div
                                         onClick={() => {
-                                            batch(() => {
-                                                setTabId('view');
-                                                setViewedMedias([{
+                                            setTab({
+                                                type: 'view',
+                                                medias: [{
                                                     stream_id: streamId,
                                                     file_name,
-                                                }]);
-                                            })
+                                                }],
+                                            });
                                         }}
                                         class="bg-neu-850 p-4 rounded-lg space-y-1 cursor-pointer hover:bg-neu-800 border border-neu-800">
                                         <p class="font-semibold">{title()}</p>

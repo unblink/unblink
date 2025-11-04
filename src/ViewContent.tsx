@@ -1,13 +1,13 @@
 import { For, Show, createEffect, onCleanup, createSignal } from "solid-js";
 import CanvasVideo from "./CanvasVideo";
-import { setSubscription, settings, viewedMedias } from "./shared";
+import { setSubscription, settings, tab, } from "./shared";
 import { FaSolidObjectGroup } from "solid-icons/fa";
 import ArkSwitch from "./ark/ArkSwitch";
 
 const GAP_SIZE = '8px';
 
 const chunk = <T,>(arr: T[]): T[][] => {
-    const n = viewedMedias().length;
+    const n = arr.length;
     const size = n === 0 ? 1 : Math.ceil(Math.sqrt(n));
     if (size <= 0) {
         return arr.length ? [arr] : [];
@@ -19,6 +19,12 @@ const chunk = <T,>(arr: T[]): T[][] => {
 
 export default function ViewContent() {
     const [showDetections, setShowDetections] = createSignal(true);
+
+
+    const viewedMedias = () => {
+        const t = tab();
+        return t.type === 'view' ? t.medias : [];
+    }
 
 
     // Handle subscriptions
@@ -38,10 +44,12 @@ export default function ViewContent() {
     });
 
     const cols = () => {
+
         const n = viewedMedias().length;
         return n === 0 ? 1 : Math.ceil(Math.sqrt(n));
     }
-    const rowsOfMedias = () => chunk(viewedMedias())
+
+    const rowsOfMedias = () => chunk(viewedMedias());
 
 
 
@@ -58,7 +66,7 @@ export default function ViewContent() {
                     when={rowsOfMedias().length > 0}
                     fallback={<div class="flex justify-center items-center h-full">No camera selected</div>}
                 >
-                    <div class="h-full w-full flex flex-col ">
+                    <div class="h-full w-full flex flex-col space-y-2">
                         <div class="flex-none flex items-center space-x-2 py-2 px-4 bg-neu-900 rounded-2xl border border-neu-800">
                             <div class="flex-1 text-sm text-neu-400">Viewing {viewedMedias().length} streams</div>
                             <Show when={settings()['object_detection_enabled'] === 'true'}>

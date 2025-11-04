@@ -6,7 +6,7 @@ import type { MediaUnit } from "~/shared";
 import IslandRow from "./search/IslandRow";
 import LoadingSkeleton from "./search/LoadingSkeleton";
 import SearchBar from "./SearchBar";
-import { tabId } from "./shared";
+import { tab } from "./shared";
 
 export type Island = (MediaUnit & { _distance: number })[]
 

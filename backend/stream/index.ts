@@ -294,12 +294,14 @@ export async function streamMedia(stream: StartStreamArg, onMessage: (msg: Strea
         if (now - last_save_time < 1000) return;
         last_save_time = now;
 
-        const path = `${FRAMES_DIR}/${stream.id}.jpg`;
-        await Bun.write(path, encodedData);
+        // Reuse the same filename for simplicity (we only need the latest frame anyway)
+        const _path = path.join(FRAMES_DIR, `${stream.id}_latest.jpg`);
+        await Bun.write(_path, encodedData);
 
         const frame_file_msg: StreamMessage = {
             type: "frame_file",
-            path,
+            frame_id: crypto.randomUUID(),
+            path: _path,
         };
         onMessage(frame_file_msg);
     }

@@ -1,5 +1,6 @@
 export type FrameMessage = {
     type: "frame_file";
+    frame_id: string;
     path: string;
 }
 
@@ -102,3 +103,19 @@ export type RecordingsResponse = Record<string, {
     from_ms?: number;
     to_ms?: number;
 }[]>;
+
+export type ServerToEngine = {
+    type: "frame_binary";
+    frame_id: string;
+    stream_id: string;
+    frame: Uint8Array;
+} | {
+    type: "i_am_server";
+    token?: string;
+}
+
+export type EngineToServer = {
+    type: "frame_description";
+    frame_id: string;
+    description: string;
+}

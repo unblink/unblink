@@ -1,7 +1,7 @@
 import { createSignal } from "solid-js";
-import type { Conn } from "./video/connection";
-import type { Subscription } from "~/shared";
+import type { ClientToServerMessage, ServerToClientMessage, Subscription } from "~/shared";
 import { toaster } from "./ark/ArkToast";
+import type { Conn } from "~/shared/Conn";
 
 export type Camera = {
     id: string;
@@ -13,15 +13,20 @@ export type Camera = {
     saveDir: string;
 };
 
-export const [tabId, setTabId] = createSignal<string>('home');
+export const [tab, setTab] = createSignal<{
+    type: 'home' | 'search' | 'moments' | 'history' | 'settings';
+} | {
+    type: 'view';
+    medias: {
+        stream_id: string;
+        file_name?: string;
+    }[]
+}>({ type: 'home' });
 export const [cameras, setCameras] = createSignal<Camera[]>([]);
 export const [camerasLoading, setCamerasLoading] = createSignal(true);
 export const [subscription, setSubscription] = createSignal<Subscription>();
-export const [conn, setConn] = createSignal<Conn>();
-export const [viewedMedias, setViewedMedias] = createSignal<{
-    stream_id: string;
-    file_name?: string;
-}[]>([]);
+export const [conn, setConn] = createSignal<Conn<ClientToServerMessage, ServerToClientMessage>>();
+
 
 export const [settings, setSettings] = createSignal<Record<string, string>>({});
 

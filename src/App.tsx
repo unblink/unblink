@@ -4,7 +4,7 @@ import HistoryContent from './HistoryContent';
 import HomeContent from './HomeContent';
 import MomentsContent from './MomentsContent';
 import SearchContent from './SearchContent';
-import { conn, fetchCameras, fetchSettings, setConn, subscription, tabId } from './shared';
+import { conn, fetchCameras, fetchSettings, setConn, subscription, tab } from './shared';
 import SideBar from './SideBar';
 import { connectWebSocket } from './video/connection';
 import ViewContent from './ViewContent';
@@ -31,22 +31,22 @@ export default function App() {
         <ArkToast />
         <SideBar />
         <div class="flex-1">
-            <Show when={tabId() === 'home'}>
+            <Show when={tab().type === 'home'}>
                 <HomeContent />
             </Show>
-            <Show when={tabId() === 'search'}>
+            <Show when={tab().type === 'search'}>
                 <SearchContent />
             </Show>
-            <Show when={tabId() === 'moments'}>
+            <Show when={tab().type === 'moments'}>
                 <MomentsContent />
             </Show>
-            <Show when={tabId() === 'history'}>
+            <Show when={tab().type === 'history'}>
                 <HistoryContent />
             </Show>
-            <Show when={tabId() === 'view'}>
+            <Show when={tab().type === 'view'}>
                 <ViewContent />
             </Show>
-            <Show when={tabId() === 'settings'}>
+            <Show when={tab().type === 'settings'}>
                 <SettingsContent />
             </Show>
         </div>
