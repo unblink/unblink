@@ -24,9 +24,11 @@ export class WsClient {
     }
 
     send(
-        msg: ServerToClientMessage
+        msg: ServerToClientMessage,
+
     ) {
         if (this.destroyed) return;
+
         if (!this._subscription) return;
 
         // Check matches subscription before sending

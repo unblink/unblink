@@ -93,36 +93,21 @@ body {
   @apply flex items-center space-x-2 text-neutral-400 hover:text-white transition-all duration-100 bg-neutral-800 hover:bg-neutral-700 border border-neutral-700/0 hover:border-neutral-700 px-4 py-2 rounded-full
 }
 
-@keyframes push-down {
-  from {
-    opacity: 0;
-    transform: translateY(-50px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.card {
+.push-down {
   animation: push-down 0.5s ease-out forwards;
 }
 
+@theme {
+  --animate-push-down: push-down 0.5s ease-out forwards;
 
-
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-@keyframes fadeOut {
-  from { opacity: 1; }
-  to { opacity: 0; }
-}
-@keyframes scaleIn {
-  from { transform: scale(0.95); opacity: 0; }
-  to { transform: scale(1); opacity: 1; }
-}
-@keyframes scaleOut {
-  from { transform: scale(1); opacity: 1; }
-  to { transform: scale(0.95); opacity: 0; }
+  @keyframes push-down {
+    from {
+      opacity: 0;
+      transform: translateY(-50px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+      }
+  }
 }

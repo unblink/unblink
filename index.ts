@@ -39,6 +39,8 @@ try {
 }
 
 
+const clients = new Map<ServerWebSocket, WsClient>();
+
 const engine_conn = new Conn<ServerToEngine, EngineToServer>(`wss://${ENGINE_URL}/ws`, {
     onOpen() {
         const msg: ServerToEngine = {
@@ -54,6 +56,14 @@ const engine_conn = new Conn<ServerToEngine, EngineToServer>(`wss://${ENGINE_URL
     },
     onMessage(decoded) {
         logger.info(decoded, "Message from Zapdos Labs engine:");
+
+        if (decoded.type === 'frame_description') {
+            // Forward to clients
+            for (const [id, client] of clients) {
+                client.send(decoded);
+            }
+
+        }
     }
 });
 
@@ -282,8 +292,6 @@ const server = Bun.serve({
 
 logger.info("Server running on http://localhost:3000");
 
-
-const clients = new Map<ServerWebSocket, WsClient>();
 const forward = createForwardFunction({
     clients,
     worker_object_detection: () => worker_object_detection,

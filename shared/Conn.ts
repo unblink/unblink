@@ -4,7 +4,8 @@ import { decode, encode } from "cbor-x";
 export class Conn<T, R> {
     ws: WebSocket | null = null;
     queue: (ArrayBuffer | Uint8Array)[] = [];
-    closed: boolean = false;
+    state: 'idle' | 'connecting' | 'connected' = 'idle';
+    explicitlyClosed: boolean = false;
     private url: string;
     private options: {
         onOpen?: () => void,
@@ -27,9 +28,11 @@ export class Conn<T, R> {
         this.connect();
     }
 
-
-
     private connect() {
+        if (this.state === 'connecting' || this.state === 'connected') {
+            return; // Already connecting or connected
+        }
+        this.state = 'connecting';
         try {
             this.ws = new WebSocket(this.url);
             this.ws.binaryType = "arraybuffer";
@@ -57,6 +60,8 @@ export class Conn<T, R> {
 
             this.ws.addEventListener("open", () => {
                 console.log(`[Conn] Connection successful to ${this.url}.`);
+                // Mark as connected on successful connection
+                this.state = 'connected';
                 // Reset reconnect delay on successful connection
                 this.reconnectDelay = 1000;
                 this.flush();
@@ -65,15 +70,25 @@ export class Conn<T, R> {
             // on close, clear the queue and attempt to reconnect with exponential backoff
             this.ws.addEventListener("close", (event) => {
                 console.log(`[Conn] Connection closed: ${event.code} ${event.reason}`);
-                this.closed = true;
 
-                // Attempt to reconnect with exponential backoff
-                this.attemptReconnect();
+                // Mark as idle/disconnected
+                this.state = 'idle';
+
+                // Only attempt to reconnect if not explicitly closed
+                if (!this.explicitlyClosed) {
+                    // Attempt to reconnect with exponential backoff
+                    this.attemptReconnect();
+                }
             });
         } catch (error) {
             console.error(`[Conn] Error creating WebSocket connection:`, error);
-            // Attempt to reconnect with exponential backoff
-            this.attemptReconnect();
+            // Mark as idle since connection failed
+            this.state = 'idle';
+            // Only attempt to reconnect if not explicitly closed
+            if (!this.explicitlyClosed) {
+                // Attempt to reconnect with exponential backoff
+                this.attemptReconnect();
+            }
         }
     }
 
@@ -85,7 +100,7 @@ export class Conn<T, R> {
         }
 
         this.reconnectTimer = setTimeout(() => {
-            if (!this.closed) { // Only reconnect if not explicitly closed
+            if (!this.explicitlyClosed) { // Only reconnect if not explicitly closed
                 this.connect();
             }
         }, this.reconnectDelay);
@@ -97,7 +112,8 @@ export class Conn<T, R> {
     }
 
     public close() {
-        this.closed = true;
+        this.state = 'idle';
+        this.explicitlyClosed = true;
         if (this.reconnectTimer) {
             clearTimeout(this.reconnectTimer);
             this.reconnectTimer = null;
@@ -110,9 +126,8 @@ export class Conn<T, R> {
     }
 
     send(message: T) {
-        if (this.closed) {
-            console.warn("Attempted to send on closed connection");
-            return;
+        if (this.state !== 'connected') {
+            console.warn('[Conn] Attempted to send message while not connected. Message queued.');
         }
         const encoded = encode(message);
         if (this.ws && this.ws.readyState === WebSocket.OPEN) {

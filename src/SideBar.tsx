@@ -46,9 +46,9 @@ function MediaGroup(props: { group: { label: string; cameras: Camera[] } }) {
                 <For each={props.group.cameras}>
                     {(camera) => {
                         const viewedMedias = () => {
-                            const tab = tab();
-                            if (tab.type === 'view') {
-                                return tab.medias;
+                            const _tab = tab();
+                            if (_tab.type === 'view') {
+                                return _tab.medias;
                             }
                             return [];
                         };
@@ -147,16 +147,16 @@ export default function SideBar() {
 
             <div class="mx-4 space-y-1 mb-4">
                 <For each={tabs}>
-                    {tab => <button
+                    {_tab => <button
                         onClick={() => setTab({
-                            type: tab.id as 'home' | 'search' | 'moments' | 'history'
+                            type: _tab.id as 'home' | 'search' | 'moments' | 'history'
                         })}
                         data-active={
-                            tab().type === tab.id
+                            tab().type === _tab.id
                         }
                         class="w-full flex items-center space-x-3 px-4 py-2 rounded-xl text-neu-400 hover:bg-neu-800 data-[active=true]:bg-neu-800 data-[active=true]:text-white">
-                        <tab.icon class="w-4 h-4" />
-                        <div>{tab.name}</div>
+                        <_tab.icon class="w-4 h-4" />
+                        <div>{_tab.name}</div>
 
                     </button>}
                 </For>

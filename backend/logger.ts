@@ -1,5 +1,4 @@
 import pino from 'pino';
-import { ROOT_DIR } from '../definition';
 export const logger = pino({
     transport: {
         target: 'pino-pretty'

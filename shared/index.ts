@@ -42,7 +42,7 @@ export type ClientToServerMessage = {
 }
 
 export type WorkerToServerMessage = WorkerObjectDetectionToServerMessage | WorkerStreamToServerMessage
-export type ServerToClientMessage = WorkerToServerMessage & {
+export type ServerToClientMessage = (WorkerToServerMessage | EngineToServer) & {
     session_id?: string;
 }
 
@@ -117,5 +117,6 @@ export type ServerToEngine = {
 export type EngineToServer = {
     type: "frame_description";
     frame_id: string;
+    stream_id: string;
     description: string;
 }
