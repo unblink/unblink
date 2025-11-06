@@ -78,15 +78,6 @@ function WhatsAppToggle() {
                 placeholder='+1234567890'
                 type="text" id="phone-number" class="px-3 py-1.5 mt-1 block w-full rounded-lg bg-neu-850 border border-neu-750 text-white focus:outline-none placeholder:text-neu-500" />
         </div>
-
-        <div class="flex justify-end pt-4">
-            <button
-                onClick={() => {/* handle save */ }}
-                class="btn-primary">
-                Save
-            </button>
-        </div>
-
     </ToggleLayout>
 
 }
@@ -106,14 +97,6 @@ function EmailToggle() {
                 onInput={(e) => setEmail(e.currentTarget.value)}
                 placeholder='you@example.com'
                 type="text" id="email" class="px-3 py-1.5 mt-1 block w-full rounded-lg bg-neu-850 border border-neu-750 text-white focus:outline-none placeholder:text-neu-500" />
-        </div>
-
-        <div class="flex justify-end pt-4">
-            <button
-                onClick={() => {/* handle save */ }}
-                class="btn-primary">
-                Save
-            </button>
         </div>
     </ToggleLayout>
 

@@ -13,7 +13,7 @@ export type Camera = {
     saveDir: string;
 };
 
-export const [tab, setTab] = createSignal<{
+export type Tab = {
     type: 'home' | 'search' | 'moments' | 'history' | 'settings';
 } | {
     type: 'view';
@@ -24,7 +24,8 @@ export const [tab, setTab] = createSignal<{
 } | {
     type: 'search_result';
     query: string;
-}>({ type: 'home' });
+}
+export const [tab, setTab] = createSignal<Tab>({ type: 'home' });
 export const [cameras, setCameras] = createSignal<Camera[]>([]);
 export const [camerasLoading, setCamerasLoading] = createSignal(true);
 export const [subscription, setSubscription] = createSignal<Subscription>();

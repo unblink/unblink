@@ -4,13 +4,14 @@ import { Dynamic } from 'solid-js/web';
 import ArkToast from './ark/ArkToast';
 import HomeContent from './content/HomeContent';
 import MomentsContent from './content/MomentsContent';
-import { conn, fetchCameras, fetchSettings, setAgentCards, setConn, subscription, tab } from './shared';
+import { conn, fetchCameras, fetchSettings, setAgentCards, setConn, subscription, tab, type Tab } from './shared';
 import SideBar from './SideBar';
 import { connectWebSocket, newMessage } from './video/connection';
 import ViewContent from './ViewContent';
 import HistoryContent from './content/HistoryContent';
 import SettingsContent from './content/SettingsContent';
 import SearchContent from './content/SearchContent';
+import SearchResultContent from './content/SearchResultContent';
 
 export default function App() {
     onMount(() => {
@@ -41,13 +42,14 @@ export default function App() {
 
     })
 
-    const components = (): Record<string, ValidComponent> => {
+    const components = (): Record<Tab['type'], ValidComponent> => {
         return {
             'home': HomeContent,
             'moments': MomentsContent,
             'view': ViewContent,
             'history': HistoryContent,
             'search': SearchContent,
+            'search_result': SearchResultContent,
             'settings': SettingsContent,
         }
 
