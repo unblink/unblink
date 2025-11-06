@@ -2,7 +2,7 @@ import { format } from "date-fns";
 import { createResource, For, Show } from "solid-js";
 import type { RecordingsResponse } from "~/shared";
 import LayoutContent from "./LayoutContent";
-import { cameras, setTab } from "./shared";
+import { cameras, setTab } from "~/src/shared";
 
 async function fetchRecordings() {
     const response = await fetch("/recordings");

@@ -126,7 +126,7 @@ export default function EditCameraButton(props: { camera: Camera, children: any 
                 <Dialog.CloseTrigger>
                     <button
                         onClick={handleSave}
-                        class="px-4 py-2 text-sm font-medium text-white bg-neu-800 rounded-lg hover:bg-neu-850 border border-neu-750 focus:outline-none">
+                        class="btn-primary">
                         Save Camera
                     </button>
                 </Dialog.CloseTrigger>

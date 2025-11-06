@@ -1,6 +1,7 @@
 import { render } from "solid-js/web";
 import App from "./App";
 import "./index.css";
+import "./ark/ark.css";
 import type { JSX } from "solid-js";
 
 // Store the dispose function for HMR

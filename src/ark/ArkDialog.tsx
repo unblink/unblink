@@ -17,9 +17,9 @@ export const ArkDialog = (props: {
       {props.trigger(open(), setOpen)}
       <Dialog.Root open={open()} onOpenChange={() => setOpen(false)}>
         <Portal>
-          <Dialog.Backdrop class="fixed inset-0 bg-black/80 data-[state=open]:animate-[fadeIn_0.2s_ease-out] data-[state=closed]:animate-[fadeOut_0.2s_ease-in]" />
+          <Dialog.Backdrop class="fixed inset-0 bg-black/80 " />
           <Dialog.Positioner class="fixed inset-0 flex items-center justify-center">
-            <Dialog.Content class="relative w-full max-w-md max-h-[85vh] p-6 bg-neu-900 rounded-2xl border border-neu-800 shadow-lg data-[state=open]:animate-[scaleIn_0.2s_ease-out] data-[state=closed]:animate-[scaleOut_0.2s_ease-in]">
+            <Dialog.Content class="relative w-full max-w-md max-h-[85vh] p-6 bg-neu-900 rounded-2xl border border-neu-800 shadow-lg">
               <Dialog.Title class="m-0 text-lg font-medium text-white">
                 {props.title}
               </Dialog.Title>

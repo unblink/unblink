@@ -1,7 +1,7 @@
 import { onMount, For, Show } from 'solid-js';
 import LayoutContent from "./LayoutContent";
-import { cameras, camerasLoading, fetchCameras } from './shared';
-import EditCameraButton from './EditCameraButton';
+import { cameras, camerasLoading, fetchCameras } from '~/src/shared';
+import EditCameraButton from '~/src/EditCameraButton';
 import { format } from 'date-fns';
 
 export default function HomeContent() {

@@ -1,10 +1,10 @@
 import { createEffect, createSignal, For, Match, Show, Switch } from "solid-js";
 import type { MediaUnit } from "~/shared";
 import LayoutContent from "./LayoutContent";
-import LoadingSkeleton from "./search/LoadingSkeleton";
-import { cameras, tab } from "./shared";
+import LoadingSkeleton from "~/src/search/LoadingSkeleton";
+import { cameras, tab } from "~/src/shared";
 import { format } from "date-fns";
-import SearchBar from "./SearchBar";
+import SearchBar from "~/src/SearchBar";
 
 
 

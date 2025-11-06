@@ -14,7 +14,7 @@ export type Camera = {
 };
 
 export const [tab, setTab] = createSignal<{
-    type: 'home' | 'search' | 'moments' | 'history' | 'settings';
+    type: 'home' | 'search' | 'moments' | 'history' | 'settings' | 'alerts';
 } | {
     type: 'view';
     medias: {

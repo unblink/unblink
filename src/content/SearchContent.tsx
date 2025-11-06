@@ -1,7 +1,4 @@
-import { Show } from "solid-js";
-import SearchBar from "./SearchBar";
-import { FaSolidClockRotateLeft, FaSolidDisplay } from "solid-icons/fa";
-import { setTab } from "./shared";
+import SearchBar from "~/src/SearchBar";
 
 export default function SearchContent() {
   return <div class="h-screen py-2 pr-2">

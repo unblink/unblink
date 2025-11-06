@@ -1,16 +1,17 @@
 
-import { createEffect, onMount, Show } from 'solid-js';
-import HistoryContent from './HistoryContent';
-import HomeContent from './HomeContent';
-import MomentsContent from './MomentsContent';
-import SearchContent from './SearchContent';
+import { createEffect, onMount, type ValidComponent } from 'solid-js';
+import { Dynamic } from 'solid-js/web';
+import ArkToast from './ark/ArkToast';
+import HomeContent from './content/HomeContent';
+import MomentsContent from './content/MomentsContent';
 import { conn, fetchCameras, fetchSettings, setAgentCards, setConn, subscription, tab } from './shared';
 import SideBar from './SideBar';
 import { connectWebSocket, newMessage } from './video/connection';
 import ViewContent from './ViewContent';
-import SettingsContent from './SettingsContent';
-import ArkToast from './ark/ArkToast';
-import SearchResultContent from './SearchResultContent';
+import HistoryContent from './content/HistoryContent';
+import SettingsContent from './content/SettingsContent';
+import SearchContent from './content/SearchContent';
+import AlertsContent from './content/AlertsContent';
 
 export default function App() {
     onMount(() => {
@@ -41,31 +42,25 @@ export default function App() {
 
     })
 
+    const components = (): Record<string, ValidComponent> => {
+        return {
+            'home': HomeContent,
+            'moments': MomentsContent,
+            'view': ViewContent,
+            'history': HistoryContent,
+            'search': SearchContent,
+            'settings': SettingsContent,
+            'alerts': AlertsContent,
+        }
+
+    }
+    const component = () => components()[tab().type]
+
     return <div class="h-screen flex items-start bg-neu-925 text-white space-x-2">
         <ArkToast />
         <SideBar />
         <div class="flex-1">
-            <Show when={tab().type === 'home'}>
-                <HomeContent />
-            </Show>
-            <Show when={tab().type === 'search'}>
-                <SearchContent />
-            </Show>
-            <Show when={tab().type === 'search_result'}>
-                <SearchResultContent />
-            </Show>
-            <Show when={tab().type === 'moments'}>
-                <MomentsContent />
-            </Show>
-            <Show when={tab().type === 'history'}>
-                <HistoryContent />
-            </Show>
-            <Show when={tab().type === 'view'}>
-                <ViewContent />
-            </Show>
-            <Show when={tab().type === 'settings'}>
-                <SettingsContent />
-            </Show>
+            <Dynamic component={component()} />
         </div>
 
     </div>;

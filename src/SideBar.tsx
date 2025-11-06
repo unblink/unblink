@@ -1,7 +1,7 @@
 
 import { BsGithub } from 'solid-icons/bs';
 import { FaSolidChevronDown } from 'solid-icons/fa';
-import { FiClock, FiFilm, FiGrid, FiMonitor, FiSearch, FiSettings } from 'solid-icons/fi';
+import { FiBell, FiClock, FiFilm, FiGrid, FiMonitor, FiSearch, FiSettings } from 'solid-icons/fi';
 import { createMemo, createSignal, For, onMount, Show } from 'solid-js';
 import logoSVG from '~/assets/logo.svg';
 import AddCameraButton from './AddCameraButton';
@@ -131,6 +131,11 @@ export default function SideBar() {
             name: 'History',
             icon: FiClock,
         },
+        {
+            id: 'alerts',
+            name: 'Alerts',
+            icon: FiBell,
+        }
     ];
 
     return <div class="w-80 h-screen pl-2 py-2">

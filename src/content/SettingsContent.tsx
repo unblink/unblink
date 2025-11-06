@@ -1,7 +1,7 @@
 import { createSignal, onMount, createEffect } from "solid-js";
 import LayoutContent from "./LayoutContent";
-import ArkSwitch from "./ark/ArkSwitch";
-import { saveSettings, settings } from "./shared";
+import ArkSwitch from "~/src/ark/ArkSwitch";
+import { saveSettings, settings } from "~/src/shared";
 
 export default function SettingsContent() {
     const [objectDetection, setObjectDetection] = createSignal(false);
@@ -35,7 +35,7 @@ export default function SettingsContent() {
             <div class="flex justify-end mt-4">
                 <button
                     onClick={handleSaveSettings}
-                    class="px-4 py-2 text-sm font-medium text-white bg-neu-800 rounded-lg hover:bg-neu-850 border border-neu-750 focus:outline-none">
+                    class="btn-primary">
                     Save Settings
                 </button>
             </div>
