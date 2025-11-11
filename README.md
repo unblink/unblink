@@ -67,11 +67,6 @@ or
 HOSTNAME=0.0.0.0 bun dev
 ```
 
-Note that, authentication is secured with `Secure` cookie by default. If serving over unsecured connection is needed (not recommended), you can disable that with
-```sh
-DANGEROUS_DISABLE_SECURE_COOKIE=true ...
-```
-
 ## Screenshots
 
 ### Setup & Camera Configuration

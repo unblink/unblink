@@ -26,12 +26,19 @@ By default, the authentication screen is disabled, and any visitor to the applic
 To enable the authentication screen, modify the settings as follows:
 
 ```bash
-bun run admin.ts settings modify auth_screen_enabled true
+bun run admin.ts settings modify auth_enabled true
 bun run admin.ts users add
 # input username, password, and role (admin)
 ```
 
 Unblink uses role-based access control.
+
+Note that, when authentication is enabled, [`Secure` cookie](https://en.wikipedia.org/wiki/Secure_cookie) is used by default. This means it authentication might not work if the app is served over unsecured connection . 
+
+To disable Secure cookie (not recommended), run the app with env var:
+```sh
+DANGEROUS_DISABLE_SECURE_COOKIE=true
+```
 
 ---
 

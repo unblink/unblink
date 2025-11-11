@@ -11,7 +11,7 @@ export default function Authed(props: {
     onMount(async () => {
         await fetchSettings(); // Ensure settings are loaded first
 
-        if (settings()['auth_screen_enabled'] !== 'true') {
+        if (settings()['auth_enabled'] !== 'true') {
             setIsAuthenticated(true);
             // This user is a "guest" user when auth screen is disabled
             setUser();

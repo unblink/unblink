@@ -116,12 +116,18 @@ const server = Bun.serve({
 
         "/auth/me": {
             GET: async (req: Request) => {
-                const auth_res = await auth_required(req);
+                const auth_res = await auth_required(
+                    settings,
+                    req
+                );
                 if (auth_res.error) {
                     return new Response(auth_res.error.msg, { status: auth_res.error.code || 401 });
                 }
 
                 const { user } = auth_res.data;
+                if (!user) {
+                    return new Response("User not found", { status: 404 });
+                }
                 const maskedUser = {
                     id: user.id,
                     username: user.username,
@@ -159,7 +165,7 @@ const server = Bun.serve({
                 return Response.json(media);
             },
             POST: async (req: Request) => {
-                const auth_res = await auth_required(req);
+                const auth_res = await auth_required(settings, req);
                 if (auth_res.error) {
                     return new Response(auth_res.error.msg, { status: auth_res.error.code || 401 });
                 }
@@ -229,7 +235,7 @@ const server = Bun.serve({
                 return Response.json(settings);
             },
             PUT: async (req: Request) => {
-                const auth_res = await auth_required(req);
+                const auth_res = await auth_required(settings, req);
                 if (auth_res.error) {
                     return new Response(auth_res.error.msg, { status: auth_res.error.code || 401 });
                 }

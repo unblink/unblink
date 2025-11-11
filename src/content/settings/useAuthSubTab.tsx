@@ -32,10 +32,10 @@ export const useAuthSubTab: UseSubTab = (props) => {
                 <div class="bg-neu-850 border border-neu-800 rounded-lg p-6">
                     <div class="flex items-center justify-between">
                         <ArkSwitch
-                            checked={() => props.scratchpad()['auth_screen_enabled'] === 'true'}
+                            checked={() => props.scratchpad()['auth_enabled'] === 'true'}
                             onCheckedChange={(details) => props.setScratchpad((prev) => ({
                                 ...prev,
-                                auth_screen_enabled: details.checked ? 'true' : 'false'
+                                auth_enabled: details.checked ? 'true' : 'false'
                             }))}
                             label="Enable Auth Screen"
                         />
@@ -62,7 +62,7 @@ export const useAuthSubTab: UseSubTab = (props) => {
         </div>,
         keys: () => [
             {
-                name: 'auth_screen_enabled',
+                name: 'auth_enabled',
                 validate: (value) => {
                     if (value !== 'true' && value !== 'false') {
                         return {

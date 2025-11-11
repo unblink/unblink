@@ -30,10 +30,10 @@ export async function verifyPassword(password: string, hash: string): Promise<bo
     return await Bun.password.verify(password, hash);
 }
 
-export async function auth_required(req: Request): Promise<{
+export async function auth_required(settings: () => Record<string, string>, req: Request): Promise<{
     data: {
-        user: DbUser,
-        session: DbSession
+        user?: DbUser,
+        session?: DbSession
     },
     error?: undefined
 } | {
@@ -43,6 +43,16 @@ export async function auth_required(req: Request): Promise<{
         msg: string
     }
 }> {
+
+    if (settings().auth_enabled !== "true") {
+        return {
+            data: {
+                // Empty
+            }
+        }
+
+    }
+
     const cookies = req.headers.get("cookie");
     const session_id = cookies?.match(/session_id=([^;]+)/)?.[1];
     if (!session_id) return {

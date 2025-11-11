@@ -29,7 +29,7 @@ export type Tab = {
 export const [isAuthenticated, setIsAuthenticated] = createSignal(false);
 export const [user, setUser] = createSignal<User>();
 export const authorized_as_admin = () => {
-    if (settings()['auth_screen_enabled'] !== 'true') return true; // if auth screen is disabled, all users are admins  
+    if (settings()['auth_enabled'] !== 'true') return true; // if auth screen is disabled, all users are admins  
     const u = user();
     return u && u.role === 'admin';
 }
