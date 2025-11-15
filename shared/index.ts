@@ -1,3 +1,5 @@
+
+import type { MediaUnit } from "./database";
 import type { EngineToServer } from "./engine";
 
 export type FrameMessage = {
@@ -21,15 +23,6 @@ export type StreamMessage = {
     data: Uint8Array;
 } | FrameMessage;
 
-export type MediaUnit = {
-    id: string;
-    type: 'frame';
-    description: string | null;
-    at_time: Date;
-    embedding: number[] | null;
-    media_id: string;
-    path: string;
-}
 
 export type Subscription = {
     session_id: string;
@@ -47,7 +40,10 @@ export type ClientToServerMessage = {
 export type WorkerToServerMessage =
     // WorkerObjectDetectionToServerMessage | 
     WorkerStreamToServerMessage
-export type ServerToClientMessage = (WorkerToServerMessage | EngineToServer) & {
+export type ServerToClientMessage = (WorkerToServerMessage | EngineToServer | {
+    type: 'agent_card';
+    media_unit: MediaUnit;
+}) & {
     session_id?: string;
 }
 

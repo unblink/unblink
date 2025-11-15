@@ -1,10 +1,10 @@
 import { createEffect, createSignal, For, Match, Show, Switch } from "solid-js";
-import type { MediaUnit } from "~/shared";
 import LayoutContent from "./LayoutContent";
 import LoadingSkeleton from "~/src/search/LoadingSkeleton";
 import { cameras, tab } from "~/src/shared";
 import { format } from "date-fns";
 import SearchBar from "~/src/SearchBar";
+import type { MediaUnit } from "~/shared/database";
 
 
 
@@ -20,7 +20,7 @@ type SearchState = {
     type: "result",
     query: string,
     result: {
-        media_units: (MediaUnit & { _distance: number })[]
+        media_units: MediaUnit[]
     }
 }
 
@@ -77,7 +77,7 @@ export default function SearchResultContent() {
 
         <div class="space-y-2 overflow-y-auto h-full">
             <div class="relative h-18 mt-4">
-                <SearchBar variant="lg" />
+                <SearchBar variant="lg" placeholder={q} />
             </div>
 
             <Switch>
@@ -102,7 +102,8 @@ export default function SearchResultContent() {
                                     return <div class="animate-push-down p-4 bg-neu-850 rounded-2xl space-y-2">
                                         <div class="font-semibold">{name()}</div>
                                         <div class="text-neu-400 text-sm">{format(mu.at_time, 'PPpp')}</div>
-                                        <div>{mu.description}</div>
+                                        <div class="py-1">{mu.description}</div>
+                                        <img src={`/files?path=${mu.path}`} class="rounded-lg" />
                                     </div>
                                 }}
                             </For>

@@ -1,7 +1,7 @@
 import { createSignal } from "solid-js";
 import type { ClientToServerMessage, ServerToClientMessage, Subscription, User } from "~/shared";
-import { toaster } from "./ark/ArkToast";
 import type { Conn } from "~/shared/Conn";
+import type { MediaUnit } from "~/shared/database";
 
 export type Camera = {
     id: string;
@@ -75,13 +75,8 @@ export const fetchCameras = async () => {
     }
 };
 
-export type AgentCard = {
-    created_at: number;
-    stream_id: string;
-    content: string;
-}
 
-export const [agentCards, setAgentCards] = createSignal<AgentCard[]>([]);
+export const [agentCards, setAgentCards] = createSignal<MediaUnit[]>([]);
 export const relevantAgentCards = () => {
     const viewedMedias = () => {
         const t = tab();
@@ -90,7 +85,7 @@ export const relevantAgentCards = () => {
     const liveStreams = viewedMedias().filter(m => !m.file_name)
     const cards = agentCards();
     // newest first
-    const relevant_cards = cards.filter(c => liveStreams.some(media => media.stream_id === c.stream_id)).toSorted((a, b) => b.created_at - a.created_at);
+    const relevant_cards = cards.filter(c => liveStreams.some(media => media.stream_id === c.media_id)).toSorted((a, b) => new Date(b.at_time).getTime() - new Date(a.at_time).getTime());
 
     return relevant_cards;
 }

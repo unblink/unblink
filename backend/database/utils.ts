@@ -1,6 +1,6 @@
 import type { Database } from '@tursodatabase/database';
 import { getDb } from './database';
-import type { Media, MediaUnit, Secret, Session, Setting, User } from './init';
+import type { Media, MediaUnit, Secret, Session, Setting, User } from '~/shared/database';
 import type { RESTQuery } from '~/shared';
 
 

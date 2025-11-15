@@ -3,9 +3,10 @@ import { FaSolidChevronLeft, FaSolidChevronRight } from "solid-icons/fa";
 import { For, Show, createEffect, createSignal, onCleanup } from "solid-js";
 import ArkSwitch from "./ark/ArkSwitch";
 import CanvasVideo from "./CanvasVideo";
-import { cameras, relevantAgentCards, setAgentCards, setSubscription, settings, subscription, tab, type AgentCard } from "./shared";
+import { cameras, relevantAgentCards, setAgentCards, setSubscription, settings, subscription, tab } from "./shared";
 import { v4 as uuid } from 'uuid';
-import type { MediaUnit, RESTQuery } from "~/shared";
+import type { RESTQuery } from "~/shared";
+import type { MediaUnit } from "~/shared/database";
 
 const GAP_SIZE = '8px';
 
@@ -95,12 +96,7 @@ export default function ViewContent() {
 
         if (resp.ok) {
             const data = await resp.json() as { media_units: MediaUnit[] };
-            const cards: AgentCard[] = data.media_units.map(mu => ({
-                created_at: new Date(mu.at_time).getTime(),
-                stream_id: mu.media_id,
-                content: mu.description || '',
-            }));
-            setAgentCards(cards);
+            setAgentCards([...data.media_units]);
 
             console.log('Fetched media units for viewed medias:', data);
         } else {
@@ -193,15 +189,16 @@ export default function ViewContent() {
                                     <For each={relevantAgentCards()}>
                                         {(card) => {
                                             const stream_name = () => {
-                                                const camera = cameras().find(c => c.id === card.stream_id);
+                                                const camera = cameras().find(c => c.id === card.media_id);
                                                 return camera ? camera.name : 'Unknown Stream';
                                             }
                                             return <div class="animate-push-down p-4 bg-neu-850 rounded-2xl space-y-2">
                                                 <div class="font-semibold">{stream_name()}</div>
-                                                <div class="text-neu-400 text-sm">{formatDistance(card.created_at, Date.now(), {
+                                                <div class="text-neu-400 text-sm">{formatDistance(card.at_time, Date.now(), {
                                                     addSuffix: true
                                                 })}</div>
-                                                <div>{card.content}</div>
+                                                <div>{card.description}</div>
+                                                <img src={`/files?path=${card.path}`} class="rounded-lg" />
                                             </div>
                                         }}
                                     </For>

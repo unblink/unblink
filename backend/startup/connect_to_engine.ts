@@ -2,10 +2,11 @@ import type { ServerWebSocket } from "bun";
 
 import type { WebhookMessage } from "~/shared/alert";
 import { Conn } from "~/shared/Conn";
-import { updateMediaUnit } from "../database/utils";
+import { getMediaUnitById, updateMediaUnit } from "../database/utils";
 import { logger } from "../logger";
 import type { WsClient } from "../WsClient";
 import type { EngineToServer, ServerToEngine } from "~/shared/engine";
+import type { ServerToClientMessage } from "~/shared";
 
 export function connect_to_engine(props: {
     ENGINE_URL: string,
@@ -25,7 +26,7 @@ export function connect_to_engine(props: {
         onError(event) {
             logger.error(event, "WebSocket to engine error:");
         },
-        onMessage(decoded) {
+        async onMessage(decoded) {
             if (decoded.type === 'frame_description') {
                 // Store in database
                 // logger.info(`Received description for frame ${decoded.frame_id}: ${decoded.description}`);
@@ -33,9 +34,23 @@ export function connect_to_engine(props: {
                     description: decoded.description,
                 })
 
+                const mu = await getMediaUnitById(decoded.frame_id);
+                if (!mu) {
+                    logger.error(`MediaUnit not found for frame_id ${decoded.frame_id}`);
+                    return;
+                }
+
+                const msg: ServerToClientMessage = {
+                    type: 'agent_card',
+                    media_unit: {
+                        ...mu,
+                        description: decoded.description,
+                    }
+                }
+
                 // Forward to clients 
                 for (const [id, client] of props.clients()) {
-                    client.send(decoded, false);
+                    client.send(msg, false);
                 }
 
                 // Also forward to webhook

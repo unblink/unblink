@@ -3,7 +3,7 @@ import { decode } from "cbor-x";
 import { v4 as uuid } from 'uuid';
 import { admin } from "./admin";
 import { WsClient } from "./backend/WsClient";
-import { RECORDINGS_DIR, RUNTIME_DIR } from "./backend/appdir";
+import { FRAMES_DIR, RECORDINGS_DIR, RUNTIME_DIR } from "./backend/appdir";
 import { auth_required, verifyPassword } from "./backend/auth";
 import { createMedia, createSession, deleteMedia, deleteSession, getAllMedia, getAllSettings as getAllSettingsDB, getAllUsers, getByQuery, getMediaUnitsByEmbedding, getUserByUsername as getUserByUsernameDB, setSetting as setSettingDB, updateMedia } from "./backend/database/utils";
 import { createForwardFunction } from "./backend/forward";
@@ -17,6 +17,7 @@ import { spawn_worker } from "./backend/worker_connect/shared";
 import { start_stream, start_stream_file, start_streams, stop_stream } from "./backend/worker_connect/worker_stream_connector";
 import homepage from "./index.html";
 import type { ClientToServerMessage, DbUser, RecordingsResponse, RESTQuery } from "./shared";
+import path from "node:path";
 
 // Check args for "admin" mode
 if (process.argv[2] === "admin") {
@@ -271,6 +272,39 @@ const server = Bun.serve({
                 return Response.json(safeUsers);
             },
         },
+        '/files': {
+            GET: async (req) => {
+                const url = new URL(req.url);
+                const file_path = url.searchParams.get('path');
+
+                if (!file_path) {
+                    return new Response('Missing file path', { status: 400 });
+                }
+
+                const absoluteFilePath = path.resolve(file_path);
+
+                if (!absoluteFilePath.startsWith(FRAMES_DIR)) {
+                    return new Response('Invalid file path', { status: 400 });
+                }
+
+                try {
+                    const file = Bun.file(file_path);
+                    const headers = new Headers();
+                    headers.set('Content-Type', file.type);
+
+                    if (file.type.startsWith('image/')) {
+                        headers.set('Content-Disposition', 'inline');
+                    } else {
+                        headers.set('Content-Disposition', `attachment; filename="${file.name}"`);
+                    }
+
+                    return new Response(file.stream(), { headers });
+                } catch (error) {
+                    logger.error({ error }, 'Error fetching file');
+                    return new Response('Error fetching file', { status: 500 });
+                }
+            }
+        },
         '/search': {
             POST: async (req: Request) => {
                 const body = await req.json();
@@ -304,6 +338,7 @@ const server = Bun.serve({
                 }
 
                 const media_units = await getMediaUnitsByEmbedding(embedding);
+                console.log('media_units', media_units)
                 return Response.json({ media_units });
             }
         }

@@ -2,17 +2,17 @@
 import { createEffect, onMount, type ValidComponent } from 'solid-js';
 import { Dynamic } from 'solid-js/web';
 import ArkToast from './ark/ArkToast';
+import Authed from './Authed';
+import HistoryContent from './content/HistoryContent';
 import HomeContent from './content/HomeContent';
 import MomentsContent from './content/MomentsContent';
-import { conn, fetchCameras, fetchSettings, setAgentCards, setConn, subscription, tab, type Tab } from './shared';
+import SearchContent from './content/SearchContent';
+import SearchResultContent from './content/SearchResultContent';
+import SettingsContent from './content/SettingsContent';
+import { conn, fetchCameras, setAgentCards, setConn, subscription, tab, type Tab } from './shared';
 import SideBar from './SideBar';
 import { connectWebSocket, newMessage } from './video/connection';
 import ViewContent from './ViewContent';
-import HistoryContent from './content/HistoryContent';
-import SettingsContent from './content/SettingsContent';
-import SearchContent from './content/SearchContent';
-import SearchResultContent from './content/SearchResultContent';
-import Authed from './Authed';
 
 export default function App() {
     onMount(() => {
@@ -25,10 +25,10 @@ export default function App() {
         const m = newMessage();
         if (!m) return;
 
-        if (m.type === 'frame_description') {
+        if (m.type === 'agent_card') {
             // console.log('Received description for stream', m.stream_id, ':', m.description);
             setAgentCards(prev => {
-                return [...prev, { created_at: Date.now(), stream_id: m.stream_id, content: m.description }].slice(-200);
+                return [...prev, m.media_unit].slice(-200);
             });
         }
     })
