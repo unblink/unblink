@@ -1,10 +1,11 @@
-import type { EngineToServer, ServerToEngine } from "~/shared";
-import { Conn } from "~/shared/Conn";
-import { logger } from "../logger";
-import { updateMediaUnit } from "../database/utils";
-import type { WebhookMessage } from "~/shared/alert";
 import type { ServerWebSocket } from "bun";
+
+import type { WebhookMessage } from "~/shared/alert";
+import { Conn } from "~/shared/Conn";
+import { updateMediaUnit } from "../database/utils";
+import { logger } from "../logger";
 import type { WsClient } from "../WsClient";
+import type { EngineToServer, ServerToEngine } from "~/shared/engine";
 
 export function connect_to_engine(props: {
     ENGINE_URL: string,
@@ -57,6 +58,24 @@ export function connect_to_engine(props: {
                 updateMediaUnit(decoded.frame_id, {
                     embedding: embeddingBuffer,
                 })
+            }
+
+            if (decoded.type === 'frame_object_detection') {
+                // // Also forward to webhook
+                // props.forward_to_webhook({
+                //     event: 'object_detection',
+                //     data: {
+                //         created_at: new Date().toISOString(),
+                //         stream_id: decoded.stream_id,
+                //         frame_id: decoded.frame_id,
+                //         objects: decoded.objects,
+                //     }
+                // });
+
+                // Forward to clients
+                for (const [, client] of props.clients()) {
+                    client.send(decoded);
+                }
             }
         }
     });

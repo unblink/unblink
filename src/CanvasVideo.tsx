@@ -2,8 +2,9 @@ import { createResizeObserver } from "@solid-primitives/resize-observer";
 import { FaSolidSpinner } from "solid-icons/fa";
 import { createEffect, createSignal, onCleanup, onMount, Show, type Accessor } from "solid-js";
 import { newMessage } from "./video/connection";
-import type { DetectionObject, ServerToClientMessage } from "~/shared";
+import type { ServerToClientMessage } from "~/shared";
 import { subscription } from "./shared";
+import type { DetectionObject } from "~/shared/engine";
 
 class MjpegPlayer {
     private canvas: HTMLCanvasElement;
@@ -30,7 +31,7 @@ class MjpegPlayer {
     public handleMessage(message: ServerToClientMessage): void {
         if (this.isDestroyed) return;
 
-        if (message.type === 'object_detection') {
+        if (message.type === 'frame_object_detection') {
             this.detectionObjects = message.objects;
             return;
         }
@@ -140,23 +141,10 @@ class MjpegPlayer {
 
         const videoWidth = this.sourceWidth;
         const videoHeight = this.sourceHeight;
-        const MODEL_INPUT_WIDTH = 640;
-        const MODEL_INPUT_HEIGHT = 640;
 
-        const videoAspect = videoWidth / videoHeight;
-        const modelAspect = MODEL_INPUT_WIDTH / MODEL_INPUT_HEIGHT;
-
-        let modelScale: number, modelOffsetX = 0, modelOffsetY = 0;
-        if (videoAspect > modelAspect) {
-            modelScale = MODEL_INPUT_WIDTH / videoWidth;
-            modelOffsetY = (MODEL_INPUT_HEIGHT - videoHeight * modelScale) / 2;
-        } else {
-            modelScale = MODEL_INPUT_HEIGHT / videoHeight;
-            modelOffsetX = (MODEL_INPUT_WIDTH - videoWidth * modelScale) / 2;
-        }
-
-        const imageWidthInModel = videoWidth * modelScale;
-        const canvasRenderScale = geom.renderWidth / imageWidthInModel;
+        // IMPORTANT FIX: independent X/Y scaling
+        const scaleX = geom.renderWidth / videoWidth;
+        const scaleY = geom.renderHeight / videoHeight;
 
         this.ctx.save();
         this.ctx.strokeStyle = '#FF0000';
@@ -165,13 +153,14 @@ class MjpegPlayer {
         this.ctx.textBaseline = 'bottom';
 
         this.detectionObjects.forEach(obj => {
-            const { x1, y1, x2, y2 } = obj.box;
+            const { x_min, y_min, x_max, y_max } = obj.box;
 
-            const scaledX = geom.offsetX + (x1 - modelOffsetX) * canvasRenderScale;
-            const scaledY = geom.offsetY + (y1 - modelOffsetY) * canvasRenderScale;
-            const scaledWidth = (x2 - x1) * canvasRenderScale;
-            const scaledHeight = (y2 - y1) * canvasRenderScale;
-
+            // Correct projection into rendered+letterboxed canvas
+            const scaledX = geom.offsetX + x_min * scaleX;
+            const scaledY = geom.offsetY + y_min * scaleY;
+            const scaledWidth = (x_max - x_min) * scaleX;
+            const scaledHeight = (y_max - y_min) * scaleY;
+            // Draw the rectangle
             this.ctx.strokeRect(
                 Math.floor(scaledX),
                 Math.floor(scaledY),
@@ -179,11 +168,15 @@ class MjpegPlayer {
                 Math.floor(scaledHeight)
             );
 
+            // Label background & text
             const text = `${obj.label} (${(obj.confidence * 100).toFixed(1)}%)`;
             const textMetrics = this.ctx.measureText(text);
             const textWidth = textMetrics.width;
             const textHeight = 15;
-            const labelY = scaledY > textHeight + 5 ? scaledY : scaledY + scaledHeight + textHeight;
+
+            const labelY = scaledY > textHeight + 5
+                ? scaledY
+                : scaledY + scaledHeight + textHeight;
 
             this.ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
             this.ctx.fillRect(
@@ -192,12 +185,14 @@ class MjpegPlayer {
                 Math.ceil(textWidth + 10),
                 Math.ceil(textHeight + 2)
             );
+
             this.ctx.fillStyle = '#FFFFFF';
             this.ctx.fillText(text, scaledX + 5, labelY);
         });
 
         this.ctx.restore();
     }
+
 
     private startRenderLoop() {
         this.animationFrameId = requestAnimationFrame(() => this.render());
@@ -248,9 +243,16 @@ export default function CanvasVideo(props: { stream_id: string, file_name?: stri
 
     createEffect(() => {
         const message = newMessage();
+        if (!message) return;
         const s = subscription();
-        const isCorrectType = message?.type == 'frame' || message?.type == 'codec' || message?.type == 'object_detection';
-        if (isCorrectType && message?.stream_id === props.stream_id && message.file_name === props.file_name && message.session_id == s?.session_id) {
+        if (!s) return;
+
+        const isCorrectStreamMessage = (message.type == 'frame' || message.type == 'codec') && message.stream_id === props.stream_id && message.file_name === props.file_name && message.session_id == s.session_id;
+        const isCorrectEngineMessage = message.type == 'frame_object_detection' && message.stream_id === props.stream_id && message.session_id == s.session_id;
+        // if (message.type === 'frame_object_detection' && isCorrectEngineMessage) {
+        //     console.log('CanvasVideo received message:', message);
+        // }
+        if (isCorrectStreamMessage || isCorrectEngineMessage) {
             player?.handleMessage(message);
         }
     });
@@ -276,7 +278,6 @@ export default function CanvasVideo(props: { stream_id: string, file_name?: stri
         <div ref={setContainerRef}
             style={{ position: "relative", width: "100%", height: "100%" }}
         >
-
             <canvas
                 ref={setCanvasRef}
                 style={{

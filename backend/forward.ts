@@ -1,15 +1,17 @@
 import type { ServerWebSocket } from "bun";
 import { decode } from "cbor-x";
-import type { EngineToServer, ServerToEngine, ServerToWorkerObjectDetectionMessage, WorkerToServerMessage } from "~/shared";
-import type { WsClient } from "./WsClient";
-import type { Conn } from "~/shared/Conn";
 import fs from "fs/promises";
-import { createMediaUnit, getMediaUnitsByMediaId } from "./database/utils";
+import type { WorkerToServerMessage } from "~/shared";
 import type { WebhookMessage } from "~/shared/alert";
+import type { Conn } from "~/shared/Conn";
+import type { EngineToServer, ServerToEngine } from "~/shared/engine";
+import { createMediaUnit } from "./database/utils";
+import type { WsClient } from "./WsClient";
+import { logger } from "./logger";
 
 export const createForwardFunction = (opts: {
     clients: Map<ServerWebSocket, WsClient>,
-    worker_object_detection: () => Worker,
+    // worker_object_detection: () => Worker,
     settings: () => Record<string, string>,
     engine_conn: () => Conn<ServerToEngine, EngineToServer>,
     forward_to_webhook: (msg: WebhookMessage) => Promise<void>,
@@ -17,7 +19,8 @@ export const createForwardFunction = (opts: {
     const state: {
         streams: {
             [stream_id: string]: {
-                last_engine_sent: number,
+                last_engine_sent__index: number,
+                last_engine_sent__object_detection: number,
             }
         }
     } = {
@@ -29,40 +32,42 @@ export const createForwardFunction = (opts: {
         const encoded = msg.data;
         const decoded = decode(encoded) as WorkerToServerMessage;
 
-        if (decoded.type === 'codec' || decoded.type === 'frame' || decoded.type === 'object_detection') {
+        if (decoded.type === 'codec' || decoded.type === 'frame'
+            //  || decoded.type === 'object_detection'
+        ) {
             // Forward to clients
             for (const [, client] of opts.clients) {
                 client.send(decoded);
             }
         }
 
-        // Only for live streams (no file_name)
-        if (decoded.type === 'object_detection' && decoded.file_name === undefined) {
-            // Also forward to webhook
-            opts.forward_to_webhook({
-                type: 'object_detection',
-                data: {
-                    created_at: new Date().toISOString(),
-                    stream_id: decoded.stream_id,
-                    frame_id: decoded.frame_id,
-                    objects: decoded.objects,
-                }
-            });
-        }
+        // // Only for live streams (no file_name)
+        // if (decoded.type === 'object_detection' && decoded.file_name === undefined) {
+        //     // Also forward to webhook
+        //     opts.forward_to_webhook({
+        //         type: 'object_detection',
+        //         data: {
+        //             created_at: new Date().toISOString(),
+        //             stream_id: decoded.stream_id,
+        //             frame_id: decoded.frame_id,
+        //             objects: decoded.objects,
+        //         }
+        //     });
+        // }
 
         if (decoded.type === 'frame_file') {
+            const now = Date.now();
+            if (!state.streams[decoded.stream_id]) {
+                state.streams[decoded.stream_id] = {
+                    last_engine_sent__index: 0,
+                    last_engine_sent__object_detection: 0,
+                }
+            }
+
             (async () => {
-                const now = Date.now();
                 // Throttle engine forwarding to 1 frame every 5 seconds
-                if (!state.streams[decoded.stream_id]) {
-                    state.streams[decoded.stream_id] = {
-                        last_engine_sent: 0,
-                    }
-                }
-                if (now - state.streams[decoded.stream_id]!.last_engine_sent < 5000) {
-                    return;
-                }
-                state.streams[decoded.stream_id]!.last_engine_sent = now;
+                if (now - state.streams[decoded.stream_id]!.last_engine_sent__index < 5000) return;
+                state.streams[decoded.stream_id]!.last_engine_sent__index = now;
 
                 // Store in database
                 await createMediaUnit({
@@ -84,6 +89,10 @@ export const createForwardFunction = (opts: {
                 const frame = await fs.readFile(decoded.path);
                 const msg: ServerToEngine = {
                     type: "frame_binary",
+                    workers: {
+                        'vlm': true,
+                        'embedding': true,
+                    },
                     stream_id: decoded.stream_id,
                     frame_id: decoded.frame_id,
                     frame,
@@ -91,13 +100,26 @@ export const createForwardFunction = (opts: {
                 engine_conn.send(msg);
             })();
 
-            // Forward to object detection worker if enabled
-            const object_detection_enabled = opts.settings()['object_detection_enabled'] === 'true';
-            if (object_detection_enabled) {
-                const msg: ServerToWorkerObjectDetectionMessage = decoded;
-                // Forward to object detection worker
-                opts.worker_object_detection().postMessage(msg);
-            }
+            (async () => {
+                // Forward to object detection worker if enabled
+                const object_detection_enabled = opts.settings()['object_detection_enabled'] === 'true';
+                if (!object_detection_enabled) return;
+                // Throttle engine forwarding to 1 fps
+                if (now - state.streams[decoded.stream_id]!.last_engine_sent__object_detection < 1000) return;
+                state.streams[decoded.stream_id]!.last_engine_sent__object_detection = now;
+
+                // logger.info({ path: decoded.path }, `Forwarding frame ${decoded.frame_id} from stream ${decoded.stream_id} to object detection worker.`);
+                const msg: ServerToEngine = {
+                    type: "frame_binary",
+                    workers: {
+                        'object_detection': true,
+                    },
+                    stream_id: decoded.stream_id,
+                    frame_id: decoded.frame_id,
+                    frame: await fs.readFile(decoded.path),
+                }
+                opts.engine_conn().send(msg);
+            })();
         }
     }
 

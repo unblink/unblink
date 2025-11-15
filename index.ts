@@ -428,15 +428,14 @@ logger.info(`Server running on ${HOSTNAME}:${PORT}`);
 
 const forward = createForwardFunction({
     clients,
-    worker_object_detection: () => worker_object_detection,
+    // worker_object_detection: () => worker_object_detection,
     settings,
     engine_conn: () => engine_conn,
     forward_to_webhook,
 })
 
 const worker_stream = spawn_worker('worker_stream.js', forward);
-const worker_object_detection = spawn_worker('worker_object_detection.js', forward);
-
+// const worker_object_detection = spawn_worker('worker_object_detection.js', forward);
 
 if (process.env.DEV_MODE === 'lite') {
     logger.info("Running in lite development mode - skipping stream startup");

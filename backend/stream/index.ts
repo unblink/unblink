@@ -50,6 +50,8 @@ const OUTPUT_ROLLING_INTERVAL_MS = 3600 * 1000; // 1 hour
 // const OUTPUT_ROLLING_INTERVAL_MS = 60 * 1000; // 1 min for testing
 
 function getCodecs(
+    width: number,
+    height: number,
     videoStream: Stream,
     audioStream: Stream | undefined,
 ): StreamMessage {
@@ -72,8 +74,8 @@ function getCodecs(
         audioCodec: audioCodecString,
         codecString: codecStrings,
         fullCodec,
-        width: videoStream.codecpar.width,
-        height: videoStream.codecpar.height,
+        width,
+        height,
         hasAudio: !!audioStream,
     };
 
@@ -235,9 +237,14 @@ export async function streamMedia(stream: StartStreamArg, onMessage: (msg: Strea
         videoStream.codecpar.width,
         videoStream.codecpar.height,
     );
-    const scale = MAX_SIZE / longer_side;
-    const newWidth = Math.round(videoStream.codecpar.width * scale);
-    const newHeight = Math.round(videoStream.codecpar.height * scale);
+
+    let newWidth = videoStream.codecpar.width;
+    let newHeight = videoStream.codecpar.height;
+    if (longer_side > MAX_SIZE) {
+        const scale = MAX_SIZE / longer_side;
+        newWidth = Math.round(newWidth * scale);
+        newHeight = Math.round(newHeight * scale);
+    }
 
     logger.info({ newWidth, newHeight }, "Scaling video to:");
 
@@ -265,7 +272,9 @@ export async function streamMedia(stream: StartStreamArg, onMessage: (msg: Strea
         AV_CODEC_ID_MJPEG,
     }, "Transcode decision:");
 
-    const codecItem = getCodecs(videoStream, audioStream);
+    const codecItem = getCodecs(newWidth, newHeight, videoStream, audioStream);
+
+
     logger.info(codecItem, "Initialized stream codecs");
     onMessage(codecItem);
 

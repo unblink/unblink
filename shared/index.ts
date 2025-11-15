@@ -1,3 +1,5 @@
+import type { EngineToServer } from "./engine";
+
 export type FrameMessage = {
     type: "frame_file";
     frame_id: string;
@@ -42,7 +44,9 @@ export type ClientToServerMessage = {
     subscription: Subscription | undefined | null;
 }
 
-export type WorkerToServerMessage = WorkerObjectDetectionToServerMessage | WorkerStreamToServerMessage
+export type WorkerToServerMessage =
+    // WorkerObjectDetectionToServerMessage | 
+    WorkerStreamToServerMessage
 export type ServerToClientMessage = (WorkerToServerMessage | EngineToServer) & {
     session_id?: string;
 }
@@ -76,58 +80,24 @@ export type ServerToWorkerStreamMessage = ServerToWorkerStreamMessage_Add_Stream
     file_name?: string,
 }
 
-export type ServerToWorkerObjectDetectionMessage = {
-    stream_id: string;
-    file_name?: string;
-} & FrameMessage
+// export type ServerToWorkerObjectDetectionMessage = {
+//     stream_id: string;
+//     file_name?: string;
+// } & FrameMessage
 
-export type DetectionObject = {
-    label: string;
-    confidence: number;
-    box: {
-        x1: number;
-        y1: number;
-        x2: number;
-        y2: number;
-    }
-}
-
-export type WorkerObjectDetectionToServerMessage = {
-    type: 'object_detection';
-    stream_id: string;
-    frame_id: string;
-    file_name?: string;
-    objects: DetectionObject[];
-}
+// export type WorkerObjectDetectionToServerMessage = {
+//     type: 'object_detection';
+//     stream_id: string;
+//     frame_id: string;
+//     file_name?: string;
+//     objects: DetectionObject[];
+// }
 
 export type RecordingsResponse = Record<string, {
     file_name: string;
     from_ms?: number;
     to_ms?: number;
 }[]>;
-
-export type ServerToEngine = {
-    type: "frame_binary";
-    frame_id: string;
-    stream_id: string;
-    frame: Uint8Array;
-} | {
-    type: "i_am_server";
-    token?: string;
-}
-
-
-export type EngineToServer = {
-    type: "frame_description";
-    frame_id: string;
-    stream_id: string;
-    description: string;
-} | {
-    type: "frame_embedding";
-    frame_id: string;
-    stream_id: string;
-    embedding: number[];
-}
 
 export type User = Pick<DbUser, 'id' | 'username' | 'role'>;
 export type DbUser = {
@@ -151,5 +121,4 @@ export type RESTQuery = {
         op: 'equals' | 'in' | 'is_not' | 'like';
         value: any;
     }[]
-
 }
