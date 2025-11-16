@@ -1,16 +1,55 @@
 # Self-Hosting with Docker
 
-This guide provides instructions for setting up and running Unblink using Docker and `docker-compose`. This is the recommended method for self-hosting as it simplifies deployment and dependency management.
+This guide provides instructions for setting up and running Unblink using Docker. This is the recommended method for self-hosting as it simplifies deployment and dependency management.
 
-## Prerequisites
+## Quick Start (Recommended)
 
-- [Docker](https://docs.docker.com/get-docker/) installed on your system.
-- [Docker Compose](https://docs.docker.com/compose/install/) installed on your system.
-- [Git](https://git-scm.com/book/en/v2/Getting-Started-Installing-Git) for cloning the repository.
+Instead of cloning and rebuilding the image, you can use the latest released Docker image directly:
 
-## Installation Steps
+**Option 1: Simple Docker command**
+```bash
+docker run -d --name unblink -p 3000:3000 -v unblink-data:/data/unblink -e APPDATA=/data tri2820/unblink:latest
+```
 
-1.  **Clone the Repository**
+**Option 2: Using Docker Compose**
+Create a `docker-compose.yml` file with the following content:
+
+```yaml
+version: '3.8'
+services:
+  unblink:
+    image: tri2820/unblink:latest
+    ports:
+      - "3000:3000"
+    environment:
+      - PORT=3000
+      - HOSTNAME=0.0.0.0
+      - APPDATA=/data
+    volumes:
+      - unblink-data:/data/unblink
+    restart: unless-stopped
+volumes:
+  unblink-data:
+```
+
+Then run:
+```bash
+docker-compose up -d
+```
+
+Access the application at `http://localhost:3000` in your web browser.
+
+## Building from Source (Advanced)
+
+If you prefer to build the Docker image from source code (for development or customization):
+
+1.  **Prerequisites**
+
+    - [Docker](https://docs.docker.com/get-docker/) installed on your system.
+    - [Docker Compose](https://docs.docker.com/compose/install/) installed on your system.
+    - [Git](https://git-scm.com/book/en/v2/Getting-Started-Installing-Git) for cloning the repository.
+
+2.  **Clone the Repository**
 
     Open your terminal and clone the Unblink repository to your local machine:
 
@@ -19,7 +58,7 @@ This guide provides instructions for setting up and running Unblink using Docker
     cd unblink
     ```
 
-2.  **Build and Start the Container**
+3.  **Build and Start the Container**
 
     Use `docker-compose` to build the Docker image and run the container in detached mode (`-d`):
 
@@ -29,10 +68,6 @@ This guide provides instructions for setting up and running Unblink using Docker
 
     -   `--build`: This flag forces the rebuilding of the Docker image, which is useful when you've made changes to the source code or `Dockerfile`.
     -   `-d`: This runs the container in the background.
-
-3.  **Accessing the Application**
-
-    Once the container is running, you can access the Unblink web interface by navigating to `http://localhost:3000` in your web browser.
 
 ## Data Persistence
 

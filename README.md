@@ -4,6 +4,7 @@
 
 
 [![Status](https://github.com/tri2820/unblink/actions/workflows/release.yml/badge.svg)](https://github.com/tri2820/unblink/actions)
+[![Docker](https://github.com/tri2820/unblink/actions/workflows/docker.yml/badge.svg)](https://github.com/tri2820/unblink/actions/workflows/docker.yml)
 [![GitHub Stars](https://img.shields.io/github/stars/tri2820/unblink?style=flat)](https://github.com/tri2820/unblink/stargazers)
 [![Discord](https://img.shields.io/badge/Discord-Join%20Server-5865F2?style=flat&logo=discord&logoColor=white)](https://discord.gg/YMAjT8A6e2)
 
