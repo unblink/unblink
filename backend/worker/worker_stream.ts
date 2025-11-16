@@ -1,10 +1,9 @@
 import { encode } from "cbor-x";
-import { streamMedia, type StartStreamArg } from "../stream/index";
-import { logger } from "../logger";
-import fs from "fs/promises";
-import type { WorkerStreamToServerMessage, ServerToWorkerStreamMessage } from "../../shared";
-import { RECORDINGS_DIR } from "../appdir";
 import path from "path";
+import type { ServerToWorkerStreamMessage, WorkerStreamToServerMessage } from "../../shared";
+import { RECORDINGS_DIR } from "../appdir";
+import { logger } from "../logger";
+import { streamMedia, type StartStreamArg } from "../stream/index";
 declare var self: Worker;
 
 logger.info("Worker 'stream' started");
@@ -14,6 +13,16 @@ const loops: {
         controller: AbortController;
     }
 } = {};
+
+
+process.on("unhandledRejection", (r) => {
+    console.error("[worker] unhandledRejection:", r);
+    try { postMessage?.({ __worker_error: String(r) }); } catch (_) { }
+});
+process.on("uncaughtException", (e) => {
+    console.error("[worker] uncaughtException:", e);
+    try { postMessage?.({ __worker_error: String(e && e.stack || e) }); } catch (_) { }
+});
 
 function sendMessage(msg: WorkerStreamToServerMessage) {
     const worker_msg = encode(msg);
@@ -113,3 +122,4 @@ self.addEventListener("message", async (event) => {
         loops[loop_id]?.controller.abort();
     }
 });
+

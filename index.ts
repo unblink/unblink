@@ -469,7 +469,7 @@ const forward = createForwardFunction({
     forward_to_webhook,
 })
 
-const worker_stream = spawn_worker('worker_stream.js', forward);
+const worker_stream = await spawn_worker('worker_stream.js', forward);
 // const worker_object_detection = spawn_worker('worker_object_detection.js', forward);
 
 if (process.env.DEV_MODE === 'lite') {

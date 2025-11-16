@@ -1,9 +1,9 @@
-import type { CompileBuildOptions } from "bun";
-import solidPlugin from "./bun-plugin-solid";
+import type { BuildConfig, CompileBuildOptions } from "bun";
 import tailwindPlugin from "bun-plugin-tailwind";
-
+import solidPlugin from "./bun-plugin-solid";
 import { readdirSync } from "fs";
 import path from "path";
+
 // Build for multiple platforms
 const platforms: CompileBuildOptions[] = [
     { target: "bun-windows-x64", outfile: "unblink.exe" },
@@ -13,20 +13,27 @@ const platforms: CompileBuildOptions[] = [
 
 // Find all worker files
 const workers: string[] = readdirSync("./backend/worker").filter(file => file.endsWith(".ts"));
+const worker_entrypoints = workers.map(worker => path.join("./backend/worker", worker));
 
+const base_options: Partial<BuildConfig> = {
+    plugins: [
+        solidPlugin,
+        tailwindPlugin,
+    ],
+    naming: {
+        entry: "[name]-[hash].[ext]",
+        chunk: "chunks/[name]-[hash].[ext]",
+        asset: "assets/[name]-[hash].[ext]",
+    },
+}
+
+// Build standalone binary (embedded workers)
 for (const platform of platforms) {
     await Bun.build({
-        entrypoints: ["./index.ts", ...workers.map(worker => path.join("./backend/worker", worker))],
-        plugins: [
-            solidPlugin,
-            tailwindPlugin,
-        ],
+        ...base_options,
+        // Embed worker files into the binary
+        entrypoints: ["./index.ts", ...worker_entrypoints],
         outdir: "./dist",
-        naming: {
-            entry: "[name]-[hash].[ext]",
-            chunk: "chunks/[name]-[hash].[ext]",
-            asset: "assets/[name]-[hash].[ext]",
-        },
         compile: platform,
     });
 }

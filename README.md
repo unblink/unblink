@@ -21,8 +21,7 @@ Live demo: [https://app.zapdoslabs.com](https://app.zapdoslabs.com)
 
 ## Installation
 
-### Method 1: Directly from source
-
+The following instructions are for running the source code using Bun. If you are looking for alternative methods, check out the [Docker](/docs/DOCKER.md) [or Binary Executable](/docs/BINARY_EXECUTABLE.md) doc.
 
 #### Prerequisites
 
@@ -40,19 +39,7 @@ bun install
 # Start the application
 bun dev
 
-# Or you can build the binary and run that (faster load time & more efficient in production)
-# bun build.ts
-# ./dist/unblink-linux
-
 ```
-
-### Method 2: Binary executable
-
-1. Go to Unblink [release page](https://github.com/tri2820/unblink/releases/latest)
-2. Download the file suitable for your operating system
-3. Double click and run
-
-📌 This method is experimetal, if you have any problem please file a bug report
 
 ### Change Server Address
 
@@ -119,7 +106,7 @@ The model inference code is in a separate repository at [https://github.com/tri2
 Currently I have the engine hosted on my GPU server that you can use (the client app automatically connects to it), so hosting the engine yourself is optional. If you need to, you can mofidy `ENGINE_URL` env var and the client app will connect there instead.
 
 ## Authentication & Administration
-For administration, please refer to [ADMIN.md](/ADMIN.md)
+For administration, please refer to [ADMIN.md](/docs/ADMIN.md)
 
 ## Project Status
 
@@ -130,7 +117,6 @@ For administration, please refer to [ADMIN.md](/ADMIN.md)
 | SmolVLM2 Integration | ✅ Stable | |
 | Semantic Search | 🤔 WIP | Need to rework UI |
 | Video Recording & Playback | 🤔 WIP | Need to implement controls (help needed) |
-| Binary Distribution | 🤔 WIP | Testing... |
 | Motion Detection | 🚧 Coming Soon |  |
 | ONVIF Support | 🚧 Coming Soon |  |
 | Webhook | ✅ Stable |  |

@@ -1,0 +1,16 @@
+version: '3.8'
+services:
+  unblink:
+    build: .
+    image: unblink
+    ports:
+      - "3000:3000"
+    environment:
+      - PORT=3000
+      - HOSTNAME=0.0.0.0
+      - APPDATA=/data
+    volumes:
+      - unblink-data:/data/unblink
+    restart: unless-stopped
+volumes:
+  unblink-data:
