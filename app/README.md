@@ -11,7 +11,7 @@ If you are self-hosting relay or other components, update the env vars according
 For example, in production we replace this
 
 ```
-VITE_RELAY_API_URL=http://127.0.0.1:8080
+VITE_RELAY_API_URL=http://127.0.0.1:8020
 ```
 
 with

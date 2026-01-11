@@ -12,7 +12,7 @@ import (
 )
 
 var (
-	mjpegRelayAddr   = flag.String("mjpeg-relay-addr", ":8080", "Relay listen address")
+	mjpegRelayAddr   = flag.String("mjpeg-relay-addr", ":8020", "Relay listen address")
 	mjpegHTTPAPIAddr = flag.String("mjpeg-http-addr", ":8081", "HTTP API listen address")
 )
 
@@ -20,7 +20,7 @@ var (
 //
 // This test demonstrates MJPEG→H.264 transcoding via FFmpeg for WebRTC streaming.
 //
-// Usage: go test -v -run TestWebRTCMJPEGManual -mjpeg-relay-addr=:8080 -mjpeg-http-addr=:8081
+// Usage: go test -v -run TestWebRTCMJPEGManual -mjpeg-relay-addr=:8020 -mjpeg-http-addr=:8081
 //
 // Then open a browser and use the WebRTC client to connect to an MJPEG service.
 // You should see FFmpeg transcoding logs in the output.

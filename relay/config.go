@@ -18,12 +18,12 @@ type Config struct {
 
 	// CV Configuration
 	FrameInterval time.Duration
-	workerPort    string
+	EventPort     string
 	BatchSize     int // Number of frames per batch
 
 	// Ports
-	RelayPort string // Port for node connections (e.g., "9000")
-	APIPort   string // Port for HTTP API (e.g., "8080")
+	RelayPort string // Port for node connections (e.g., "9020")
+	APIPort   string // Port for HTTP API (e.g., "8020")
 
 	// Dashboard
 	DashboardURL string
@@ -51,9 +51,9 @@ func LoadConfig() (*Config, error) {
 		missingVars = append(missingVars, "FRAME_INTERVAL_SECONDS")
 	}
 
-	workerPort := os.Getenv("WORKER_PORT")
-	if workerPort == "" {
-		missingVars = append(missingVars, "WORKER_PORT")
+	eventPort := os.Getenv("EVENT_PORT")
+	if eventPort == "" {
+		missingVars = append(missingVars, "EVENT_PORT")
 	}
 
 	relayPort := os.Getenv("RELAY_PORT")
@@ -107,8 +107,8 @@ func LoadConfig() (*Config, error) {
 	frameInterval := time.Duration(frameIntervalSeconds) * time.Second
 
 	// Validate port number
-	if _, err := strconv.Atoi(workerPort); err != nil {
-		errors = append(errors, fmt.Sprintf("WORKER_PORT must be a number, got: %s", workerPort))
+	if _, err := strconv.Atoi(eventPort); err != nil {
+		errors = append(errors, fmt.Sprintf("EVENT_PORT must be a number, got: %s", eventPort))
 	}
 
 	if _, err := strconv.Atoi(relayPort); err != nil {
@@ -132,7 +132,7 @@ func LoadConfig() (*Config, error) {
 		StorageDir:                storageDir,
 		DatabasePath:              databasePath,
 		FrameInterval:             frameInterval,
-		workerPort:                workerPort,
+		EventPort:                 eventPort,
 		BatchSize:                 batchSize,
 		RelayPort:                 relayPort,
 		APIPort:                   apiPort,
@@ -147,7 +147,7 @@ func LoadConfig() (*Config, error) {
 	log.Printf("[Config]   STORAGE_DIR: %s", config.StorageDir)
 	log.Printf("[Config]   DATABASE_PATH: %s", config.DatabasePath)
 	log.Printf("[Config]   FRAME_INTERVAL: %v", config.FrameInterval)
-	log.Printf("[Config]   WORKER_PORT: %s", config.workerPort)
+	log.Printf("[Config]   EVENT_PORT: %s", config.EventPort)
 	log.Printf("[Config]   RELAY_PORT: %s", config.RelayPort)
 	log.Printf("[Config]   API_PORT: %s", config.APIPort)
 	log.Printf("[Config]   BATCH_SIZE: %d", config.BatchSize)

@@ -6,7 +6,7 @@ from events.process_frame_batch_event import process_frame_batch_event
 
 
 class CVWorker:
-    def __init__(self, relay_url: str = "ws://localhost:7010/connect", http_url: str = "http://localhost:7010"):
+    def __init__(self, relay_url: str = "ws://localhost:7020/connect", http_url: str = "http://localhost:7020"):
         self.relay_url = relay_url
         self.http_url = http_url
         self.worker_id = None  # Assigned by relay

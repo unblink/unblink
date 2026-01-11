@@ -116,13 +116,13 @@ func (r *Relay) initializeCV() {
 
 	// Start worker API server
 	go func() {
-		if err := StartWorkerAPIServer(config.workerPort, r.cvWorkerRegistry, r.storageManager); err != nil {
+		if err := StartWorkerAPIServer(config.EventPort, r.cvWorkerRegistry, r.storageManager); err != nil {
 			log.Printf("[Relay] Worker API server error: %v", err)
 		}
 	}()
 
-	log.Printf("[Relay] Initialized CV processing (storage=%s, frameInterval=%v, workerPort=%s)",
-		config.StorageDir, config.FrameInterval, config.workerPort)
+	log.Printf("[Relay] Initialized CV processing (storage=%s, frameInterval=%v, eventPort=%s)",
+		config.StorageDir, config.FrameInterval, config.EventPort)
 }
 
 // Listen starts listening on the given address

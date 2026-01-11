@@ -20,6 +20,7 @@
   },
   "dependencies": {
     "@ark-ui/solid": "^5.26.2",
+    "posthog-js": "^1.318.1",
     "solid-icons": "^1.1.0",
     "solid-js": "^1.9.9"
   }

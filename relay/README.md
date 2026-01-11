@@ -30,10 +30,10 @@ Start server and test with the web app.
 
 ```bash
 # All services
-go test -v -run TestWebRTCManual -relay-addr=:8080 -http-addr=:8081
+go test -v -run TestWebRTCManual -relay-addr=:8020 -http-addr=:8081
 
 # MJPEG only (with FFmpeg transcoding)
-go test -v -run TestWebRTCMJPEGManual -mjpeg-relay-addr=:8080 -mjpeg-http-addr=:8081
+go test -v -run TestWebRTCMJPEGManual -mjpeg-relay-addr=:8020 -mjpeg-http-addr=:8081
 ```
 
 Then open the app dev server or `http://localhost:8081`.

@@ -4,6 +4,10 @@ import { render } from 'solid-js/web';
 import 'solid-devtools';
 
 import App from './App';
+import { initPostHog } from './lib/posthog';
+
+// Initialize PostHog early
+initPostHog();
 
 const root = document.getElementById('root');
 

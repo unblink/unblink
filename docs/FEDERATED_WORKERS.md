@@ -38,7 +38,7 @@ You can self-host your AI workers, use public ones, or use dedicated workers pro
 Workers connect via WebSocket to receive events:
 
 ```
-ws://relay:7010/connect
+ws://relay:7020/connect
 ```
 
 ### Registration
@@ -123,7 +123,7 @@ Header: X-Worker-Key: {worker_key}
 **Example:**
 
 ```bash
-curl http://localhost:7010/frames/{frame_uuid} \
+curl http://localhost:7020/frames/{frame_uuid} \
   -H "X-Worker-Key: {your_key}" \
   -o frame.jpg
 ```
@@ -141,7 +141,7 @@ Body: {event_data}
 **Example:**
 
 ```bash
-curl -X POST http://localhost:7010/events \
+curl -X POST http://localhost:7020/events \
   -H "Content-Type: application/json" \
   -H "X-Worker-Key: {your_key}" \
   -d '{"summary": "Processed 10 frames successfully"}'

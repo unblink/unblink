@@ -1,4 +1,5 @@
 import { createSignal } from "solid-js";
+import posthog from "./lib/posthog";
 
 
 const BASE_URL = import.meta.env.VITE_RELAY_API_URL;
@@ -65,8 +66,11 @@ export const login = async (email: string, password: string): Promise<{ success:
         isAuthenticated: true,
         isLoading: false,
       });
+      posthog.identify(String(data.user.id));
+      posthog.capture('user_logged_in', { email: data.user.email });
       return { success: true, user: data.user };
     }
+    posthog.capture('login_failed', { email });
     return { success: false, message: data.message || 'Login failed' };
   } catch (error) {
     console.error('Login error:', error);
@@ -86,6 +90,7 @@ export const register = async (email: string, password: string, name: string): P
     const data = await response.json();
 
     if (response.ok && data.success) {
+      posthog.capture('user_registered', { email, name });
       return { success: true, message: 'Registration successful', user: data.user };
     }
     return { success: false, message: data.message || 'Registration failed' };
@@ -103,6 +108,8 @@ export const logout = async () => {
     isAuthenticated: false,
     isLoading: false,
   });
+  posthog.capture('user_logged_out');
+  posthog.reset();
   try {
     await apiFetch('/auth/logout', { method: 'POST' });
   } catch (error) {

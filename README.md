@@ -34,7 +34,7 @@ The node creates a config file at `~/.unblink_config.jsonc` on first run. Edit i
 
 ```json
 {
-  "relay_addr": "your-relay.com:9000",
+  "relay_addr": "your-relay.com:9020",
   "services": [
     { "addr": "192.168.1.100", "port": 554 },
     { "addr": "192.168.1.101", "port": 80 }

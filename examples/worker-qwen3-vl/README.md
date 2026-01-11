@@ -5,6 +5,7 @@ A simple Computer Vision worker that connects to the Unblink relay and receives 
 ## Overview
 
 This worker demonstrates how to:
+
 - Connect to the CV relay via WebSocket
 - Register and receive authentication keys
 - Listen for job broadcasts
@@ -56,7 +57,7 @@ To enable job claiming/processing, uncomment the claim_job
 call in the handle_job method
 ============================================================
 
-[Worker] Connecting to ws://localhost:7010/connect
+[Worker] Connecting to ws://localhost:7020/connect
 [Worker] Connected!
 [Worker] Registering as 123e4567-e89b-12d3-a456-426614174000
 [Worker] Registered successfully!
@@ -94,6 +95,7 @@ async def handle_job(self, job):
 ```
 
 This will enable:
+
 - Job claiming via HTTP POST
 - Frame downloading with authentication
 - Job completion/failure reporting
@@ -102,8 +104,8 @@ This will enable:
 
 ```python
 worker = CVWorker(
-    relay_url="ws://your-relay:7010/connect",
-    http_url="http://your-relay:7010"
+    relay_url="ws://your-relay:7020/connect",
+    http_url="http://your-relay:7020"
 )
 asyncio.run(worker.run())
 ```
@@ -231,15 +233,18 @@ async def process_job(self, job):
 ## Troubleshooting
 
 **Connection refused**
-- Make sure the relay is running on port 7010
+
+- Make sure the relay is running on port 7020
 - Check that CV system is enabled in relay configuration
 
 **No jobs appearing**
+
 - Ensure a camera with RTSP/MJPEG service is connected
 - Check relay logs for frame extraction messages
 - Verify AUTO_REQUEST_REALTIME_STREAM=true in relay config
 
 **Authentication errors**
+
 - Worker key is issued during registration
 - Key is used for all HTTP frame downloads
 - Key is invalidated when worker disconnects

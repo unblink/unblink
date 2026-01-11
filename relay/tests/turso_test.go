@@ -465,7 +465,7 @@ func TestTursoWithRealDatabase(t *testing.T) {
 	// Insert a test node
 	insertSQL := `INSERT INTO relay_nodes (id, name, address) VALUES (?, ?, ?)`
 	nodeID := fmt.Sprintf("node-%d", 12345)
-	if _, err := conn.Exec(insertSQL, nodeID, "test-node", "192.168.1.100:8080"); err != nil {
+	if _, err := conn.Exec(insertSQL, nodeID, "test-node", "192.168.1.100:8020"); err != nil {
 		t.Fatalf("Failed to insert node: %v", err)
 	}
 
@@ -479,8 +479,8 @@ func TestTursoWithRealDatabase(t *testing.T) {
 	if name != "test-node" {
 		t.Errorf("Expected name 'test-node', got '%s'", name)
 	}
-	if address != "192.168.1.100:8080" {
-		t.Errorf("Expected address '192.168.1.100:8080', got '%s'", address)
+	if address != "192.168.1.100:8020" {
+		t.Errorf("Expected address '192.168.1.100:8020', got '%s'", address)
 	}
 
 	t.Logf("Successfully tested with real database file: %s", dbPath)

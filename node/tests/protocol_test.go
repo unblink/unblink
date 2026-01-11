@@ -40,7 +40,7 @@ func TestRegisterMessage(t *testing.T) {
 func TestAnnounceMessage(t *testing.T) {
 	services := []node.Service{
 		{ID: "cam1", Addr: "192.168.1.100", Port: 554, Type: "rtsp"},
-		{ID: "cam2", Addr: "192.168.1.101", Port: 8080, Type: "mjpeg"},
+		{ID: "cam2", Addr: "192.168.1.101", Port: 8020, Type: "mjpeg"},
 	}
 	msg := node.NewAnnounceMsg("msg-002", services)
 
@@ -63,8 +63,8 @@ func TestAnnounceMessage(t *testing.T) {
 	if decoded.Control.Services[0].ID != "cam1" {
 		t.Errorf("Service[0].ID = %q, want %q", decoded.Control.Services[0].ID, "cam1")
 	}
-	if decoded.Control.Services[1].Port != 8080 {
-		t.Errorf("Service[1].Port = %d, want 8080", decoded.Control.Services[1].Port)
+	if decoded.Control.Services[1].Port != 8020 {
+		t.Errorf("Service[1].Port = %d, want 8020", decoded.Control.Services[1].Port)
 	}
 }
 

@@ -12,13 +12,13 @@ import (
 )
 
 var (
-	relayAddr   = flag.String("relay-addr", ":8080", "Relay listen address")
+	relayAddr   = flag.String("relay-addr", ":8020", "Relay listen address")
 	httpAPIAddr = flag.String("http-addr", ":8081", "HTTP API listen address")
 )
 
 // TestWebRTCManual starts the relay, HTTP API, and a node for manual browser testing
 //
-// Usage: go test -v -run TestWebRTCManual -relay-addr=:8080 -http-addr=:8081
+// Usage: go test -v -run TestWebRTCManual -relay-addr=:8020 -http-addr=:8081
 //
 // Then open http://localhost:8081 (or the App.tsx dev server proxied to it)
 func TestWebRTCManual(t *testing.T) {
