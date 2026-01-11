@@ -1,7 +1,6 @@
 package main
 
 import (
-	"flag"
 	"fmt"
 	"log"
 	"os"
@@ -20,6 +19,12 @@ func main() {
 		log.Println("[Main] Loaded .env file")
 	}
 
+	// Load config to get ports from environment
+	config, err := relay.LoadConfig()
+	if err != nil {
+		log.Fatalf("Failed to load configuration: %v", err)
+	}
+
 	// Parse subcommands
 	if len(os.Args) > 1 {
 		switch os.Args[1] {
@@ -32,19 +37,18 @@ func main() {
 		}
 	}
 
-	// Default: run relay server
-	addr := flag.String("addr", ":9000", "Listen address for node connections")
-	httpAddr := flag.String("http", ":8080", "Listen address for HTTP API")
-	flag.Parse()
+	// Run relay server
+	relayAddr := ":" + config.RelayPort
+	apiAddr := ":" + config.APIPort
 
 	r := relay.NewRelay()
 
-	if err := r.Listen(*addr); err != nil {
+	if err := r.Listen(relayAddr); err != nil {
 		log.Fatalf("Failed to listen: %v", err)
 	}
 
 	// Start HTTP API
-	go relay.StartHTTPAPI(r, *httpAddr)
+	go relay.StartHTTPAPI(r, apiAddr)
 
 	// Handle shutdown signals
 	sigChan := make(chan os.Signal, 1)
@@ -114,13 +118,9 @@ func deleteDatabase() {
 }
 
 func printUsage() {
-	fmt.Println("Usage: relay [command] [options]")
+	fmt.Println("Usage: relay [command]")
 	fmt.Println()
 	fmt.Println("Commands:")
 	fmt.Println("  database delete  Delete the database file")
-	fmt.Println()
-	fmt.Println("Options:")
-	fmt.Println("  -addr  Listen address for node connections (default: :9000)")
-	fmt.Println("  -http  Listen address for HTTP API (default: :8080)")
-	fmt.Println("  -h     Show this help message")
+	fmt.Println("  help, -h         Show this help message")
 }

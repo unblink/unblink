@@ -21,6 +21,10 @@ type Config struct {
 	workerPort    string
 	BatchSize     int // Number of frames per batch
 
+	// Ports
+	RelayPort string // Port for node connections (e.g., "9000")
+	APIPort   string // Port for HTTP API (e.g., "8080")
+
 	// Dashboard
 	DashboardURL string
 
@@ -47,6 +51,16 @@ func LoadConfig() (*Config, error) {
 	workerPort := os.Getenv("WORKER_PORT")
 	if workerPort == "" {
 		missingVars = append(missingVars, "WORKER_PORT")
+	}
+
+	relayPort := os.Getenv("RELAY_PORT")
+	if relayPort == "" {
+		missingVars = append(missingVars, "RELAY_PORT")
+	}
+
+	apiPort := os.Getenv("API_PORT")
+	if apiPort == "" {
+		missingVars = append(missingVars, "API_PORT")
 	}
 
 	dashboardURL := os.Getenv("DASHBOARD_URL")
@@ -87,6 +101,14 @@ func LoadConfig() (*Config, error) {
 		errors = append(errors, fmt.Sprintf("WORKER_PORT must be a number, got: %s", workerPort))
 	}
 
+	if _, err := strconv.Atoi(relayPort); err != nil {
+		errors = append(errors, fmt.Sprintf("RELAY_PORT must be a number, got: %s", relayPort))
+	}
+
+	if _, err := strconv.Atoi(apiPort); err != nil {
+		errors = append(errors, fmt.Sprintf("API_PORT must be a number, got: %s", apiPort))
+	}
+
 	if len(errors) > 0 {
 		return nil, fmt.Errorf("configuration validation errors:\n%v", errors)
 	}
@@ -102,6 +124,8 @@ func LoadConfig() (*Config, error) {
 		FrameInterval:             frameInterval,
 		workerPort:                workerPort,
 		BatchSize:                 batchSize,
+		RelayPort:                 relayPort,
+		APIPort:                   apiPort,
 		DashboardURL:              dashboardURL,
 		AutoRequestRealtimeStream: autoRequestRealtimeStream,
 	}
@@ -113,6 +137,8 @@ func LoadConfig() (*Config, error) {
 	log.Printf("[Config]   DATABASE_PATH: %s", config.DatabasePath)
 	log.Printf("[Config]   FRAME_INTERVAL: %v", config.FrameInterval)
 	log.Printf("[Config]   WORKER_PORT: %s", config.workerPort)
+	log.Printf("[Config]   RELAY_PORT: %s", config.RelayPort)
+	log.Printf("[Config]   API_PORT: %s", config.APIPort)
 	log.Printf("[Config]   BATCH_SIZE: %d", config.BatchSize)
 	log.Printf("[Config]   DASHBOARD_URL: %s", config.DashboardURL)
 	log.Printf("[Config]   AUTO_REQUEST_REALTIME_STREAM: %v", config.AutoRequestRealtimeStream)
