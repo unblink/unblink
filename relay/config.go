@@ -30,6 +30,9 @@ type Config struct {
 
 	// Realtime Streams
 	AutoRequestRealtimeStream bool // Auto-create streams for RTSP/MJPEG
+
+	// Security
+	JWTSecret string // Secret for signing JWT tokens
 }
 
 // LoadConfig loads and validates all configuration from environment
@@ -84,6 +87,13 @@ func LoadConfig() (*Config, error) {
 		}
 	}
 
+	// JWT secret for token signing
+	jwtSecret := os.Getenv("JWT_SECRET")
+	if jwtSecret == "" {
+		jwtSecret = "change-me-in-production" // fallback
+		log.Printf("[Config] WARNING: Using default JWT_SECRET. Set JWT_SECRET in production!")
+	}
+
 	// Stop if any required variables are missing
 	if len(missingVars) > 0 {
 		return nil, fmt.Errorf("missing required environment variables: %v\nPlease set them in .env file or environment", missingVars)
@@ -128,6 +138,7 @@ func LoadConfig() (*Config, error) {
 		APIPort:                   apiPort,
 		DashboardURL:              dashboardURL,
 		AutoRequestRealtimeStream: autoRequestRealtimeStream,
+		JWTSecret:                 jwtSecret,
 	}
 
 	// Log loaded configuration

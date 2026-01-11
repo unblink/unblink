@@ -1,6 +1,6 @@
 import { For, Show, onMount, createSignal } from 'solid-js';
 import { FiVideo, FiInfo, FiServer, FiEdit2, FiTrash2 } from 'solid-icons/fi';
-import { nodes, nodesLoading, fetchNodes, setTab, type NodeService, type NodeInfo } from '../../shared';
+import { nodes, nodesLoading, fetchNodes, setTab, relay, type NodeService, type NodeInfo } from '../../shared';
 import { ArkDialog } from '../../ark/ArkDialog';
 import { ArkTabs } from '../../ark/ArkTabs';
 import { Dialog } from '@ark-ui/solid/dialog';
@@ -78,7 +78,7 @@ function NodeEditDialog(props: { node: NodeInfo }) {
     }
 
     toaster.promise(async () => {
-      const response = await fetch(`/relay/node/${props.node.id}/name`, {
+      const response = await fetch(relay(`/node/${props.node.id}/name`), {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
@@ -154,7 +154,7 @@ function NodeEditDialog(props: { node: NodeInfo }) {
 function NodeDeleteDialog(props: { node: NodeInfo }) {
   const handleDelete = async () => {
     toaster.promise(async () => {
-      const response = await fetch(`/relay/node/${props.node.id}/delete`, {
+      const response = await fetch(relay(`/node/${props.node.id}/delete`), {
         method: 'DELETE',
         credentials: 'include',
       });

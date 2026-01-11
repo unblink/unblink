@@ -44,8 +44,11 @@ func TestWebRTCManual(t *testing.T) {
 	log.Printf("[Manual] Relay started on %s", r.Addr().String())
 
 	// Start HTTP API
+	cfg := &relay.Config{
+		DisableSecureCookie: true, // Allow HTTP cookies for testing
+	}
 	go func() {
-		if err := relay.StartHTTPAPI(r, *httpAPIAddr); err != nil {
+		if err := relay.StartHTTPAPI(r, *httpAPIAddr, cfg); err != nil {
 			log.Printf("[Manual] HTTP API error: %v", err)
 		}
 	}()

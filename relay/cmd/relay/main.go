@@ -48,7 +48,7 @@ func main() {
 	}
 
 	// Start HTTP API
-	go relay.StartHTTPAPI(r, apiAddr)
+	go relay.StartHTTPAPI(r, apiAddr, config)
 
 	// Handle shutdown signals
 	sigChan := make(chan os.Signal, 1)

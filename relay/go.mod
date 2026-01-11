@@ -17,6 +17,7 @@ replace github.com/unblink/unblink/node => ../node
 require (
 	github.com/ebitengine/purego v0.10.0-alpha.2 // indirect
 	github.com/fxamacker/cbor/v2 v2.5.0 // indirect
+	github.com/golang-jwt/jwt/v5 v5.3.0 // indirect
 	github.com/joho/godotenv v1.5.1 // indirect
 	github.com/pion/datachannel v1.5.10 // indirect
 	github.com/pion/dtls/v3 v3.0.9 // indirect

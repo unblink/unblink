@@ -1,5 +1,32 @@
 import { createSignal } from "solid-js";
 
+
+const BASE_URL = import.meta.env.VITE_RELAY_API_URL;
+if (!BASE_URL) throw new Error("VITE_RELAY_API_URL is not configured");
+export const relay = (path: string) => new URL(path, BASE_URL).href
+
+
+// JWT token management
+const TOKEN_KEY = 'auth_token';
+
+export const setToken = (token: string) => localStorage.setItem(TOKEN_KEY, token);
+export const getToken = () => localStorage.getItem(TOKEN_KEY);
+export const clearToken = () => localStorage.removeItem(TOKEN_KEY);
+
+// Helper function to make authenticated API requests
+const apiFetch = async (path: string, options?: RequestInit): Promise<Response> => {
+  const token = getToken();
+  return fetch(relay(path), {
+    ...options,
+    headers: {
+      ...options?.headers,
+      ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+    },
+    credentials: 'omit', // No longer need cookies
+  });
+};
+
+
 // Auth types
 export interface User {
   id: number;
@@ -23,16 +50,16 @@ export const [authState, setAuthState] = createSignal<AuthState>({
 // Login function
 export const login = async (email: string, password: string): Promise<{ success: boolean; message?: string; user?: User }> => {
   try {
-    const response = await fetch('/relay/auth/login', {
+    const response = await apiFetch('/auth/login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
       body: JSON.stringify({ email, password }),
     });
 
     const data = await response.json();
 
     if (response.ok && data.success) {
+      setToken(data.token); // Store JWT token
       setAuthState({
         user: data.user,
         isAuthenticated: true,
@@ -50,7 +77,7 @@ export const login = async (email: string, password: string): Promise<{ success:
 // Register function
 export const register = async (email: string, password: string, name: string): Promise<{ success: boolean; message?: string; user?: User }> => {
   try {
-    const response = await fetch('/relay/auth/register', {
+    const response = await fetch(relay('/auth/register'), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email, password, name }),
@@ -70,28 +97,24 @@ export const register = async (email: string, password: string, name: string): P
 
 // Logout function
 export const logout = async () => {
-  try {
-    await fetch('/relay/auth/logout', {
-      method: 'POST',
-      credentials: 'include',
-    });
-  } catch (error) {
-    console.error('Logout error:', error);
-  }
+  clearToken(); // Remove JWT from localStorage
   setAuthState({
     user: null,
     isAuthenticated: false,
     isLoading: false,
   });
+  try {
+    await apiFetch('/auth/logout', { method: 'POST' });
+  } catch (error) {
+    console.error('Logout error:', error);
+  }
 };
 
-// Initialize auth by checking session with server
+// Initialize auth by checking JWT token with server
 export const initAuth = async () => {
   console.log('[initAuth] Starting auth check...');
   try {
-    const response = await fetch('/relay/auth/me', {
-      credentials: 'include',
-    });
+    const response = await apiFetch('/auth/me');
 
     console.log('[initAuth] Response status:', response.status, response.ok);
 
@@ -106,6 +129,7 @@ export const initAuth = async () => {
         });
         console.log('[initAuth] User authenticated:', data.user);
       } else {
+        clearToken();
         setAuthState({
           user: null,
           isAuthenticated: false,
@@ -114,6 +138,7 @@ export const initAuth = async () => {
         console.log('[initAuth] Response not successful');
       }
     } else {
+      clearToken();
       setAuthState({
         user: null,
         isAuthenticated: false,
@@ -123,6 +148,7 @@ export const initAuth = async () => {
     }
   } catch (error) {
     console.error('[initAuth] Auth check failed:', error);
+    clearToken();
     setAuthState({
       user: null,
       isAuthenticated: false,
@@ -136,11 +162,11 @@ export type SimpleTabType = 'home' | 'search' | 'moments' | 'agents' | 'settings
 export type Tab =
   | { type: SimpleTabType }
   | {
-      type: 'view';
-      nodeId: string;
-      serviceId: string;
-      name?: string;
-    };
+    type: 'view';
+    nodeId: string;
+    serviceId: string;
+    name?: string;
+  };
 
 export const [tab, setTab] = createSignal<Tab>({ type: 'home' });
 
@@ -169,9 +195,7 @@ export const [nodesLoading, setNodesLoading] = createSignal(true);
 export const fetchNodes = async () => {
   setNodesLoading(true);
   try {
-    const response = await fetch('/relay/nodes', {
-      credentials: 'include',
-    });
+    const response = await apiFetch('/nodes');
 
     if (response.ok) {
       const data = await response.json(); // Array of {id, status, name, last_connected_at}
@@ -184,9 +208,7 @@ export const fetchNodes = async () => {
           // Only fetch services if node is online
           if (nodeData.status === 'online') {
             try {
-              const servicesResp = await fetch(`/relay/node/${nodeData.id}/services`, {
-                credentials: 'include',
-              });
+              const servicesResp = await apiFetch(`/node/${nodeData.id}/services`);
               if (servicesResp.ok) {
                 services = await servicesResp.json();
               }

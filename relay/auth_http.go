@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
+	"strings"
 )
 
 // RegisterRequest represents a registration request
@@ -65,7 +66,7 @@ func handleRegister(w http.ResponseWriter, r *http.Request, authStore *AuthStore
 	user, err := authStore.Register(req.Email, req.Password, req.Name)
 	if err != nil {
 		log.Printf("[Auth] Registration failed for %s: %v", req.Email, err)
-		writeJSONError(w, "Registration failed", http.StatusBadRequest)
+		writeJSONError(w, "Registration failed: "+err.Error(), http.StatusBadRequest)
 		return
 	}
 
@@ -79,8 +80,8 @@ func handleRegister(w http.ResponseWriter, r *http.Request, authStore *AuthStore
 	})
 }
 
-// handleLogin handles user login requests with session cookie
-func handleLogin(w http.ResponseWriter, r *http.Request, authStore *AuthStore, sessionManager *SessionManager) {
+// handleLogin handles user login requests and returns a JWT token
+func handleLogin(w http.ResponseWriter, r *http.Request, authStore *AuthStore, cfg *Config) {
 	if r.Method != http.MethodPost {
 		writeJSONError(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
@@ -106,60 +107,32 @@ func handleLogin(w http.ResponseWriter, r *http.Request, authStore *AuthStore, s
 		return
 	}
 
-	// Create session
-	session, err := sessionManager.Create(user.ID)
+	// Generate JWT token
+	token, err := GenerateToken(user.ID, user.Email, cfg.JWTSecret)
 	if err != nil {
-		log.Printf("[Auth] Failed to create session for %s: %v", req.Email, err)
+		log.Printf("[Auth] Failed to generate token: %v", err)
 		writeJSONError(w, "Login failed", http.StatusInternalServerError)
 		return
 	}
 
-	// Set httpOnly cookie (XSS protection)
-	http.SetCookie(w, &http.Cookie{
-		Name:     "session",
-		Value:    session.ID,
-		Path:     "/",
-		MaxAge:   7 * 24 * 60 * 60, // 7 days
-		HttpOnly: true,              // Prevent JavaScript access (XSS protection)
-		Secure:   false,             // Set true in production with HTTPS
-		SameSite: http.SameSiteStrictMode, // CSRF protection
-	})
-
-	log.Printf("[Auth] User logged in: %s (ID: %d, Session: %s)", req.Email, user.ID, session.ID[:8]+"...")
+	log.Printf("[Auth] User logged in: %s (ID: %d)", req.Email, user.ID)
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(AuthResponse{
-		Success: true,
-		Message: "Login successful",
-		User:    user,
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"success": true,
+		"message": "Login successful",
+		"user":    user,
+		"token":   token,
 	})
 }
 
 // handleLogout handles user logout requests
-func handleLogout(w http.ResponseWriter, r *http.Request, sessionManager *SessionManager) {
+// With JWT access-only tokens, logout is handled client-side (delete token from localStorage)
+func handleLogout(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		writeJSONError(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
-
-	// Get session cookie
-	cookie, err := r.Cookie("session")
-	if err == nil {
-		// Delete session from database
-		if err := sessionManager.Delete(cookie.Value); err != nil {
-			log.Printf("[Auth] Failed to delete session: %v", err)
-		}
-	}
-
-	// Clear cookie
-	http.SetCookie(w, &http.Cookie{
-		Name:     "session",
-		Value:    "",
-		Path:     "/",
-		MaxAge:   -1, // Delete immediately
-		HttpOnly: true,
-		SameSite: http.SameSiteStrictMode,
-	})
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]interface{}{
@@ -168,29 +141,37 @@ func handleLogout(w http.ResponseWriter, r *http.Request, sessionManager *Sessio
 	})
 }
 
-// handleMe handles requests to get the current authenticated user
-func handleMe(w http.ResponseWriter, r *http.Request, sessionManager *SessionManager, authStore *AuthStore) {
+// handleMe handles requests to get the current authenticated user using JWT
+func handleMe(w http.ResponseWriter, r *http.Request, authStore *AuthStore, cfg *Config) {
 	if r.Method != http.MethodGet {
 		writeJSONError(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
 
-	// Get session cookie
-	cookie, err := r.Cookie("session")
-	if err != nil {
-		writeJSONError(w, "Not authenticated", http.StatusUnauthorized)
+	// Get Authorization header
+	authHeader := r.Header.Get("Authorization")
+	if authHeader == "" {
+		writeJSONError(w, "Missing authorization header", http.StatusUnauthorized)
 		return
 	}
 
-	// Validate session
-	session, err := sessionManager.Validate(cookie.Value)
+	// Extract token from "Bearer <token>"
+	tokenString := strings.TrimPrefix(authHeader, "Bearer ")
+	if tokenString == authHeader {
+		writeJSONError(w, "Invalid authorization header format", http.StatusUnauthorized)
+		return
+	}
+
+	// Validate JWT token
+	claims, err := ValidateToken(tokenString, cfg.JWTSecret)
 	if err != nil {
-		writeJSONError(w, "Invalid session", http.StatusUnauthorized)
+		log.Printf("[Auth] Token validation failed: %v", err)
+		writeJSONError(w, "Invalid token", http.StatusUnauthorized)
 		return
 	}
 
 	// Get user details
-	user, err := authStore.GetUserByID(session.UserID)
+	user, err := authStore.GetUserByID(claims.UserID)
 	if err != nil {
 		writeJSONError(w, "User not found", http.StatusNotFound)
 		return

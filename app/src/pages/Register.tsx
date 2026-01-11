@@ -1,5 +1,5 @@
-import { createSignal, onMount, type Component } from 'solid-js';
-import { register, authState, initAuth } from '../shared';
+import { createSignal, onMount, createEffect, type Component } from 'solid-js';
+import { register, authState } from '../shared';
 
 const Register: Component = () => {
   const [email, setEmail] = createSignal('');
@@ -9,17 +9,18 @@ const Register: Component = () => {
   const [loading, setLoading] = createSignal(false);
   const [redirect, setRedirect] = createSignal<string | null>(null);
 
-  onMount(async () => {
-    await initAuth();
-
-    // If already authenticated, redirect to main page
-    if (authState().isAuthenticated) {
-      window.location.href = redirect() || '/';
-      return;
-    }
-
+  // Parse redirect param on mount
+  onMount(() => {
     const params = new URLSearchParams(window.location.search);
     setRedirect(params.get('redirect'));
+  });
+
+  // Redirect if authenticated (reactive to authState changes)
+  createEffect(() => {
+    const auth = authState();
+    if (!auth.isLoading && auth.isAuthenticated) {
+      window.location.href = redirect() || '/';
+    }
   });
 
   const loginHref = () => {

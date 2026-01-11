@@ -65,8 +65,11 @@ func TestWebRTCMJPEGManual(t *testing.T) {
 	log.Printf("[MJPEG Manual] Relay started on %s", r.Addr().String())
 
 	// Start HTTP API
+	cfg := &relay.Config{
+		DisableSecureCookie: true, // Allow HTTP cookies for testing
+	}
 	go func() {
-		if err := relay.StartHTTPAPI(r, *mjpegHTTPAPIAddr); err != nil {
+		if err := relay.StartHTTPAPI(r, *mjpegHTTPAPIAddr, cfg); err != nil {
 			log.Printf("[MJPEG Manual] HTTP API error: %v", err)
 		}
 	}()

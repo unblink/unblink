@@ -1,5 +1,5 @@
-import { createSignal, onMount, type Component } from 'solid-js';
-import { login, authState, initAuth } from '../shared';
+import { createSignal, onMount, createEffect, type Component } from 'solid-js';
+import { login, authState } from '../shared';
 
 const Login: Component = () => {
   const [email, setEmail] = createSignal('');
@@ -8,20 +8,20 @@ const Login: Component = () => {
   const [success, setSuccess] = createSignal('');
   const [loading, setLoading] = createSignal(false);
 
-  onMount(async () => {
-    await initAuth();
-
-    // If already authenticated, redirect to main page
-    if (authState().isAuthenticated) {
-      window.location.href = redirectParam() || '/';
-      return;
-    }
-
-    // Check for message from registration
+  // Check for message from registration on mount
+  onMount(() => {
     const params = new URLSearchParams(window.location.search);
     const msg = params.get('message');
     if (msg) {
       setSuccess(msg);
+    }
+  });
+
+  // Redirect if authenticated (reactive to authState changes)
+  createEffect(() => {
+    const auth = authState();
+    if (!auth.isLoading && auth.isAuthenticated) {
+      window.location.href = redirectParam() || '/';
     }
   });
 

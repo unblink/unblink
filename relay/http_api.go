@@ -7,15 +7,17 @@ import (
 	"strings"
 )
 
-func StartHTTPAPI(relay *Relay, addr string) error {
+func StartHTTPAPI(relay *Relay, addr string, cfg *Config) error {
 	mux := http.NewServeMux()
+
+	// Wrap with CORS middleware
+	handler := corsMiddleware(mux)
 
 	sessionManager := NewWebRTCSessionManager()
 	authStore := NewAuthStore(relay.db.DB)
-	sessionAuthManager := NewSessionManager(relay.db.DB)
 
 	mux.HandleFunc("/api/authorize", func(w http.ResponseWriter, r *http.Request) {
-		handleAuthorizeAPI(w, r, sessionAuthManager, relay)
+		handleAuthorizeAPI(w, r, cfg, relay)
 	})
 
 	// List all nodes (protected)
@@ -24,11 +26,11 @@ func StartHTTPAPI(relay *Relay, addr string) error {
 			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 			return
 		}
-		session, err := requireAuth(w, r, sessionAuthManager)
+		userID, err := requireAuth(w, r, cfg)
 		if err != nil {
 			return
 		}
-		handleListNodes(w, r, relay, session.UserID)
+		handleListNodes(w, r, relay, userID)
 	})
 
 	// Node-specific endpoints: /node/{nodeId}/services and /node/{nodeId}/offer (protected)
@@ -46,13 +48,13 @@ func StartHTTPAPI(relay *Relay, addr string) error {
 		endpoint := parts[1]
 
 		// Check authentication
-		session, err := requireAuth(w, r, sessionAuthManager)
+		userID, err := requireAuth(w, r, cfg)
 		if err != nil {
 			return
 		}
 
 		// Verify node ownership
-		if !relay.nodeTable.UserOwnsNode(session.UserID, nodeID) {
+		if !relay.nodeTable.UserOwnsNode(userID, nodeID) {
 			http.Error(w, "Node not found", http.StatusNotFound)
 			return
 		}
@@ -77,19 +79,41 @@ func StartHTTPAPI(relay *Relay, addr string) error {
 	})
 
 	mux.HandleFunc("/auth/login", func(w http.ResponseWriter, r *http.Request) {
-		handleLogin(w, r, authStore, sessionAuthManager)
+		handleLogin(w, r, authStore, cfg)
 	})
 
 	mux.HandleFunc("/auth/logout", func(w http.ResponseWriter, r *http.Request) {
-		handleLogout(w, r, sessionAuthManager)
+		handleLogout(w, r)
 	})
 
 	mux.HandleFunc("/auth/me", func(w http.ResponseWriter, r *http.Request) {
-		handleMe(w, r, sessionAuthManager, authStore)
+		handleMe(w, r, authStore, cfg)
 	})
 
 	log.Printf("[HTTP] Starting HTTP API on %s", addr)
-	return http.ListenAndServe(addr, mux)
+	return http.ListenAndServe(addr, handler)
+}
+
+// corsMiddleware adds CORS headers to all responses
+func corsMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// Set CORS headers
+		origin := r.Header.Get("Origin")
+		if origin != "" {
+			w.Header().Set("Access-Control-Allow-Origin", origin)
+		}
+		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE, OPTIONS")
+		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
+
+		// Handle preflight requests
+		if r.Method == "OPTIONS" {
+			w.WriteHeader(http.StatusOK)
+			return
+		}
+
+		// Call the next handler
+		next.ServeHTTP(w, r)
+	})
 }
 
 // handleListNodes returns a list of nodes owned by the authenticated user

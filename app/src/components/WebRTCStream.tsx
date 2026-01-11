@@ -1,4 +1,5 @@
 import { createSignal, onMount, onCleanup, For, Show, untrack, type Component } from 'solid-js';
+import { relay } from '../shared';
 
 interface ServiceInfo {
   id: string;
@@ -33,7 +34,7 @@ const WebRTCStream: Component<Props> = (props) => {
     }
 
     try {
-      const response = await fetch(`/relay/node/${props.nodeId}/services`);
+      const response = await fetch(relay(`/node/${props.nodeId}/services`));
       if (response.status === 404) {
         setNodeNotFound(true);
         setLoading(false);
@@ -97,7 +98,7 @@ const WebRTCStream: Component<Props> = (props) => {
     setStatus('Sending offer...');
 
     try {
-      const response = await fetch(`/relay/node/${props.nodeId}/offer`, {
+      const response = await fetch(relay(`/node/${props.nodeId}/offer`), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
