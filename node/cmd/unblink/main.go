@@ -33,6 +33,9 @@ func main() {
 		case "logout":
 			logout()
 			return
+		case "uninstall":
+			uninstall()
+			return
 		}
 	}
 
@@ -170,6 +173,21 @@ func mustConfigPath() string {
 	return path
 }
 
+func uninstall() {
+	// Get binary path
+	binaryPath, err := os.Executable()
+	if err != nil {
+		log.Fatalf("Failed to get binary path: %v", err)
+	}
+
+	// Remove binary
+	if err := os.Remove(binaryPath); err != nil && !os.IsNotExist(err) {
+		log.Fatalf("Failed to remove binary %s: %v", binaryPath, err)
+	}
+
+	log.Println("Uninstall complete. Config file preserved.")
+}
+
 func printUsage() {
 	fmt.Println("Usage: unblink [command]")
 	fmt.Println()
@@ -177,6 +195,7 @@ func printUsage() {
 	fmt.Println("  show-config  Show the config file path")
 	fmt.Println("  login        Authorize with the relay server")
 	fmt.Println("  logout       Remove saved credentials")
+	fmt.Println("  uninstall    Remove binary")
 	fmt.Println()
 	fmt.Println("Options:")
 	fmt.Println("  -h      Show this help message")

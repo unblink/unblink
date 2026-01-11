@@ -22,7 +22,7 @@ The node runs in your private network and forwards traffic from the relay to you
 go install github.com/unblink/unblink/node/cmd/unblink@latest
 
 # Run (make sure ~/go/bin is in your PATH)
-~/go/bin/unblink
+unblink
 
 # First run: authorizes with relay and generates credentials
 # Subsequent runs: uses saved credentials
@@ -48,6 +48,7 @@ The node creates a config file at `~/.unblink_config.jsonc` on first run. Edit i
 unblink show-config  # Show config file path
 unblink login        # Authorize with relay
 unblink logout       # Remove saved credentials
+unblink uninstall    # Remove binary
 ```
 
 ### Authorization Flow
@@ -112,16 +113,6 @@ AI vision processors that integrate with the relay's CV system:
 - Emit events back (summaries, metrics, alerts)
 
 See [UNBLINK_PROTOCOL.md](UNBLINK_PROTOCOL.md) and [docs/FEDERATED_WORKERS.md](docs/FEDERATED_WORKERS.md) for detailed specifications.
-
-## Uninstall
-
-```bash
-# Remove the binary
-rm ~/go/bin/unblink
-
-# Remove config
-rm ~/.unblink_config.jsonc
-```
 
 ## Contributing
 
