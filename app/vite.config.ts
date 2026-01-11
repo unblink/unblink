@@ -5,9 +5,8 @@ import devtools from 'solid-devtools/vite';
 
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, '.');
-  const target = env.VITE_RELAY_API_URL || 'http://127.0.0.1:8080';
-
-  console.log('Relay URL:', target);
+  const target = env.VITE_RELAY_API_URL;
+  if (!target) throw new Error("VITE_RELAY_API_URL is not configured in .env");
 
   return {
     plugins: [devtools(), solidPlugin(), tailwindcss()],
