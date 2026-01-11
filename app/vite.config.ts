@@ -1,12 +1,22 @@
 import tailwindcss from '@tailwindcss/vite';
+import devtools from 'solid-devtools/vite';
 import { defineConfig, loadEnv } from 'vite';
 import solidPlugin from 'vite-plugin-solid';
-import devtools from 'solid-devtools/vite';
 
 export default defineConfig(({ mode }) => {
-  const env = loadEnv(mode, '.');
-  const target = env.VITE_RELAY_API_URL;
-  if (!target) throw new Error("VITE_RELAY_API_URL is not configured in .env");
+  // Load local .env files
+  const env = loadEnv(mode, process.cwd(), '');
+
+  // Cloudflare injects variables into process.env during build.
+  // We check the loaded env first, then fall back to the system process.env.
+  const target = env.VITE_RELAY_API_URL || process.env.VITE_RELAY_API_URL;
+
+  // Debugging (optional): This will show up in your Cloudflare build logs
+  if (!target) {
+    console.log("Current Mode:", mode);
+    console.log("Available Env Keys:", Object.keys(env));
+    throw new Error("VITE_RELAY_API_URL is not configured. Check Cloudflare Dashboard -> Settings -> Environment Variables.");
+  }
 
   return {
     plugins: [devtools(), solidPlugin(), tailwindcss()],
@@ -24,7 +34,6 @@ export default defineConfig(({ mode }) => {
     build: {
       target: 'esnext',
     },
-    // SPA fallback - serve index.html for /node/* routes
     appType: 'spa',
   };
 });
