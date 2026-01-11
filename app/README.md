@@ -6,7 +6,7 @@
 
 ## Env vars
 
-If you are also self-hosting relay or other components, update the env vars accordingly in the Cloduflare worker creation page.
+If you are self-hosting relay or other components, update the env vars accordingly in the Cloduflare worker > Settings > Buid > Variables and secrets.
 
 For example, in production we replace this
 
