@@ -1,7 +1,8 @@
 {
   "name": "unblink-app",
   "compatibility_date": "2026-01-06",
-  "assets": {
-    "directory": "./dist"
+  "pages_build_config": {
+    "build_command": "bun run build",
+    "destination_dir": "dist"
   }
 }
