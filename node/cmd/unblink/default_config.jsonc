@@ -1,6 +1,6 @@
 {
   // Relay server address
-  "relay_addr": "localhost:9000",
+  "relay_addr": "relay.unblink.net",
 
   // Node identifier (auto-generated, do not edit)
   // "node_id": "",
