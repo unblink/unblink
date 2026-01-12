@@ -227,7 +227,8 @@ func (nc *NodeConn) handleData(msg *node.Message) error {
 	bridge, exists := nc.bridges[data.BridgeID]
 	if !exists {
 		nc.bridgeMu.Unlock()
-		return fmt.Errorf("unknown bridge: %s", data.BridgeID)
+		// Bridge already closed, silently drop this data message (likely in-flight)
+		return nil
 	}
 
 	// Update statistics
