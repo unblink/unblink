@@ -237,18 +237,13 @@ func serviceAdd() {
 	fmt.Println("Adding a new service")
 	fmt.Println("---------------------")
 
-	// Name
-	fmt.Print("Name (optional): ")
-	name, _ := reader.ReadString('\n')
-	name = strings.TrimSpace(name)
-
 	// Type
 	fmt.Print("Type (rtsp or mjpeg): ")
 	serviceType, _ := reader.ReadString('\n')
 	serviceType = strings.TrimSpace(serviceType)
 
 	// Addr
-	fmt.Print("Address (required): ")
+	fmt.Print("Address (required, e.g., 192.168.1.100 or mycam.example.com): ")
 	addr, _ := reader.ReadString('\n')
 	addr = strings.TrimSpace(addr)
 	if addr == "" {
@@ -256,7 +251,7 @@ func serviceAdd() {
 	}
 
 	// Port
-	fmt.Print("Port (required): ")
+	fmt.Print("Port (required, e.g., 554 for RTSP, 80 for HTTP): ")
 	portStr, _ := reader.ReadString('\n')
 	portStr = strings.TrimSpace(portStr)
 	port, err := strconv.Atoi(portStr)
@@ -290,6 +285,11 @@ func serviceAdd() {
 			Password: password,
 		}
 	}
+
+	// Name
+	fmt.Print("Name (optional): ")
+	name, _ := reader.ReadString('\n')
+	name = strings.TrimSpace(name)
 
 	// Create service
 	service := node.Service{
