@@ -33,14 +33,14 @@ func StartHTTPAPIServer(relay *Relay, addr string, cfg *Config) (*http.Server, e
 		handleListNodes(w, r, relay, userID)
 	})
 
-	// Node-specific endpoints: /node/{nodeId}/services and /node/{nodeId}/offer (protected)
-	mux.HandleFunc("/node/", func(w http.ResponseWriter, r *http.Request) {
-		// Parse: /node/{nodeId}/{endpoint}
-		path := strings.TrimPrefix(r.URL.Path, "/node/")
+	// Node-specific endpoints: /nodes/{nodeId}/services and /nodes/{nodeId}/offer (protected)
+	mux.HandleFunc("/nodes/", func(w http.ResponseWriter, r *http.Request) {
+		// Parse: /nodes/{nodeId}/{endpoint}
+		path := strings.TrimPrefix(r.URL.Path, "/nodes/")
 		parts := strings.SplitN(path, "/", 2)
 
 		if len(parts) < 2 || parts[0] == "" || parts[1] == "" {
-			http.Error(w, "Invalid path. Expected /node/{nodeId}/{services|offer}", http.StatusBadRequest)
+			http.Error(w, "Invalid path. Expected /nodes/{nodeId}/{services|offer}", http.StatusBadRequest)
 			return
 		}
 
@@ -88,6 +88,71 @@ func StartHTTPAPIServer(relay *Relay, addr string, cfg *Config) (*http.Server, e
 
 	mux.HandleFunc("/auth/me", func(w http.ResponseWriter, r *http.Request) {
 		handleMe(w, r, authStore, cfg)
+	})
+
+	// Agent endpoints (protected)
+	mux.HandleFunc("/agents", func(w http.ResponseWriter, r *http.Request) {
+		userID, err := requireAuth(w, r, cfg)
+		if err != nil {
+			return
+		}
+
+		switch r.Method {
+		case http.MethodPost:
+			handleCreateAgent(w, r, relay, userID)
+		case http.MethodGet:
+			handleListAgents(w, r, relay, userID)
+		default:
+			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		}
+	})
+
+	// Agent-specific endpoints: /agents/{agentId} and /agents/{agentId}/services (protected)
+	mux.HandleFunc("/agents/", func(w http.ResponseWriter, r *http.Request) {
+		// Parse: /agents/{agentId}/{endpoint}
+		path := strings.TrimPrefix(r.URL.Path, "/agents/")
+		parts := strings.SplitN(path, "/", 2)
+
+		if len(parts) < 1 || parts[0] == "" {
+			http.Error(w, "Invalid path. Expected /agents/{agentId} or /agents/{agentId}/services", http.StatusBadRequest)
+			return
+		}
+
+		agentID := parts[0]
+		endpoint := ""
+		if len(parts) > 1 {
+			endpoint = parts[1]
+		}
+
+		// Check authentication
+		userID, err := requireAuth(w, r, cfg)
+		if err != nil {
+			return
+		}
+
+		// Verify agent ownership
+		if !relay.agentTable.UserOwnsAgent(userID, agentID) {
+			http.Error(w, "Agent not found", http.StatusNotFound)
+			return
+		}
+
+		// Route to specific handler
+		if endpoint == "" {
+			// GET/DELETE /agents/{agentId}
+			switch r.Method {
+			case http.MethodGet:
+				handleGetAgent(w, r, relay, agentID)
+			case http.MethodDelete:
+				handleDeleteAgent(w, r, relay, agentID)
+			default:
+				http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+			}
+		} else if endpoint == "services" {
+			// PATCH /agents/{agentId}/services
+			handleUpdateAgentServices(w, r, relay, agentID)
+		} else {
+			http.Error(w, "Not found", http.StatusNotFound)
+		}
 	})
 
 	server := &http.Server{
@@ -328,5 +393,166 @@ func handleDeleteNode(w http.ResponseWriter, r *http.Request, relay *Relay, node
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]string{
 		"success": "true",
+	})
+}
+
+// Agent handler functions
+
+// AgentResponse represents the agent data returned in API responses
+type AgentResponse struct {
+	ID          string   `json:"id"`
+	Name        string   `json:"name"`
+	Instruction string   `json:"instruction"`
+	WorkerID    string   `json:"worker_id"`
+	ServiceIDs  []string `json:"service_ids"`
+	CreatedAt   string   `json:"created_at"`
+	UpdatedAt   string   `json:"updated_at,omitempty"`
+}
+
+// handleCreateAgent handles POST /agents
+func handleCreateAgent(w http.ResponseWriter, r *http.Request, relay *Relay, userID int64) {
+	var req struct {
+		Name        string `json:"name"`
+		Instruction string `json:"instruction"`
+		Worker      string `json:"worker,omitempty"`
+	}
+
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "Invalid request: "+err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	// Validation
+	if req.Name == "" {
+		http.Error(w, "Agent name is required", http.StatusBadRequest)
+		return
+	}
+	if req.Instruction == "" {
+		http.Error(w, "Agent instruction is required", http.StatusBadRequest)
+		return
+	}
+	if len(req.Name) > 255 {
+		http.Error(w, "Name too long (max 255 characters)", http.StatusBadRequest)
+		return
+	}
+	if len(req.Instruction) > 5000 {
+		http.Error(w, "Instruction too long (max 5000 characters)", http.StatusBadRequest)
+		return
+	}
+
+	// Create agent
+	agent, err := relay.agentTable.CreateAgent(req.Name, req.Instruction, req.Worker, userID)
+	if err != nil {
+		log.Printf("[HTTP] Failed to create agent: %v", err)
+		http.Error(w, "Failed to create agent", http.StatusInternalServerError)
+		return
+	}
+
+	log.Printf("[HTTP] Agent %s created by user %d", agent.ID, userID)
+
+	// Format response
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"success": true,
+		"id":      agent.ID,
+		"agent": AgentResponse{
+			ID:          agent.ID,
+			Name:        agent.Name,
+			Instruction: agent.Config.Instruction,
+			WorkerID:    agent.WorkerID,
+			ServiceIDs:  agent.ServiceIDs,
+			CreatedAt:   agent.CreatedAt.Format("2006-01-02T15:04:05Z07:00"),
+		},
+	})
+}
+
+// handleListAgents handles GET /agents
+func handleListAgents(w http.ResponseWriter, r *http.Request, relay *Relay, userID int64) {
+	agents, err := relay.agentTable.GetAgentsByUser(userID)
+	if err != nil {
+		log.Printf("[HTTP] Failed to list agents: %v", err)
+		http.Error(w, "Failed to fetch agents", http.StatusInternalServerError)
+		return
+	}
+
+	result := make([]AgentResponse, len(agents))
+	for i, agent := range agents {
+		result[i] = AgentResponse{
+			ID:          agent.ID,
+			Name:        agent.Name,
+			Instruction: agent.Config.Instruction,
+			WorkerID:    agent.WorkerID,
+			ServiceIDs:  agent.ServiceIDs,
+			CreatedAt:   agent.CreatedAt.Format("2006-01-02T15:04:05Z07:00"),
+			UpdatedAt:   agent.UpdatedAt.Format("2006-01-02T15:04:05Z07:00"),
+		}
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(result)
+}
+
+// handleGetAgent handles GET /agents/{agentId}
+func handleGetAgent(w http.ResponseWriter, r *http.Request, relay *Relay, agentID string) {
+	agent, err := relay.agentTable.GetAgentByID(agentID)
+	if err != nil {
+		http.Error(w, "Agent not found", http.StatusNotFound)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(AgentResponse{
+		ID:          agent.ID,
+		Name:        agent.Name,
+		Instruction: agent.Config.Instruction,
+		WorkerID:    agent.WorkerID,
+		ServiceIDs:  agent.ServiceIDs,
+		CreatedAt:   agent.CreatedAt.Format("2006-01-02T15:04:05Z07:00"),
+		UpdatedAt:   agent.UpdatedAt.Format("2006-01-02T15:04:05Z07:00"),
+	})
+}
+
+// handleUpdateAgentServices handles PATCH /agents/{agentId}/services
+func handleUpdateAgentServices(w http.ResponseWriter, r *http.Request, relay *Relay, agentID string) {
+	if r.Method != http.MethodPatch {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	var req struct {
+		ServiceIDs []string `json:"service_ids"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "Invalid request: "+err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	// Update service_ids
+	if err := relay.agentTable.UpdateAgentServiceIDs(agentID, req.ServiceIDs); err != nil {
+		log.Printf("[HTTP] Failed to update agent services: %v", err)
+		http.Error(w, "Failed to update agent services", http.StatusInternalServerError)
+		return
+	}
+
+	log.Printf("[HTTP] Updated services for agent %s", agentID)
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"success":     true,
+		"service_ids": req.ServiceIDs,
+	})
+}
+
+// handleDeleteAgent handles DELETE /agents/{agentId}
+func handleDeleteAgent(w http.ResponseWriter, r *http.Request, relay *Relay, agentID string) {
+	if err := relay.agentTable.DeleteAgent(agentID); err != nil {
+		log.Printf("[HTTP] Failed to delete agent: %v", err)
+		http.Error(w, "Failed to delete agent", http.StatusInternalServerError)
+		return
+	}
+
+	log.Printf("[HTTP] Deleted agent %s", agentID)
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"success": true,
 	})
 }

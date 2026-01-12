@@ -34,7 +34,7 @@ const WebRTCStream: Component<Props> = (props) => {
     }
 
     try {
-      const response = await relayFetch(`/node/${props.nodeId}/services`);
+      const response = await relayFetch(`/nodes/${props.nodeId}/services`);
       if (response.status === 404) {
         setNodeNotFound(true);
         setLoading(false);
@@ -98,7 +98,7 @@ const WebRTCStream: Component<Props> = (props) => {
     setStatus('Sending offer...');
 
     try {
-      const response = await relayFetch(`/node/${props.nodeId}/offer`, {
+      const response = await relayFetch(`/nodes/${props.nodeId}/offer`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

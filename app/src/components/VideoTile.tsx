@@ -49,7 +49,7 @@ const VideoTile: Component<Props> = (props) => {
       const offer = await newPc.createOffer();
       await newPc.setLocalDescription(offer);
 
-      const response = await relayFetch(`/node/${props.nodeId}/offer`, {
+      const response = await relayFetch(`/nodes/${props.nodeId}/offer`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

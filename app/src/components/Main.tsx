@@ -4,6 +4,8 @@ import VideoTile from './VideoTile';
 import TabLayout from './TabLayout';
 import TabSettings from './tabs/TabSettings';
 import TabHome from './tabs/TabHome';
+import TabAgents from './tabs/TabAgents';
+import ArkToast from '../ark/ArkToast';
 import { tab, type Tab } from '../shared';
 
 const ComingSoon = () => (
@@ -25,6 +27,7 @@ const Main: Component = () => {
 
   return (
     <div class="flex gap-2 h-screen bg-neutral-950">
+      <ArkToast />
       <SideBar />
 
       <div class="flex-1 h-screen overflow-hidden">
@@ -60,7 +63,7 @@ const Main: Component = () => {
 
           <Match when={tab().type === 'agents'}>
             <TabLayout title="Agents">
-              <ComingSoon />
+              <TabAgents />
             </TabLayout>
           </Match>
 

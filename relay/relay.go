@@ -13,14 +13,15 @@ import (
 
 // Relay manages node connections and the service registry
 type Relay struct {
-	nodes     map[string]*NodeConn // node_id -> connection
-	nodesMu   sync.RWMutex
-	services  *ServiceRegistry
-	db        *Database
-	nodeTable *NodeTable
-	config    *Config // Centralized configuration
-	shutdown  chan struct{}
-	wg        sync.WaitGroup
+	nodes      map[string]*NodeConn // node_id -> connection
+	nodesMu    sync.RWMutex
+	services   *ServiceRegistry
+	db         *Database
+	nodeTable  *NodeTable
+	agentTable *AgentTable
+	config     *Config // Centralized configuration
+	shutdown   chan struct{}
+	wg         sync.WaitGroup
 
 	// Realtime streaming and CV processing
 	realtimeStreamManager *realtime.RealtimeStreamManager
@@ -44,12 +45,13 @@ func NewRelay() *Relay {
 	}
 
 	relay := &Relay{
-		nodes:     make(map[string]*NodeConn),
-		services:  NewServiceRegistry(),
-		shutdown:  make(chan struct{}),
-		db:        db,
-		nodeTable: NewNodeTable(db.DB),
-		config:    config,
+		nodes:      make(map[string]*NodeConn),
+		services:   NewServiceRegistry(),
+		shutdown:   make(chan struct{}),
+		db:         db,
+		nodeTable:  NewNodeTable(db.DB),
+		agentTable: NewAgentTable(db.DB),
+		config:     config,
 	}
 
 	// Initialize CV and realtime streaming subsystems

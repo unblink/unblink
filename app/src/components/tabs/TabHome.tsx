@@ -78,7 +78,7 @@ function NodeEditDialog(props: { node: NodeInfo }) {
     }
 
     toaster.promise(async () => {
-      const response = await relayFetch(`/node/${props.node.id}/name`, {
+      const response = await relayFetch(`/nodes/${props.node.id}/name`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
@@ -155,7 +155,7 @@ function NodeEditDialog(props: { node: NodeInfo }) {
 function NodeDeleteDialog(props: { node: NodeInfo }) {
   const handleDelete = async () => {
     toaster.promise(async () => {
-      const response = await relayFetch(`/node/${props.node.id}/delete`, {
+      const response = await relayFetch(`/nodes/${props.node.id}/delete`, {
         method: 'DELETE',
       });
 

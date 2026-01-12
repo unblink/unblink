@@ -73,11 +73,11 @@ func LoadConfig() (*Config, error) {
 
 	// Optional: Batch size (default: 10)
 	batchSize := 10
-	if val := os.Getenv("BATCH_SIZE"); val != "" {
+	if val := os.Getenv("CV_FRAME_BATCH_SIZE"); val != "" {
 		if parsed, err := strconv.Atoi(val); err == nil && parsed > 0 {
 			batchSize = parsed
 		} else {
-			errors = append(errors, fmt.Sprintf("BATCH_SIZE must be a positive number, got: %s", val))
+			errors = append(errors, fmt.Sprintf("CV_FRAME_BATCH_SIZE must be a positive number, got: %s", val))
 		}
 	}
 
@@ -138,7 +138,7 @@ func LoadConfig() (*Config, error) {
 	log.Printf("[Config]   FRAME_INTERVAL: %v", config.FrameInterval)
 	log.Printf("[Config]   RELAY_PORT: %s (nodes + workers)", config.RelayPort)
 	log.Printf("[Config]   API_PORT: %s", config.APIPort)
-	log.Printf("[Config]   BATCH_SIZE: %d", config.BatchSize)
+	log.Printf("[Config]   CV_FRAME_BATCH_SIZE: %d", config.BatchSize)
 	log.Printf("[Config]   DASHBOARD_URL: %s", config.DashboardURL)
 	log.Printf("[Config]   AUTO_REQUEST_REALTIME_STREAM: %v", config.AutoRequestRealtimeStream)
 

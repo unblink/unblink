@@ -200,6 +200,43 @@ export interface NodeInfo {
 export const [nodes, setNodes] = createSignal<NodeInfo[]>([]);
 export const [nodesLoading, setNodesLoading] = createSignal(true);
 
+// Agent state
+export interface AgentInfo {
+  id: string;
+  name: string;
+  instruction: string;
+  worker_id: string;
+  service_ids: string[];
+  created_at: string;
+  updated_at?: string;
+}
+
+export const [agents, setAgents] = createSignal<AgentInfo[]>([]);
+export const [agentsLoading, setAgentsLoading] = createSignal(true);
+
+export const fetchAgents = async () => {
+  setAgentsLoading(true);
+  try {
+    const response = await relayFetch('/agents');
+
+    if (response.ok) {
+      const data = await response.json(); // Array of agent objects
+      setAgents(data);
+    } else if (response.status === 401) {
+      // Unauthorized - redirect to login
+      window.location.href = '/login';
+    } else {
+      console.error('Failed to fetch agents');
+      setAgents([]);
+    }
+  } catch (error) {
+    console.error('Error fetching agents:', error);
+    setAgents([]);
+  } finally {
+    setAgentsLoading(false);
+  }
+};
+
 export const fetchNodes = async () => {
   setNodesLoading(true);
   try {
@@ -216,7 +253,7 @@ export const fetchNodes = async () => {
           // Only fetch services if node is online
           if (nodeData.status === 'online') {
             try {
-              const servicesResp = await relayFetch(`/node/${nodeData.id}/services`);
+              const servicesResp = await relayFetch(`/nodes/${nodeData.id}/services`);
               if (servicesResp.ok) {
                 services = await servicesResp.json();
               }

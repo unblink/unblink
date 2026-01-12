@@ -74,6 +74,20 @@ func initSchema(db *sql.DB) error {
 		FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 	);
 	CREATE INDEX IF NOT EXISTS idx_nodes_users_user ON nodes_users(user_id);
+
+	CREATE TABLE IF NOT EXISTS agents (
+		id TEXT PRIMARY KEY,
+		name TEXT NOT NULL,
+		worker_id TEXT NOT NULL,
+		config TEXT NOT NULL,
+		service_ids TEXT,
+		user_id INTEGER NOT NULL,
+		created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+		updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+		FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+	);
+	CREATE INDEX IF NOT EXISTS idx_agents_user ON agents(user_id);
+	CREATE INDEX IF NOT EXISTS idx_agents_worker ON agents(worker_id);
 	`
 	_, err := db.Exec(schema)
 	return err
