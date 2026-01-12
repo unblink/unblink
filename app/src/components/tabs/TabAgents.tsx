@@ -1,5 +1,5 @@
 import { For, Show, onMount, createSignal } from 'solid-js';
-import { FiTrash2, FiCpu, FiMoreVertical } from 'solid-icons/fi';
+import { FiTrash2, FiCpu, FiMoreVertical, FiEye } from 'solid-icons/fi';
 import { agents, agentsLoading, fetchAgents, relayFetch, type AgentInfo } from '../../shared';
 import { Dialog } from '@ark-ui/solid/dialog';
 import { Menu } from '@ark-ui/solid/menu';
@@ -158,9 +158,9 @@ function AgentCard(props: { agent: AgentInfo }) {
     <>
       <div onClick={() => setEditOpen(true)} class="bg-neu-850 border border-neu-750 rounded-lg p-4 hover:border-neu-700 transition-all cursor-pointer">
         <div class="flex items-start justify-between mb-3">
-          <div class="flex items-center gap-2">
+          <div class="flex items-center gap-3">
             <div class="w-10 h-10 rounded-lg bg-neu-800 border border-neu-750 flex items-center justify-center">
-              <FiCpu class="w-5 h-5 text-neu-300" />
+              <FiEye class="w-5 h-5 text-neu-300" />
             </div>
             <div>
               <h3 class="text-white font-medium">{props.agent.name}</h3>
@@ -182,6 +182,7 @@ function AgentCard(props: { agent: AgentInfo }) {
                   <Menu.Item
                     value="delete"
                     onSelect={() => setDeleteOpen(true)}
+                    onClick={(e) => e.stopPropagation()}
                     class="flex items-center gap-2 px-3 py-2 text-sm text-red-400 hover:bg-neu-800 hover:text-red-300 cursor-pointer transition-colors rounded-md mx-1"
                   >
                     <FiTrash2 class="w-4 h-4" />
@@ -250,15 +251,12 @@ export default function TabAgents() {
         <Show
           when={agents().length > 0}
           fallback={
-            <div class="bg-neu-850 border border-neu-750 rounded-lg p-12 text-center">
-              <FiCpu class="w-16 h-16 text-neu-600 mx-auto mb-4" />
-              <h3 class="text-lg font-medium text-white mb-2">No agents yet</h3>
-              <p class="text-neu-400 mb-4">
-                Create your first agent to start monitoring your services
-              </p>
-              <p class="text-sm text-neu-500">
-                Click the "Create Agent" button in the sidebar to get started
-              </p>
+            <div class="h-full flex items-center justify-center text-neu-500">
+              <div class="text-center">
+                <FiEye class="mx-auto mb-4 w-12 h-12" />
+                <p>No agents yet</p>
+                <p>Click the "Create Agent" button in the sidebar to get started</p>
+              </div>
             </div>
           }
         >

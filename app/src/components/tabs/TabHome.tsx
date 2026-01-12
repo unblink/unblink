@@ -476,6 +476,7 @@ export default function HomeContent() {
         ]}
         value={activeTab()}
         onValueChange={setActiveTab}
+        listClass="px-6"
       />
     </Show>
   );

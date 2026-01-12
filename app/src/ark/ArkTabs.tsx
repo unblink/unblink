@@ -13,6 +13,7 @@ export const ArkTabs = (props: {
   defaultValue?: string
   value?: string
   onValueChange?: Setter<string>
+  listClass?: string
 }) => {
   return (
     <Tabs.Root
@@ -21,7 +22,7 @@ export const ArkTabs = (props: {
       onValueChange={(details) => props.onValueChange?.(details.value)}
       class="h-full flex flex-col"
     >
-      <Tabs.List class="flex border-b border-neu-800 px-6 relative">
+      <Tabs.List class={`flex border-b border-neu-800 relative ${props.listClass || ''}`}>
         {props.items.map((item) => (
           <Tabs.Trigger
             value={item.value}

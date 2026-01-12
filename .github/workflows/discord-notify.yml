@@ -12,18 +12,19 @@ jobs:
     steps:
       - name: Send Discord webhook
         run: |
+          MESSAGE=$(echo '${{ github.event.head_commit.message }}' | jq -Rs .)
           curl -X POST "${{ secrets.DISCORD_WEBHOOK }}" \
             -H "Content-Type: application/json" \
-            -d '{
-              "content": "",
-              "embeds": [{
-                "title": "🚀 New Push to ${{ github.repository }}",
-                "description": "**Branch:** `${{ github.ref_name }}`\n**Commit:** `${{ github.sha }}`\n**Author:** ${{ github.actor }}\n\n[View Changes](${{ github.event.head_commit.url }})",
-                "color": 5814783,
-                "fields": [
-                  {"name": "Message", "value": "${{ github.event.head_commit.message }}", "inline": false}
+            -d "{
+              \"content\": \"\",
+              \"embeds\": [{
+                \"title\": \"🚀 New Push to ${{ github.repository }}\",
+                \"description\": \"**Branch:** `${{ github.ref_name }}`\n**Commit:** `${{ github.sha }}`\n**Author:** ${{ github.actor }}\n\n[View Changes](${{ github.event.head_commit.url }})\",
+                \"color\": 5814783,
+                \"fields\": [
+                  {\"name\": \"Message\", \"value\": $MESSAGE, \"inline\": false}
                 ],
-                "footer": {"text": "GitHub Actions"},
-                "timestamp": "${{ github.event.head_commit.timestamp }}"
+                \"footer\": {\"text\": \"GitHub Actions\"},
+                \"timestamp\": \"${{ github.event.head_commit.timestamp }}\"
               }]
-            }'
+            }"
