@@ -47,11 +47,49 @@ For development, use `ws://localhost:9020/node/connect`.
 ### Commands
 
 ```bash
+# Service management
+unblink service add    # Add a new service (interactive)
+unblink service list   # List all configured services
+unblink service delete # Delete a service
+
+# Config management
 unblink config show   # Show config file path
 unblink config delete # Delete config file
+
+# Authentication
 unblink login         # Authorize with relay
 unblink logout        # Remove saved credentials
+
+# Other
 unblink uninstall     # Remove binary
+```
+
+### Example: Adding a Service
+
+After installation, add your cameras using the interactive command:
+
+```bash
+unblink service add
+```
+
+You'll be prompted for:
+- **Type**: `rtsp` or `mjpeg`
+- **Address**: e.g., `192.168.1.100`
+- **Port**: e.g., `554` for RTSP, `80` for HTTP
+- **Path**: optional, e.g., `/cam/stream`
+- **Authentication**: optionally add username/password
+- **Name**: optional friendly name
+
+Then list your configured services:
+
+```bash
+unblink service list
+```
+
+Finally, start the node:
+
+```bash
+unblink
 ```
 
 ### Authorization Flow

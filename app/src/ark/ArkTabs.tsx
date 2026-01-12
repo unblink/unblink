@@ -34,7 +34,7 @@ export const ArkTabs = (props: {
         <Tabs.Indicator class="bg-violet-500" style={{ height: '2px', width: 'var(--width)' }} />
       </Tabs.List>
       {props.items.map((item) => (
-        <Tabs.Content value={item.value} class="flex-1 overflow-auto">
+        <Tabs.Content value={item.value} class="flex-1 overflow-auto focus:outline-none">
           {item.content}
         </Tabs.Content>
       ))}

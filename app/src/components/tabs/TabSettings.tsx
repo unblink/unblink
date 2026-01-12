@@ -60,8 +60,8 @@ const MachineLearningSettings: Component<SettingsSectionProps> = (props) => {
         <Switch
           checked={props.settings.objectDetectionEnabled}
           onCheckedChange={(checked) => props.updateSetting('objectDetectionEnabled', checked)}
-          label="Enable Object Detection"
-          description="Automatically detect and classify objects in video streams"
+          label="Enable Visual Intelligence"
+          description="Automatically run AI models on your video streams for analytics."
         />
       </div>
     </div>

@@ -16,6 +16,7 @@ export const ArkSelect = (props: {
   positioning?: {
     sameWidth?: boolean
   }
+  disabled?: boolean
 }) => {
   const collection = createMemo(() => createListCollection({
     items: props.items
@@ -27,9 +28,10 @@ export const ArkSelect = (props: {
       value={[props.value()]}
       onValueChange={props.onValueChange}
       positioning={props.positioning}
+      disabled={props.disabled}
     >
       <Select.Control class="relative">
-        <Select.Trigger class="px-2 py-1.5 text-xs font-medium text-neu-400 hover:text-white bg-neu-800 rounded-lg hover:bg-neu-850 border border-neu-750 focus:outline-none flex items-center justify-between gap-1 transition-all duration-100 min-w-32">
+        <Select.Trigger class="px-2 py-1.5 text-xs font-medium text-neu-400 hover:text-white bg-neu-800 rounded-lg hover:bg-neu-850 border border-neu-750 focus:outline-none flex items-center justify-between gap-1 transition-all duration-100 min-w-32 data-[disabled]:opacity-50 data-[disabled]:cursor-not-allowed">
           <Select.ValueText placeholder={props.placeholder || 'Select...'} />
           <Select.Indicator class="flex items-center shrink-0">
             <FiChevronDown class="w-4 h-4" />

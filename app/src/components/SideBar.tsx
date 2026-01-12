@@ -22,6 +22,7 @@ import {
   type SimpleTabType,
 } from "../shared";
 import UserMenu from "./UserMenu";
+import AddAgentButton from "./AddAgentButton";
 
 export default function SideBar() {
   onMount(fetchNodes);
@@ -111,6 +112,12 @@ export default function SideBar() {
             )}
           </For>
         </div>
+
+        <Show when={!collapsed()}>
+          <div class="mx-4 mb-4">
+            <AddAgentButton />
+          </div>
+        </Show>
 
         <Show when={!collapsed()}>
           <div class="flex-1 space-y-2 overflow-y-auto">

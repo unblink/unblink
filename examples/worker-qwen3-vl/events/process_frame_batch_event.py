@@ -1,5 +1,6 @@
 import asyncio
 import requests
+import time
 from datetime import datetime, timezone
 from typing import Callable, Awaitable
 from PIL import Image
@@ -120,10 +121,13 @@ async def process_frame_batch_event(
 
     # Generate
     print(f"[frame_batch_event] Running inference on {len(pil_images)} frames...")
+    start = time.time()
     generated_ids = model.generate(
         **inputs,
         max_new_tokens=512
     )
+    elapsed = time.time() - start
+    print(f"[frame_batch_event] Inference took {elapsed:.2f}s")
 
     # Decode output
     output_text = processor.batch_decode(
