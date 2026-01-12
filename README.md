@@ -45,10 +45,11 @@ The node creates a config file at `~/.unblink_config.jsonc` on first run. Edit i
 ### Commands
 
 ```bash
-unblink show-config  # Show config file path
-unblink login        # Authorize with relay
-unblink logout       # Remove saved credentials
-unblink uninstall    # Remove binary
+unblink config show   # Show config file path
+unblink config delete # Delete config file
+unblink login         # Authorize with relay
+unblink logout        # Remove saved credentials
+unblink uninstall     # Remove binary
 ```
 
 ### Authorization Flow

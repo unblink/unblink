@@ -24,8 +24,8 @@ func main() {
 	// Handle subcommands
 	if len(os.Args) > 1 {
 		switch os.Args[1] {
-		case "show-config":
-			showConfig()
+		case "config":
+			handleConfigCommand()
 			return
 		case "login":
 			doLogin()
@@ -125,6 +125,27 @@ func runNode(config *node.Config) {
 	}
 }
 
+func handleConfigCommand() {
+	if len(os.Args) < 3 {
+		fmt.Println("Usage: unblink config <command>")
+		fmt.Println("Commands:")
+		fmt.Println("  show    Show the config file path")
+		fmt.Println("  delete  Delete the config file")
+		os.Exit(1)
+	}
+
+	switch os.Args[2] {
+	case "show":
+		showConfig()
+	case "delete":
+		deleteConfig()
+	default:
+		fmt.Printf("Unknown config command: %s\n", os.Args[2])
+		fmt.Println("Available commands: show, delete")
+		os.Exit(1)
+	}
+}
+
 func showConfig() {
 	path, err := node.ConfigPath()
 	if err != nil {
@@ -144,6 +165,36 @@ func showConfig() {
 	} else {
 		fmt.Println(path)
 	}
+}
+
+func deleteConfig() {
+	path, err := node.ConfigPath()
+	if err != nil {
+		log.Fatalf("Error: %v", err)
+	}
+
+	// Check if file exists
+	if _, err := os.Stat(path); os.IsNotExist(err) {
+		log.Printf("Config file does not exist: %s", path)
+		return
+	}
+
+	// Confirm deletion
+	fmt.Printf("Are you sure you want to delete the config file at %s? (yes/no): ", path)
+	var response string
+	fmt.Scanln(&response)
+
+	if response != "yes" {
+		fmt.Println("Deletion cancelled")
+		return
+	}
+
+	// Delete the config file
+	if err := os.Remove(path); err != nil {
+		log.Fatalf("Failed to delete config file: %v", err)
+	}
+
+	log.Printf("Config file deleted: %s", path)
 }
 
 func logout() {
@@ -192,10 +243,11 @@ func printUsage() {
 	fmt.Println("Usage: unblink [command]")
 	fmt.Println()
 	fmt.Println("Commands:")
-	fmt.Println("  show-config  Show the config file path")
-	fmt.Println("  login        Authorize with the relay server")
-	fmt.Println("  logout       Remove saved credentials")
-	fmt.Println("  uninstall    Remove binary")
+	fmt.Println("  config show   Show the config file path")
+	fmt.Println("  config delete Delete the config file")
+	fmt.Println("  login         Authorize with the relay server")
+	fmt.Println("  logout        Remove saved credentials")
+	fmt.Println("  uninstall     Remove binary")
 	fmt.Println()
 	fmt.Println("Options:")
 	fmt.Println("  -h      Show this help message")
