@@ -50,7 +50,7 @@ type Auth struct {
 type Service struct {
 	ID   string `cbor:"id" json:"id"`
 	Name string `cbor:"name,omitempty" json:"name,omitempty"` // Human-readable name
-	Type string `cbor:"type,omitempty" json:"type,omitempty"` // rtsp, mjpeg, http, etc.
+	Type string `cbor:"type,omitempty" json:"type,omitempty"` // Examples: "rtsp", "mjpeg", etc.
 	Addr string `cbor:"addr" json:"addr"`
 	Port int    `cbor:"port" json:"port"`
 	Path string `cbor:"path,omitempty" json:"path,omitempty"`
@@ -204,8 +204,8 @@ const (
 	MsgTypeConnectionReady     = "connection_ready"
 	MsgTypeReqAuthorizationURL = "req_authorization_url" // Node requests authorization URL
 	MsgTypeResAuthorizationURL = "res_authorization_url" // Relay responds with authorization URL
-	MsgTypeAuthToken           = "auth_token"             // Relay sends token after authorization
-	MsgTypeRegisterError       = "register_error"         // Relay sends registration error
+	MsgTypeAuthToken           = "auth_token"            // Relay sends token after authorization
+	MsgTypeRegisterError       = "register_error"        // Relay sends registration error
 )
 
 // NewRegisterMsg creates a REGISTER message
