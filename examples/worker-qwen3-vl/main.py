@@ -21,11 +21,11 @@ class CVWorker:
         """Load Qwen3-VL model for video inference"""
         print(f"[Worker] Loading model: {model_name}")
 
-        from transformers import Qwen2VLForConditionalGeneration, AutoProcessor
+        from transformers import Qwen3VLForConditionalGeneration, AutoProcessor
         import torch
 
         self.processor = AutoProcessor.from_pretrained(model_name)
-        self.model = Qwen2VLForConditionalGeneration.from_pretrained(
+        self.model = Qwen3VLForConditionalGeneration.from_pretrained(
             model_name,
             torch_dtype=torch.bfloat16,
             device_map="auto"
@@ -107,9 +107,7 @@ def main():
     print("="*60 + "\n")
 
     worker = CVWorker()
-
-    # Uncomment to enable model inference:
-    # worker.load_model("Qwen/Qwen2-VL-2B-Instruct")
+    worker.load_model("Qwen/Qwen3-VL-4B-Instruct")
 
     asyncio.run(worker.run())
 
