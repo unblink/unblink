@@ -3,11 +3,8 @@ package node
 import (
 	"encoding/json"
 	"os"
-	"path/filepath"
 
 	"github.com/fxamacker/cbor/v2"
-	"github.com/google/uuid"
-	"github.com/tidwall/jsonc"
 )
 
 // Message is the top-level protocol message.
@@ -73,120 +70,6 @@ func LoadAllowList(path string) (*AllowList, error) {
 		return nil, err
 	}
 	return &allowList, nil
-}
-
-// Config is the unified node configuration file
-type Config struct {
-	RelayAddr string    `json:"relay_addr,omitempty"` // Relay server address
-	NodeID    string    `json:"node_id,omitempty"`
-	Token     string    `json:"token,omitempty"`
-	Services  []Service `json:"services,omitempty"`
-}
-
-// ConfigPath returns the path to the config file
-func ConfigPath() (string, error) {
-	homeDir, err := os.UserHomeDir()
-	if err != nil {
-		return "", err
-	}
-	return filepath.Join(homeDir, ".unblink_config.jsonc"), nil
-}
-
-// LoadConfig loads the unified config from ~/.unblink_config.jsonc
-// If the file doesn't exist, creates a new config with a generated node ID
-func LoadConfig() (*Config, error) {
-	return loadConfigWithDefault(nil)
-}
-
-// LoadConfigWithDefault loads the config, using the provided default template if creating new
-func LoadConfigWithDefault(defaultConfig []byte) (*Config, error) {
-	return loadConfigWithDefault(defaultConfig)
-}
-
-// loadConfigWithDefault is the internal implementation
-func loadConfigWithDefault(defaultConfig []byte) (*Config, error) {
-	path, err := ConfigPath()
-	if err != nil {
-		return nil, err
-	}
-
-	data, err := os.ReadFile(path)
-	if err != nil {
-		// File doesn't exist - create new config with generated node ID
-		var config Config
-
-		// Parse default config if provided
-		if len(defaultConfig) > 0 {
-			jsonData := jsonc.ToJSON(defaultConfig)
-			if err := json.Unmarshal(jsonData, &config); err != nil {
-				return nil, err
-			}
-		}
-
-		ensureConfigIDs(&config)
-
-		if err := SaveConfig(&config); err != nil {
-			return nil, err
-		}
-		return &config, nil
-	}
-
-	// Parse JSONC (supports comments)
-	// jsonc.ToJSON converts JSONC to plain JSON
-	jsonData := jsonc.ToJSON(data)
-	var config Config
-	if err := json.Unmarshal(jsonData, &config); err != nil {
-		return nil, err
-	}
-
-	// Check if we need to save (before filling IDs)
-	needsSave := config.NodeID == "" || configHasEmptyIDs(&config)
-
-	ensureConfigIDs(&config)
-
-	if needsSave {
-		SaveConfig(&config)
-	}
-
-	return &config, nil
-}
-
-// ensureConfigIDs generates UUIDs for missing node ID and service IDs
-func ensureConfigIDs(config *Config) {
-	if config.NodeID == "" {
-		config.NodeID = uuid.New().String()
-	}
-
-	for i := range config.Services {
-		if config.Services[i].ID == "" {
-			config.Services[i].ID = uuid.New().String()
-		}
-	}
-}
-
-// configHasEmptyIDs checks if any service has an empty ID (for detecting if we need to save)
-func configHasEmptyIDs(config *Config) bool {
-	for _, svc := range config.Services {
-		if svc.ID == "" {
-			return true
-		}
-	}
-	return false
-}
-
-// SaveConfig saves the unified config to ~/.unblink_config.jsonc
-func SaveConfig(config *Config) error {
-	path, err := ConfigPath()
-	if err != nil {
-		return err
-	}
-
-	data, err := json.MarshalIndent(config, "", "  ")
-	if err != nil {
-		return err
-	}
-
-	return os.WriteFile(path, data, 0600)
 }
 
 // Auth type constants

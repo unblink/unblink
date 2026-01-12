@@ -246,8 +246,8 @@ func (nc *NodeClient) handleControl(msg *Message) error {
 
 		// Save token to config
 		if nc.config != nil {
-			nc.config.Token = ctrl.Token
-			if err := SaveConfig(nc.config); err != nil {
+			nc.config.SetToken(ctrl.Token)
+			if err := nc.config.Save(); err != nil {
 				log.Printf("[Node] Failed to save token: %v", err)
 			} else {
 				log.Printf("[Node] Token saved. Node is now running.")

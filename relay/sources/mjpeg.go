@@ -24,13 +24,13 @@ func NewMJPEG(service node.Service, proxyAddr string) (*MJPEGSource, error) {
 	inputURL := fmt.Sprintf("http://%s%s", proxyAddr, service.Path)
 
 	// Build FFmpeg command to transcode MJPEG -> H.264
+	// Note: -preset and -tune omitted for compatibility with FFmpeg builds that
+	// don't support these options (e.g., some conda-installed versions)
 	cmd := exec.Command("ffmpeg",
 		"-fflags", "nobuffer",
 		"-flags", "low_delay",
 		"-i", inputURL,
 		"-c:v", "libx264",
-		"-preset", "superfast",
-		"-tune", "zerolatency",
 		"-g", "50",
 		"-profile:v", "high",
 		"-level:v", "4.1",

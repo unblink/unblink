@@ -122,7 +122,7 @@ AI vision processors that integrate with the relay's CV system:
 - Emit results back via WebSocket (bidirectional)
 - Download frame binaries via HTTP GET (`/worker/frames/{uuid}`)
 
-See [UNBLINK_PROTOCOL.md](UNBLINK_PROTOCOL.md) and [docs/FEDERATED_WORKERS.md](docs/FEDERATED_WORKERS.md) for detailed specifications.
+See [docs/UNBLINK_NODE_RELAY_PROTOCOL.md](docs/UNBLINK_NODE_RELAY_PROTOCOL.md) and [docs/FEDERATED_WORKERS.md](docs/FEDERATED_WORKERS.md) for detailed specifications.
 
 ## Contributing
 

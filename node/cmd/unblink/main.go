@@ -14,7 +14,7 @@ import (
 	"github.com/unblink/unblink/node"
 )
 
-//go:embed default_config.jsonc
+//go:embed default_config.hujson
 var defaultConfig []byte
 
 func main() {
@@ -52,14 +52,14 @@ func main() {
 	}
 
 	// Validate relay_addr is set
-	if config.RelayAddr == "" {
+	if config.RelayAddr() == "" {
 		log.Fatalf("[Node] relay_addr is not set in config. Please edit %s and add \"relay_addr\": \"<your-relay-address>\"", mustConfigPath())
 	}
 
 	// Log node ID
-	log.Printf("[Node] Node ID: %s", config.NodeID)
+	log.Printf("[Node] Node ID: %s", config.NodeID())
 
-	if len(config.Services) == 0 {
+	if len(config.Services()) == 0 {
 		log.Fatalf("[Node] No services configured. Edit %s to add services.", mustConfigPath())
 	}
 
@@ -68,40 +68,40 @@ func main() {
 }
 
 func doLogin() {
-	config, err := node.LoadConfig()
+	config, err := node.LoadConfigWithDefault(defaultConfig)
 	if err != nil {
 		log.Fatalf("Failed to load config: %v", err)
 	}
 
 	// Validate relay_addr is set
-	if config.RelayAddr == "" {
+	if config.RelayAddr() == "" {
 		log.Fatalf("[Node] relay_addr is not set in config. Please edit %s and add \"relay_addr\": \"<your-relay-address>\"", mustConfigPath())
 	}
 
-	if len(config.Services) == 0 {
+	if len(config.Services()) == 0 {
 		log.Fatalf("[Node] No services configured. Edit %s to add services.", mustConfigPath())
 	}
 
-	if config.Token != "" {
+	if config.Token() != "" {
 		log.Println("[Node] Already logged in. Use 'unblink logout' first if you want to re-authorize.")
 		return
 	}
 
-	log.Printf("[Node] Starting authorization with relay=%s, services=%d", config.RelayAddr, len(config.Services))
+	log.Printf("[Node] Starting authorization with relay=%s, services=%d", config.RelayAddr(), len(config.Services()))
 
 	runNode(config)
 }
 
 func runNode(config *node.Config) {
-	if config.Token == "" {
+	if config.Token() == "" {
 		log.Printf("[Node] Not authorized. Starting authorization flow...")
 	} else {
-		log.Printf("[Node] Starting with relay=%s, services=%d", config.RelayAddr, len(config.Services))
-		log.Printf("[Node] Using saved credentials for node: %s", config.NodeID)
+		log.Printf("[Node] Starting with relay=%s, services=%d", config.RelayAddr(), len(config.Services()))
+		log.Printf("[Node] Using saved credentials for node: %s", config.NodeID())
 	}
 
 	// Create client
-	client := node.NewNodeClient(config.RelayAddr, config.Services, config.NodeID, config.Token)
+	client := node.NewNodeClient(config.RelayAddr(), config.Services(), config.NodeID(), config.Token())
 
 	// Handle connection ready
 	client.OnConnectionReady = func(nodeID, dashboardURL string) {
@@ -159,12 +159,12 @@ func showConfig() {
 	}
 
 	// LoadConfig creates the file if it doesn't exist
-	config, err := node.LoadConfig()
+	config, err := node.LoadConfigWithDefault(defaultConfig)
 	if err != nil {
 		log.Fatalf("Failed to load config: %v", err)
 	}
 
-	if len(config.Services) == 0 {
+	if len(config.Services()) == 0 {
 		fmt.Println("Config file created with default services template.")
 		fmt.Println("Edit the file to add your services:")
 		fmt.Println(path)
@@ -302,9 +302,11 @@ func serviceAdd() {
 		Auth: auth,
 	}
 
-	config.Services = append(config.Services, service)
+	if err := config.AddService(service); err != nil {
+		log.Fatalf("Failed to add service: %v", err)
+	}
 
-	if err := node.SaveConfig(config); err != nil {
+	if err := config.Save(); err != nil {
 		log.Fatalf("Failed to save config: %v", err)
 	}
 
@@ -314,19 +316,19 @@ func serviceAdd() {
 }
 
 func serviceDelete() {
-	config, err := node.LoadConfig()
+	config, err := node.LoadConfigWithDefault(defaultConfig)
 	if err != nil {
 		log.Fatalf("Failed to load config: %v", err)
 	}
 
-	if len(config.Services) == 0 {
+	if len(config.Services()) == 0 {
 		fmt.Println("No services configured.")
 		return
 	}
 
 	// List services
 	fmt.Println("Services:")
-	for i, svc := range config.Services {
+	for i, svc := range config.Services() {
 		name := svc.Name
 		if name == "" {
 			name = "(unnamed)"
@@ -340,11 +342,12 @@ func serviceDelete() {
 	input = strings.TrimSpace(input)
 
 	index, err := strconv.Atoi(input)
-	if err != nil || index < 1 || index > len(config.Services) {
+	if err != nil || index < 1 || index > len(config.Services()) {
 		log.Fatal("Invalid service number")
 	}
 
-	svc := config.Services[index-1]
+	services := config.Services()
+	svc := services[index-1]
 	name := svc.Name
 	if name == "" {
 		name = "(unnamed)"
@@ -360,9 +363,11 @@ func serviceDelete() {
 	}
 
 	// Remove service
-	config.Services = append(config.Services[:index-1], config.Services[index:]...)
+	if err := config.DeleteService(index - 1); err != nil {
+		log.Fatalf("Failed to delete service: %v", err)
+	}
 
-	if err := node.SaveConfig(config); err != nil {
+	if err := config.Save(); err != nil {
 		log.Fatalf("Failed to save config: %v", err)
 	}
 
@@ -370,18 +375,18 @@ func serviceDelete() {
 }
 
 func serviceList() {
-	config, err := node.LoadConfig()
+	config, err := node.LoadConfigWithDefault(defaultConfig)
 	if err != nil {
 		log.Fatalf("Failed to load config: %v", err)
 	}
 
-	if len(config.Services) == 0 {
+	if len(config.Services()) == 0 {
 		fmt.Println("No services configured.")
 		return
 	}
 
 	fmt.Println("Services:")
-	for i, svc := range config.Services {
+	for i, svc := range config.Services() {
 		name := svc.Name
 		if name == "" {
 			name = "(unnamed)"
@@ -397,18 +402,18 @@ func serviceList() {
 }
 
 func logout() {
-	config, err := node.LoadConfig()
+	config, err := node.LoadConfigWithDefault(defaultConfig)
 	if err != nil {
 		log.Fatalf("Failed to load config: %v", err)
 	}
 
-	if config.Token == "" {
+	if config.Token() == "" {
 		log.Println("[Node] Not logged in.")
 		return
 	}
 
-	config.Token = ""
-	if err := node.SaveConfig(config); err != nil {
+	config.SetToken("")
+	if err := config.Save(); err != nil {
 		log.Fatalf("Failed to save config: %v", err)
 	}
 
