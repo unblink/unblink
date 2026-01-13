@@ -1,5 +1,4 @@
 import { ArkDialog } from "../ark/ArkDialog";
-import { ArkSelect, type SelectItem } from "../ark/ArkSelect";
 import { ArkTabs } from "../ark/ArkTabs";
 import { For, Show, createSignal, untrack, onMount } from "solid-js";
 import AgentPlusSVG from "../assets/icons/AgentPlus.svg";
@@ -22,17 +21,9 @@ const AGENT_TEMPLATES = [
     },
 ];
 
-const WORKER_OPTIONS: SelectItem[] = [
-    { label: "unblink/qwen3-vl", value: "unblink/qwen3-vl" },
-    { label: "unblink/llama3-vision", value: "unblink/llama3-vision" },
-    { label: "unblink/gpt-4o", value: "unblink/gpt-4o" },
-    { label: "unblink/claude-sonnet", value: "unblink/claude-sonnet" },
-];
-
 export default function AddAgentButton() {
     const [name, setName] = createSignal("");
     const [instruction, setInstruction] = createSignal("");
-    const [worker, setWorker] = createSignal("unblink/qwen3-vl");
     const [activeTab, setActiveTab] = createSignal("config");
     const [selectedServiceIds, setSelectedServiceIds] = createSignal<string[]>([]);
 
@@ -78,7 +69,6 @@ export default function AddAgentButton() {
     const handleSave = async (closeDialog: () => void) => {
         const _name = untrack(name).trim();
         const _instruction = untrack(instruction).trim();
-        const _worker = untrack(worker);
         const _serviceIds = untrack(selectedServiceIds);
 
         if (!_name || !_instruction) {
@@ -93,7 +83,6 @@ export default function AddAgentButton() {
                 body: JSON.stringify({
                     name: _name,
                     instruction: _instruction,
-                    worker: _worker,
                     service_ids: _serviceIds,
                 }),
             });
@@ -181,18 +170,6 @@ export default function AddAgentButton() {
                                                 type="text"
                                                 id="agent-name"
                                                 class="px-4 py-2 mt-1 block w-full rounded-lg bg-neu-850 border border-neu-750 text-white focus:outline-none placeholder:text-neu-500"
-                                            />
-                                        </div>
-                                        <div>
-                                            <label class="text-sm font-medium text-neu-300 block mb-2">
-                                                Worker
-                                            </label>
-                                            <ArkSelect
-                                                items={WORKER_OPTIONS}
-                                                value={worker}
-                                                onValueChange={(details) => setWorker(details.value[0])}
-                                                placeholder="Select a worker..."
-                                                disabled={true}
                                             />
                                         </div>
                                         <div>

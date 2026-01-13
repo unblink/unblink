@@ -45,12 +45,16 @@ ws://relay:9020/worker/connect
 
 ### Registration
 
+Worker generates and sends its own identifier as `worker_id`:
+
 **Worker → Relay:**
 
 ```json
 {
   "type": "register",
-  "data": {}
+  "data": {
+    "worker_id": "unblink/qwen3-vl"
+  }
 }
 ```
 
@@ -60,7 +64,6 @@ ws://relay:9020/worker/connect
 {
   "type": "registered",
   "data": {
-    "worker_id": "worker-uuid",
     "key": "a3f9e2b1c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1"
   }
 }

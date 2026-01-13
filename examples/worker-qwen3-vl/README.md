@@ -59,9 +59,8 @@ call in the handle_job method
 
 [Worker] Connecting to ws://localhost:7020/connect
 [Worker] Connected!
-[Worker] Registering as 123e4567-e89b-12d3-a456-426614174000
 [Worker] Registered successfully!
-[Worker] Worker ID: 123e4567-e89b-12d3-a456-426614174000
+[Worker] Worker ID: qwen3-vl
 [Worker] Auth Key: a3f9e2b1c4d5e6f7...
 [Worker] Listening for jobs...
 [Worker] Heartbeat sent
@@ -114,11 +113,11 @@ asyncio.run(worker.run())
 
 ### 1. Connection & Registration
 
-The worker connects to the relay's WebSocket endpoint and registers:
+The worker uses a fixed worker ID (`qwen3-vl`) and registers with relay:
 
 ```json
-→ {"type": "register", "data": {"worker_id": "worker-uuid"}}
-← {"type": "registered", "data": {"worker_id": "worker-uuid", "key": "auth-key"}}
+→ {"type": "register", "data": {"worker_id": "qwen3-vl"}}
+← {"type": "registered", "data": {"key": "auth-key"}}
 ```
 
 ### 2. Job Broadcasting

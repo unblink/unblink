@@ -10,8 +10,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/gorilla/websocket"
 	"github.com/google/uuid"
+	"github.com/gorilla/websocket"
 )
 
 // CVWorker represents a connected worker
@@ -49,7 +49,7 @@ type WSMessage struct {
 }
 
 type RegisterMessage struct {
-	// No fields needed - relay generates worker_id
+	WorkerID string `json:"worker_id"`
 }
 
 type RegisteredMessage struct {
@@ -143,8 +143,18 @@ func (r *CVWorkerRegistry) handleWorkerConnection(conn *websocket.Conn) {
 		return
 	}
 
-	// Generate worker ID relay-side
-	workerID := uuid.New().String()
+	// Parse register message to get worker_id (worker-side generated)
+	var registerMsg RegisterMessage
+	if err := json.Unmarshal(msg.Data, &registerMsg); err != nil {
+		log.Printf("[CVWorkerRegistry] Failed to parse register message: %v", err)
+		return
+	}
+
+	workerID := registerMsg.WorkerID
+	if workerID == "" {
+		log.Printf("[CVWorkerRegistry] worker_id is required in register message")
+		return
+	}
 
 	// Create worker
 	worker := &CVWorker{
@@ -164,12 +174,11 @@ func (r *CVWorkerRegistry) handleWorkerConnection(conn *websocket.Conn) {
 	r.registerWorkerKey(workerKey, workerID)
 	defer r.RemoveWorker(workerID)
 
-	// Send registration confirmation with key
+	// Send registration confirmation with key only (worker_id already known to worker)
 	regConfirm := map[string]interface{}{
 		"type": "registered",
 		"data": map[string]string{
-			"worker_id": workerID,
-			"key":       workerKey,
+			"key": workerKey,
 		},
 	}
 	if data, err := json.Marshal(regConfirm); err == nil {

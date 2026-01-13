@@ -6,10 +6,14 @@ from events.process_frame_batch_event import process_frame_batch_event
 
 
 class CVWorker:
-    def __init__(self, relay_url: str = "ws://localhost:9020/worker/connect", http_url: str = "http://localhost:9020"):
+    def __init__(
+        self,
+        relay_url: str = "ws://localhost:9020/worker/connect",
+        http_url: str = "http://localhost:9020",
+    ):
         self.relay_url = relay_url
         self.http_url = http_url
-        self.worker_id = None  # Assigned by relay
+        self.worker_id = "unblink/qwen3-vl"
         self.worker_key = None
         self.ws = None
 
@@ -26,9 +30,7 @@ class CVWorker:
 
         self.processor = AutoProcessor.from_pretrained(model_name)
         self.model = Qwen3VLForConditionalGeneration.from_pretrained(
-            model_name,
-            torch_dtype=torch.bfloat16,
-            device_map="auto"
+            model_name, torch_dtype=torch.bfloat16, device_map="auto"
         )
         print(f"[Worker] Model loaded on device: {self.model.device}")
 
@@ -37,15 +39,11 @@ class CVWorker:
         self.ws = await websockets.connect(self.relay_url)
 
     async def register(self):
-        registration_msg = {
-            "type": "register",
-            "data": {}
-        }
+        registration_msg = {"type": "register", "data": {"worker_id": self.worker_id}}
         await self.ws.send(json.dumps(registration_msg))
         response = await self.ws.recv()
         data = json.loads(response)
         if data.get("type") == "registered":
-            self.worker_id = data["data"]["worker_id"]
             self.worker_key = data["data"]["key"]
             print(f"[Worker] Registered: {self.worker_id}")
             print(f"[Worker] Key: {self.worker_key[:16]}...")
@@ -69,10 +67,9 @@ class CVWorker:
                             self.http_url,
                             self.worker_key,
                             model=self.model,
-                            processor=self.processor
+                            processor=self.processor,
                         )
                         await self.emit_event(summary)
-
 
         except websockets.exceptions.ConnectionClosed:
             print(f"[Worker] Connection closed")
@@ -80,10 +77,7 @@ class CVWorker:
     async def emit_event(self, event_data: dict):
         """Emit event back to relay via WebSocket"""
         try:
-            event_msg = {
-                "type": "event",
-                "data": event_data
-            }
+            event_msg = {"type": "event", "data": event_data}
             await self.ws.send(json.dumps(event_msg))
             print(f"[Worker] Event emitted: {event_data}")
         except Exception as e:
@@ -102,9 +96,9 @@ class CVWorker:
 
 
 def main():
-    print("="*60)
+    print("=" * 60)
     print("CV Worker - Qwen3-VL Video Processor")
-    print("="*60 + "\n")
+    print("=" * 60 + "\n")
 
     worker = CVWorker()
     worker.load_model("Qwen/Qwen3-VL-4B-Instruct")
