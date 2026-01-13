@@ -1,4 +1,4 @@
-# CV Worker - Qwen3-VL Example
+# CV Worker - Base VL Example
 
 A simple Computer Vision worker that connects to the Unblink relay and receives jobs.
 
@@ -29,7 +29,7 @@ By default, this worker **only logs jobs** without claiming them. This is useful
 
 ```bash
 # Install dependencies using uv
-cd /home/tri/unblink/examples/worker-qwen3-vl
+cd /home/tri/unblink/examples/worker-base-vl
 uv sync
 
 # Or using pip
@@ -50,7 +50,7 @@ You should see output like:
 
 ```
 ============================================================
-CV Worker - Qwen3-VL
+CV Worker - Base VL
 ============================================================
 This worker connects to the Unblink relay and logs jobs
 To enable job claiming/processing, uncomment the claim_job
@@ -60,7 +60,7 @@ call in the handle_job method
 [Worker] Connecting to ws://localhost:7020/connect
 [Worker] Connected!
 [Worker] Registered successfully!
-[Worker] Worker ID: qwen3-vl
+[Worker] Worker ID: base-vl
 [Worker] Auth Key: a3f9e2b1c4d5e6f7...
 [Worker] Listening for jobs...
 [Worker] Heartbeat sent
@@ -113,10 +113,10 @@ asyncio.run(worker.run())
 
 ### 1. Connection & Registration
 
-The worker uses a fixed worker ID (`qwen3-vl`) and registers with relay:
+The worker uses a fixed worker ID (`base-vl`) and registers with relay:
 
 ```json
-→ {"type": "register", "data": {"worker_id": "qwen3-vl"}}
+→ {"type": "register", "data": {"worker_id": "base-vl"}}
 ← {"type": "registered", "data": {"key": "auth-key"}}
 ```
 
@@ -194,7 +194,7 @@ POST /jobs/{job_id}/complete
 To extend this worker for actual CV processing:
 
 1. **Uncomment job claiming** in `handle_job()`
-2. **Add CV model loading** (Qwen3-VL, YOLO, etc.)
+2. **Add CV model loading** (Base VL, YOLO, etc.)
 3. **Process downloaded frames** in `process_job()`
 4. **Return meaningful results** in `complete_job()`
 
@@ -217,7 +217,7 @@ async def process_job(self, job):
     # Submit results
     await self.complete_job(job_id, {
         "detections": results,
-        "model": "qwen3-vl",
+        "model": "base-vl",
         "version": "1.0"
     })
 ```

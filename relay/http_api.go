@@ -414,7 +414,7 @@ func handleCreateAgent(w http.ResponseWriter, r *http.Request, relay *Relay, use
 	var req struct {
 		Name        string `json:"name"`
 		Instruction string `json:"instruction"`
-		Worker      string `json:"worker,omitempty"`
+		WorkerID    string `json:"worker_id"`
 	}
 
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -431,6 +431,10 @@ func handleCreateAgent(w http.ResponseWriter, r *http.Request, relay *Relay, use
 		http.Error(w, "Agent instruction is required", http.StatusBadRequest)
 		return
 	}
+	if req.WorkerID == "" {
+		http.Error(w, "Worker ID is required", http.StatusBadRequest)
+		return
+	}
 	if len(req.Name) > 255 {
 		http.Error(w, "Name too long (max 255 characters)", http.StatusBadRequest)
 		return
@@ -441,7 +445,7 @@ func handleCreateAgent(w http.ResponseWriter, r *http.Request, relay *Relay, use
 	}
 
 	// Create agent
-	agent, err := relay.agentTable.CreateAgent(req.Name, req.Instruction, req.Worker, userID)
+	agent, err := relay.agentTable.CreateAgent(req.Name, req.Instruction, req.WorkerID, userID)
 	if err != nil {
 		log.Printf("[HTTP] Failed to create agent: %v", err)
 		http.Error(w, "Failed to create agent", http.StatusInternalServerError)

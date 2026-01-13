@@ -1,5 +1,5 @@
 [project]
-name = "worker-qwen3-vl"
+name = "worker-base-vl"
 version = "0.1.0"
 description = "Simple CV worker that receives jobs and logs them"
 readme = "README.md"

@@ -53,7 +53,7 @@ Worker generates and sends its own identifier as `worker_id`:
 {
   "type": "register",
   "data": {
-    "worker_id": "unblink/qwen3-vl"
+    "worker_id": "unblink/base-vl"
   }
 }
 ```

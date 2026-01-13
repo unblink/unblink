@@ -83,6 +83,7 @@ export default function AddAgentButton() {
                 body: JSON.stringify({
                     name: _name,
                     instruction: _instruction,
+                    worker_id: 'unblink/base-vl',
                     service_ids: _serviceIds,
                 }),
             });

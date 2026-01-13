@@ -48,7 +48,7 @@ func (at *AgentTable) CreateAgent(name, instruction, workerID string, userID int
 		return nil, errors.New("agent instruction is required")
 	}
 	if workerID == "" {
-		workerID = "unblink/qwen3-vl" // Default worker
+		return nil, errors.New("worker ID is required")
 	}
 
 	// Generate UUID

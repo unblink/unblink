@@ -18,8 +18,8 @@ if ! tmux has-session -t "=$SESSION_NAME" 2>/dev/null; then
   # Create a second window for the worker
   tmux new-window -t $SESSION_NAME:1 -n worker
 
-  # Run the qwen worker using uv
-  tmux send-keys -t $SESSION_NAME:1 "cd $(pwd)/examples/worker-qwen3-vl && uv run main.py" C-m
+  # Run the base-vl worker using uv
+  tmux send-keys -t $SESSION_NAME:1 "cd $(pwd)/examples/worker-base-vl && uv run main.py" C-m
 
   # Split the worker window horizontally (optional, for logs/debugging)
   tmux split-window -t $SESSION_NAME:1 -h -p 50

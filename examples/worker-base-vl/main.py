@@ -13,7 +13,7 @@ class CVWorker:
     ):
         self.relay_url = relay_url
         self.http_url = http_url
-        self.worker_id = "unblink/qwen3-vl"
+        self.worker_id = "unblink/base-vl"
         self.worker_key = None
         self.ws = None
 
@@ -97,7 +97,7 @@ class CVWorker:
 
 def main():
     print("=" * 60)
-    print("CV Worker - Qwen3-VL Video Processor")
+    print("CV Worker - Base VL Video Processor")
     print("=" * 60 + "\n")
 
     worker = CVWorker()
