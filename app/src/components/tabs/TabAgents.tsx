@@ -217,23 +217,6 @@ function AgentCard(props: { agent: AgentInfo }) {
             <label class="text-xs font-medium text-neu-500 uppercase tracking-wide">Instruction</label>
             <p class="mt-1 text-sm text-neu-300 line-clamp-3">{props.agent.instruction}</p>
           </div>
-
-          <Show when={props.agent.service_ids && props.agent.service_ids.length > 0}>
-            <div>
-              <label class="text-xs font-medium text-neu-500 uppercase tracking-wide">
-                Services ({props.agent.service_ids.length})
-              </label>
-              <div class="mt-1 flex flex-wrap gap-1">
-                <For each={props.agent.service_ids}>
-                  {(serviceId) => (
-                    <span class="text-xs bg-neu-800 text-neu-400 px-2 py-0.5 rounded border border-neu-750 font-mono">
-                      {serviceId.substring(0, 8)}...
-                    </span>
-                  )}
-                </For>
-              </div>
-            </div>
-          </Show>
         </div>
       </div>
 
@@ -278,7 +261,7 @@ export default function TabAgents() {
             </div>
           }
         >
-          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-4">
             <For each={agents()}>
               {(agent) => <AgentCard agent={agent} />}
             </For>

@@ -22,7 +22,7 @@ if ! tmux has-session -t "=$SESSION_NAME" 2>/dev/null; then
 
   # Create all windows using the same function
   tmux_create_window "$SESSION_NAME" "relay" "$PROJECT_DIR/relay" "go run ./cmd/relay"
-  tmux_create_window "$SESSION_NAME" "worker_base_vl" "$PROJECT_DIR/examples/worker-base-vl" "sleep 3 && uv run main.py"
+  tmux_create_window "$SESSION_NAME" "worker_base_vl" "$PROJECT_DIR/examples/worker-base-vl" "sleep 5 && uv run main.py"
 
   # Attach to relay window
   tmux_session_attach "$SESSION_NAME" "relay"

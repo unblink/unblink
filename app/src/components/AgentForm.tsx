@@ -139,6 +139,24 @@ export function AgentForm(props: {
                                     </div>
                                 }
                             >
+                                <div class="flex items-center justify-between mb-2">
+                                    <span class="text-xs text-neu-500">
+                                        {props.selectedServiceIds().length} of {allServices().length} selected
+                                    </span>
+                                    <button
+                                        onClick={() => {
+                                            const allSelected = props.selectedServiceIds().length === allServices().length;
+                                            if (allSelected) {
+                                                props.setSelectedServiceIds([]);
+                                            } else {
+                                                props.setSelectedServiceIds(allServices().map(s => s.id));
+                                            }
+                                        }}
+                                        class="text-xs px-2 py-1 rounded-md bg-neu-850 border border-neu-750 text-neu-300 hover:bg-neu-800 hover:border-neu-700 transition-colors"
+                                    >
+                                        {props.selectedServiceIds().length === allServices().length ? "Deselect All" : "Select All"}
+                                    </button>
+                                </div>
                                 <div class="space-y-3 max-h-64 overflow-y-auto">
                                     <For each={allServices()}>
                                         {(service) => (

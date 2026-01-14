@@ -42,6 +42,7 @@ const TabSettings: Component<{ onSave?: () => void; isSaving?: boolean }> = (pro
         }
       ]}
       defaultValue="machine_learning"
+      listClass="px-6"
     />
   );
 };

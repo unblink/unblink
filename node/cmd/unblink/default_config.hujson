@@ -1,11 +1,17 @@
 {
   // Relay server WebSocket URL
-  // Development: "ws://localhost:9020/node/connect"
-  // Production: "wss://relay.unblink.net/node/connect"
+  // Development
+  // "relay_address": "ws://localhost:9020/node/connect",
+  // Production
   "relay_address": "wss://relay.unblink.net/node/connect",
 
   // Authorization token (added after authorization)
   "token": "",
+
+  // Auto-reconnect configuration
+  "reconnect": {
+    "max_num_attempts": 20
+  },
 
   // Services to expose through this node
   "services": [

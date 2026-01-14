@@ -84,6 +84,69 @@ func fieldToInt64(v *hujson.Value) int64 {
 	return 0
 }
 
+// Helper: fieldToBool safely converts a field value to bool
+func fieldToBool(v *hujson.Value) bool {
+	if v == nil || v.Value == nil {
+		return false
+	}
+	if lit, ok := v.Value.(hujson.Literal); ok && len(lit) > 0 {
+		return lit.Bool()
+	}
+	return false
+}
+
+// Helper: setBoolField sets a boolean field on an object
+func setBoolField(v *hujson.Value, name string, value bool) {
+	if v == nil {
+		return
+	}
+	obj, ok := v.Value.(*hujson.Object)
+	if !ok {
+		return
+	}
+
+	// Look for existing member
+	for i, m := range obj.Members {
+		if lit, ok := m.Name.Value.(hujson.Literal); ok && lit.String() == name {
+			m.Value.Value = hujson.Bool(value)
+			obj.Members[i] = m
+			return
+		}
+	}
+
+	// Add new member
+	obj.Members = append(obj.Members, hujson.ObjectMember{
+		Name:  hujson.Value{Value: hujson.String(name)},
+		Value: hujson.Value{Value: hujson.Bool(value)},
+	})
+}
+
+// Helper: setInt64Field sets an int64 field on an object
+func setInt64Field(v *hujson.Value, name string, value int64) {
+	if v == nil {
+		return
+	}
+	obj, ok := v.Value.(*hujson.Object)
+	if !ok {
+		return
+	}
+
+	// Look for existing member
+	for i, m := range obj.Members {
+		if lit, ok := m.Name.Value.(hujson.Literal); ok && lit.String() == name {
+			m.Value.Value = hujson.Int(value)
+			obj.Members[i] = m
+			return
+		}
+	}
+
+	// Add new member
+	obj.Members = append(obj.Members, hujson.ObjectMember{
+		Name:  hujson.Value{Value: hujson.String(name)},
+		Value: hujson.Value{Value: hujson.Int(value)},
+	})
+}
+
 // RelayAddr returns the relay server address
 func (c *Config) RelayAddr() string {
 	return fieldToString(getObjectField(c.ast, "relay_address"))
@@ -112,6 +175,76 @@ func (c *Config) Token() string {
 // SetToken sets the authorization token
 func (c *Config) SetToken(v string) {
 	setStringField(c.ast, "token", v)
+}
+
+// ReconnectConfig represents the reconnection settings
+type ReconnectConfig struct {
+	Enabled        bool
+	MaxNumAttempts int64
+}
+
+// Reconnect returns the reconnection configuration
+// Handles both: reconnect: false and reconnect: { max_num_attempts: 10 }
+func (c *Config) Reconnect() ReconnectConfig {
+	reconnectField := getObjectField(c.ast, "reconnect")
+
+	// Check if it's false (disabled)
+	if reconnectField.Value != nil {
+		if lit, ok := reconnectField.Value.(hujson.Literal); ok {
+			if !lit.Bool() {
+				return ReconnectConfig{Enabled: false, MaxNumAttempts: 0}
+			}
+		}
+	}
+
+	// Check if it's an object with max_num_attempts
+	if reconnectField.Value != nil {
+		if _, ok := reconnectField.Value.(*hujson.Object); ok {
+			maxAttempts := fieldToInt64(getObjectField(reconnectField, "max_num_attempts"))
+			return ReconnectConfig{Enabled: true, MaxNumAttempts: maxAttempts}
+		}
+	}
+
+	// Default: disabled if field doesn't exist
+	return ReconnectConfig{Enabled: false, MaxNumAttempts: 0}
+}
+
+// SetReconnect sets the reconnection configuration
+func (c *Config) SetReconnect(enabled bool, maxNumAttempts int64) {
+	if !enabled {
+		setBoolField(c.ast, "reconnect", false)
+		return
+	}
+
+	// Create reconnect object
+	reconnectObj := &hujson.Object{
+		Members: []hujson.ObjectMember{
+			{
+				Name:  hujson.Value{Value: hujson.String("max_num_attempts")},
+				Value: hujson.Value{Value: hujson.Int(maxNumAttempts)},
+			},
+		},
+	}
+
+	obj, ok := c.ast.Value.(*hujson.Object)
+	if !ok {
+		return
+	}
+
+	// Look for existing reconnect member
+	for i, m := range obj.Members {
+		if lit, ok := m.Name.Value.(hujson.Literal); ok && lit.String() == "reconnect" {
+			m.Value.Value = reconnectObj
+			obj.Members[i] = m
+			return
+		}
+	}
+
+	// Add new reconnect member
+	obj.Members = append(obj.Members, hujson.ObjectMember{
+		Name:  hujson.Value{Value: hujson.String("reconnect")},
+		Value: hujson.Value{Value: reconnectObj},
+	})
 }
 
 // Services returns the services slice

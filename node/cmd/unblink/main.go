@@ -100,34 +100,65 @@ func runNode(config *node.Config) {
 		log.Printf("[Node] Using saved credentials for node: %s", config.NodeID())
 	}
 
-	// Create client
-	client := node.NewNodeClient(config.RelayAddr(), config.Services(), config.NodeID(), config.Token())
+	reconnectCfg := config.Reconnect()
+	if reconnectCfg.Enabled {
+		log.Printf("[Node] Auto-reconnect enabled (max_num_attempts=%d)", reconnectCfg.MaxNumAttempts)
+	} else {
+		log.Printf("[Node] Auto-reconnect is DISABLED. Add 'reconnect: { max_num_attempts: N }' to config to enable.")
+	}
 
-	// Handle connection ready
-	client.OnConnectionReady = func(nodeID, dashboardURL string) {
-		if dashboardURL != "" {
-			log.Println("========================================")
-			log.Printf("AUTHORIZATION REQUIRED")
-			log.Printf("Open this URL in your browser:")
-			log.Printf("%s", dashboardURL)
-			log.Println("========================================")
-		} else {
-			log.Printf("[Node] Connected and authorized: %s", nodeID)
+	// Client factory function for reconnector
+	var currentClient *node.NodeClient
+	createClient := func() *node.NodeClient {
+		client := node.NewNodeClient(config.RelayAddr(), config.Services(), config.NodeID(), config.Token())
+
+		// Handle connection ready
+		client.OnConnectionReady = func(nodeID, dashboardURL string) {
+			if dashboardURL != "" {
+				log.Println("========================================")
+				log.Printf("AUTHORIZATION REQUIRED")
+				log.Printf("Open this URL in your browser:")
+				log.Printf("%s", dashboardURL)
+				log.Println("========================================")
+			} else {
+				log.Printf("[Node] Connected and authorized: %s", nodeID)
+			}
 		}
+
+		currentClient = client
+		return client
 	}
 
 	// Handle shutdown signals
 	sigChan := make(chan os.Signal, 1)
 	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
 
-	go func() {
-		<-sigChan
-		log.Println("[Node] Shutting down...")
-		client.Close()
-	}()
-
-	if err := client.Run(config); err != nil {
-		log.Fatalf("%v", err)
+	// Use reconnector if auto-reconnect is enabled
+	if reconnectCfg.Enabled {
+		reconnector := node.NewReconnector(config)
+		// Single signal handler for both client and reconnector cleanup
+		go func() {
+			<-sigChan
+			log.Println("[Node] Shutting down...")
+			if currentClient != nil {
+				currentClient.Close()
+			}
+			reconnector.Close()
+		}()
+		reconnector.Run(createClient)
+	} else {
+		// Signal handler for non-reconnect mode
+		go func() {
+			<-sigChan
+			log.Println("[Node] Shutting down...")
+			if currentClient != nil {
+				currentClient.Close()
+			}
+		}()
+		client := createClient()
+		if err := client.Run(config); err != nil {
+			log.Fatalf("%v", err)
+		}
 	}
 }
 
