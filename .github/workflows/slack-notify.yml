@@ -15,40 +15,50 @@ jobs:
           COMMIT_MESSAGE: ${{ github.event.head_commit.message }}
           SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
         run: |
-          MESSAGE=$(printf '%s' "$COMMIT_MESSAGE" | jq -Rs .)
           COMMIT_SHORT=$(echo "${{ github.sha }}" | cut -c1-7)
-          curl -X POST "$SLACK_WEBHOOK" \
-            -H "Content-Type: application/json" \
-            -d "{
-              \"text\": \"🚀 *New Push to ${{ github.repository }}*\",
-              \"blocks\": [
+
+          # Build JSON payload using jq
+          jq -n \
+            --arg text "🚀 New Push to ${{ github.repository }}" \
+            --arg header "🚀 New Push to ${{ github.repository }}" \
+            --arg branch "${{ github.ref_name }}" \
+            --arg author "${{ github.actor }}" \
+            --arg commit "$COMMIT_SHORT" \
+            --arg message "$COMMIT_MESSAGE" \
+            --arg url "${{ github.event.head_commit.url }}" \
+            '{
+              "text": $text,
+              "blocks": [
                 {
-                  \"type\": \"header\",
-                  \"text\": {
-                    \"type\": \"plain_text\",
-                    \"text\": \"🚀 New Push to ${{ github.repository }}\"
+                  "type": "header",
+                  "text": {
+                    "type": "plain_text",
+                    "text": $header
                   }
                 },
                 {
-                  \"type\": \"section\",
-                  \"fields\": [
-                    {\"type\": \"mrkdwn\", \"text\": \"*Branch:*\n\`${{ github.ref_name }}\`\"},
-                    {\"type\": \"mrkdwn\", \"text\": \"*Author:*\n${{ github.actor }}\"},
-                    {\"type\": \"mrkdwn\", \"text\": \"*Commit:*\n\`${COMMIT_SHORT}\`\"}
+                  "type": "section",
+                  "fields": [
+                    {"type": "mrkdwn", "text": ("*Branch:*\n`" + $branch + "`")},
+                    {"type": "mrkdwn", "text": ("*Author:*\n" + $author)},
+                    {"type": "mrkdwn", "text": ("*Commit:*\n`" + $commit + "`")}
                   ]
                 },
                 {
-                  \"type\": \"section\",
-                  \"text\": {
-                    \"type\": \"mrkdwn\",
-                    \"text\": \"*Message:*\n$MESSAGE\"
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": ("*Message:*\n" + $message)
                   }
                 },
                 {
-                  \"type\": \"section\",
-                  \"text\": {
-                    \"type\": \"mrkdwn\",
-                    \"text\": \"<${{ github.event.head_commit.url }}|View Changes>\"}
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": ("<" + $url + "|View Changes>")
+                  }
                 }
               ]
-            }"
+            }' | curl -X POST "$SLACK_WEBHOOK" \
+              -H "Content-Type: application/json" \
+              -d @-
