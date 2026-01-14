@@ -13,7 +13,7 @@ if ! tmux has-session -t "=$SESSION_NAME" 2>/dev/null; then
   tmux new-session -s $SESSION_NAME -n relay -d
 
   # Run the relay in the first pane
-  tmux send-keys -t $SESSION_NAME:0 "cd $(pwd)/relay && go run ." C-m
+  tmux send-keys -t $SESSION_NAME:0 "cd $(pwd)/relay && go run ./cmd/relay" C-m
 
   # Create a second window for the worker
   tmux new-window -t $SESSION_NAME:1 -n worker
