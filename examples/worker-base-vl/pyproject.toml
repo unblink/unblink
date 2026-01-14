@@ -12,4 +12,5 @@ dependencies = [
     "torchvision>=0.15.0",
     "pillow>=10.0.0",
     "qwen-vl-utils",
+    "accelerate>=0.20.0",
 ]

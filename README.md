@@ -102,31 +102,16 @@ On first run, the node will print an authorization URL. Open it in your browser 
 Unblink uses a minimal, WebSocket-based bridging protocol with strict separation of concerns:
 
 ```
-Public Internet                       Private Network
-────────────────                     ─────────────────
-
-┌─────────┐         HTTPS/WebRTC        ┌──────────┐
-│ Client  │◄───────────────────────────►│          │
-│  (Web)  │                             │          │
-└─────────┘                             │          │
-                                        │  Relay   │
-┌─────────┐         WebSocket           │ (Public) │
-│ Worker  │◄───────────────────────────►│          │
-└─────────┘                             └────┬─────┘
-                                             │
-                                             │ WebSocket/WSS
-                                             │
-                                        ┌────▼────┐
-                                        │  Node   │
-                                        │ (Proxy) │
-                                        └────┬────┘
-                                             │
-                                 ┌───────────┴──────────┐
-                                 │                      │
-                            ┌────▼─────┐           ┌────▼─────┐
-                            │   RTSP   │           │  MJPEG   │
-                            │  Camera  │           │  Camera  │
-                            └──────────┘           └──────────┘
+PUBLIC INTERNET        │   PRIVATE
+                       │
+  Client ──┐           │
+  (Web)    │           │
+           ├─ Relay ───┼─── Node
+  Worker ──┘ (Cloud)   │  (Proxy)
+  (WSS)                │     │
+                       │  Cameras
+                       │
+                [Firewall]
 ```
 
 **Relay Ports:**

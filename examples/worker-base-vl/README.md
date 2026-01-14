@@ -103,7 +103,7 @@ This will enable:
 
 ```python
 worker = CVWorker(
-    relay_url="ws://your-relay:7020/connect",
+    relay_address="ws://your-relay:7020/connect",
     http_url="http://your-relay:7020"
 )
 asyncio.run(worker.run())

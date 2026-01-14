@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"log"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -39,7 +40,7 @@ func NewAgentTable(db *sql.DB) *AgentTable {
 }
 
 // CreateAgent creates a new agent
-func (at *AgentTable) CreateAgent(name, instruction, workerID string, userID int64) (*Agent, error) {
+func (at *AgentTable) CreateAgent(name, instruction, workerID string, serviceIDs []string, userID int64) (*Agent, error) {
 	// Validation
 	if name == "" {
 		return nil, errors.New("agent name is required")
@@ -61,14 +62,20 @@ func (at *AgentTable) CreateAgent(name, instruction, workerID string, userID int
 		return nil, err
 	}
 
-	// Empty service_ids array
-	serviceIDsJSON := "[]"
+	// Prepare service_ids as JSON
+	if serviceIDs == nil {
+		serviceIDs = []string{}
+	}
+	serviceIDsJSON, err := json.Marshal(serviceIDs)
+	if err != nil {
+		return nil, err
+	}
 
 	// Insert into database
 	_, err = at.db.Exec(`
 		INSERT INTO agents (id, name, worker_id, config, service_ids, user_id, created_at, updated_at)
 		VALUES (?, ?, ?, json(?), json(?), ?, datetime('now'), datetime('now'))
-	`, id, name, workerID, string(configJSON), serviceIDsJSON, userID)
+	`, id, name, workerID, string(configJSON), string(serviceIDsJSON), userID)
 
 	if err != nil {
 		return nil, err
@@ -162,18 +169,56 @@ func (at *AgentTable) GetAgentsByUser(userID int64) ([]*Agent, error) {
 	return agents, nil
 }
 
-// UpdateAgentServiceIDs updates the service_ids array for an agent
-func (at *AgentTable) UpdateAgentServiceIDs(agentID string, serviceIDs []string) error {
-	serviceIDsJSON, err := json.Marshal(serviceIDs)
-	if err != nil {
-		return err
+// UpdateAgent performs a partial update on an agent (name, instruction, and/or service_ids)
+// Pass nil for fields that should not be updated
+func (at *AgentTable) UpdateAgent(agentID string, name, instruction *string, serviceIDs *[]string) error {
+	// Build dynamic SQL update
+	var updates []string
+	var args []interface{}
+
+	if name != nil {
+		if *name == "" {
+			return errors.New("agent name cannot be empty")
+		}
+		updates = append(updates, "name = ?")
+		args = append(args, *name)
 	}
 
-	result, err := at.db.Exec(`
-		UPDATE agents
-		SET service_ids = json(?), updated_at = datetime('now')
-		WHERE id = ?
-	`, string(serviceIDsJSON), agentID)
+	if instruction != nil {
+		if *instruction == "" {
+			return errors.New("agent instruction cannot be empty")
+		}
+		config := AgentConfig{Instruction: *instruction}
+		configJSON, err := json.Marshal(config)
+		if err != nil {
+			return err
+		}
+		updates = append(updates, "config = json(?)")
+		args = append(args, string(configJSON))
+	}
+
+	if serviceIDs != nil {
+		serviceIDsJSON, err := json.Marshal(*serviceIDs)
+		if err != nil {
+			return err
+		}
+		updates = append(updates, "service_ids = json(?)")
+		args = append(args, string(serviceIDsJSON))
+	}
+
+	if len(updates) == 0 {
+		return errors.New("no fields to update")
+	}
+
+	// Add updated_at
+	updates = append(updates, "updated_at = datetime('now')")
+
+	// Add agentID to args
+	args = append(args, agentID)
+
+	// Execute update
+	query := "UPDATE agents SET " + strings.Join(updates, ", ") + " WHERE id = ?"
+	result, err := at.db.Exec(query, args...)
 
 	if err != nil {
 		return err
@@ -184,7 +229,7 @@ func (at *AgentTable) UpdateAgentServiceIDs(agentID string, serviceIDs []string)
 		return errors.New("agent not found")
 	}
 
-	log.Printf("[AgentTable] Updated services for agent %s", agentID)
+	log.Printf("[AgentTable] Updated agent %s", agentID)
 	return nil
 }
 

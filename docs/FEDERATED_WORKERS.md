@@ -112,6 +112,8 @@ The `key` is a 256-bit cryptographic token used for HTTP requests (frame downloa
 
 ### Frame Event
 
+Frame events are only sent to workers with agents configured for the service (consistent with frame_batch).
+
 ```json
 {
   "type": "frame",
@@ -123,6 +125,8 @@ The `key` is a 256-bit cryptographic token used for HTTP requests (frame downloa
   }
 }
 ```
+
+**Note**: Only workers with agents configured for this service will receive the event.
 
 ### Frame Batch Event (with Agent Instructions)
 

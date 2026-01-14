@@ -46,6 +46,13 @@ type AgentInfo struct {
 	ServiceIDs  []string
 }
 
+// broadcastTarget represents a worker and associated data for broadcasting
+type broadcastTarget struct {
+	Worker    *CVWorker
+	ServiceID string
+	Agents    []*AgentEventInfo // Agent info for this worker
+}
+
 // CVWorkerRegistry manages worker connections and event distribution
 type CVWorkerRegistry struct {
 	workers        map[string]*CVWorker // workerID → worker
@@ -134,6 +141,82 @@ func (r *CVWorkerRegistry) SetAgentRegistry(ar AgentRegistry) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	r.agentRegistry = ar
+}
+
+// groupAgentsByWorker groups agents by their worker_id
+func (r *CVWorkerRegistry) groupAgentsByWorker(agents []*AgentInfo) map[string][]*AgentEventInfo {
+	workerAgents := make(map[string][]*AgentEventInfo)
+	for _, agent := range agents {
+		if _, exists := workerAgents[agent.WorkerID]; !exists {
+			workerAgents[agent.WorkerID] = []*AgentEventInfo{}
+		}
+		workerAgents[agent.WorkerID] = append(workerAgents[agent.WorkerID], &AgentEventInfo{
+			ID:          agent.ID,
+			Name:        agent.Name,
+			Instruction: agent.Instruction,
+		})
+	}
+	return workerAgents
+}
+
+// getTargetWorkers returns workers that should receive events based on agent configuration
+// Returns nil if no agents configured (gating behavior)
+func (r *CVWorkerRegistry) getTargetWorkers(serviceID string) []*broadcastTarget {
+	// Check if agent registry is set
+	if r.agentRegistry == nil {
+		log.Printf("[CVWorkerRegistry] AgentRegistry not set, skipping broadcast")
+		return nil
+	}
+
+	// Look up agents for this service
+	log.Printf("[CVWorkerRegistry] Looking up agents for service %s", serviceID)
+	agents := r.agentRegistry.GetAgentsForService(serviceID)
+	if len(agents) == 0 {
+		log.Printf("[CVWorkerRegistry] No agents configured for service %s, skipping broadcast", serviceID)
+		return nil
+	}
+	log.Printf("[CVWorkerRegistry] Found %d agents for service %s", len(agents), serviceID)
+
+	// Group agents by worker_id
+	workerAgents := r.groupAgentsByWorker(agents)
+	log.Printf("[CVWorkerRegistry] Agents grouped into %d workers", len(workerAgents))
+
+	// Build targets for matching workers
+	targets := make([]*broadcastTarget, 0, len(workerAgents))
+	for workerID, agentList := range workerAgents {
+		log.Printf("[CVWorkerRegistry] Checking if worker %s is connected (%d agents)", workerID, len(agentList))
+		if worker, exists := r.workers[workerID]; exists {
+			log.Printf("[CVWorkerRegistry] Worker %s is connected, adding to targets", workerID)
+			targets = append(targets, &broadcastTarget{
+				Worker:    worker,
+				ServiceID: serviceID,
+				Agents:    agentList,
+			})
+		} else {
+			log.Printf("[CVWorkerRegistry] Worker %s NOT connected (total workers: %d)", workerID, len(r.workers))
+		}
+	}
+
+	log.Printf("[CVWorkerRegistry] Returning %d broadcast targets for service %s", len(targets), serviceID)
+	return targets
+} // sendToWorkers sends a message to all target workers
+func (r *CVWorkerRegistry) sendToWorkers(msg map[string]interface{}, targets []*broadcastTarget, eventType string) {
+	data, err := json.Marshal(msg)
+	if err != nil {
+		log.Printf("[CVWorkerRegistry] Failed to marshal %s event: %v", eventType, err)
+		return
+	}
+
+	for _, target := range targets {
+		select {
+		case target.Worker.sendChan <- data:
+			if len(target.Agents) > 0 {
+				log.Printf("[CVWorkerRegistry] Sent %s to worker %s with %d agents", eventType, target.Worker.ID, len(target.Agents))
+			}
+		default:
+			log.Printf("[CVWorkerRegistry] Worker %s send channel full, skipping %s event", target.Worker.ID, eventType)
+		}
+	}
 }
 
 // HandleWebSocket handles WebSocket connection requests
@@ -310,7 +393,7 @@ func (r *CVWorkerRegistry) RemoveWorker(workerID string) {
 	}
 }
 
-// BroadcastFrameEvent broadcasts a frame event to all connected workers
+// BroadcastFrameEvent broadcasts a frame event to workers with matching agents
 func (r *CVWorkerRegistry) BroadcastFrameEvent(event *FrameEvent, timestamp time.Time) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
@@ -319,6 +402,13 @@ func (r *CVWorkerRegistry) BroadcastFrameEvent(event *FrameEvent, timestamp time
 		return
 	}
 
+	// Get target workers (applies agent gating)
+	targets := r.getTargetWorkers(event.ServiceID)
+	if len(targets) == 0 {
+		return
+	}
+
+	// Create message
 	msg := map[string]interface{}{
 		"type":       "frame",
 		"id":         uuid.New().String(),
@@ -326,20 +416,8 @@ func (r *CVWorkerRegistry) BroadcastFrameEvent(event *FrameEvent, timestamp time
 		"data":       event,
 	}
 
-	data, err := json.Marshal(msg)
-	if err != nil {
-		log.Printf("[CVWorkerRegistry] Failed to marshal frame event: %v", err)
-		return
-	}
-
-	// Send to all workers
-	for _, worker := range r.workers {
-		select {
-		case worker.sendChan <- data:
-		default:
-			log.Printf("[CVWorkerRegistry] Worker %s send channel full, skipping frame event", worker.ID)
-		}
-	}
+	// Send to target workers
+	r.sendToWorkers(msg, targets, "frame")
 }
 
 // BroadcastFrameBatchEvent broadcasts a frame batch event to workers with matching agents
@@ -351,63 +429,26 @@ func (r *CVWorkerRegistry) BroadcastFrameBatchEvent(event *FrameBatchEvent, time
 		return
 	}
 
-	// Check if agent registry is set
-	if r.agentRegistry == nil {
-		log.Printf("[CVWorkerRegistry] AgentRegistry not set, skipping frame_batch broadcast")
+	// Get target workers (applies agent gating)
+	targets := r.getTargetWorkers(event.ServiceID)
+	if len(targets) == 0 {
 		return
 	}
 
-	// Look up agents for this service
-	agents := r.agentRegistry.GetAgentsForService(event.ServiceID)
-	if len(agents) == 0 {
-		log.Printf("[CVWorkerRegistry] No agents configured for service %s, skipping broadcast", event.ServiceID)
-		return
-	}
+	// Send to each target with their specific agents
+	for _, target := range targets {
+		// Create event copy with filtered agents for this worker
+		eventCopy := *event
+		eventCopy.Agents = target.Agents
 
-	// Group agents by worker_id
-	workerAgents := make(map[string][]*AgentEventInfo)
-	for _, agent := range agents {
-		if _, exists := workerAgents[agent.WorkerID]; !exists {
-			workerAgents[agent.WorkerID] = []*AgentEventInfo{}
+		msg := map[string]interface{}{
+			"type":       "frame_batch",
+			"id":         uuid.New().String(),
+			"created_at": timestamp.UTC().Format(time.RFC3339),
+			"data":       &eventCopy,
 		}
-		workerAgents[agent.WorkerID] = append(workerAgents[agent.WorkerID], &AgentEventInfo{
-			ID:          agent.ID,
-			Name:        agent.Name,
-			Instruction: agent.Instruction,
-		})
-	}
 
-	// Send to matching workers only
-	for workerID, agentList := range workerAgents {
-		// Find all workers with this worker_id
-		for _, worker := range r.workers {
-			if worker.ID != workerID {
-				continue
-			}
-
-			// Create event copy with filtered agents
-			eventCopy := *event
-			eventCopy.Agents = agentList
-
-			msg := map[string]interface{}{
-				"type":       "frame_batch",
-				"id":         uuid.New().String(),
-				"created_at": timestamp.UTC().Format(time.RFC3339),
-				"data":       &eventCopy,
-			}
-
-			data, err := json.Marshal(msg)
-			if err != nil {
-				log.Printf("[CVWorkerRegistry] Failed to marshal frame batch event: %v", err)
-				continue
-			}
-
-			select {
-			case worker.sendChan <- data:
-				log.Printf("[CVWorkerRegistry] Sent frame_batch to worker %s with %d agents", worker.ID, len(agentList))
-			default:
-				log.Printf("[CVWorkerRegistry] Worker %s send channel full, skipping frame batch event", worker.ID)
-			}
-		}
+		// Send to this specific worker
+		r.sendToWorkers(msg, []*broadcastTarget{target}, "frame_batch")
 	}
 }

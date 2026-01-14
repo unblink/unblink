@@ -1,0 +1,9 @@
+[project]
+name = "worker-simple"
+version = "0.1.0"
+description = "Simple test worker for testing message flows without heavy models"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "websockets>=12.0",
+]

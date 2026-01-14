@@ -42,9 +42,37 @@ function AgentEditDialog(props: { agent: AgentInfo; open: boolean; onOpenChange:
       return;
     }
 
-    toaster.error({
-      title: 'Not Implemented',
-      description: 'Agent editing is not yet available. Please delete and recreate the agent.',
+    toaster.promise(async () => {
+      const response = await relayFetch(`/agents/${props.agent.id}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name: newName,
+          instruction: newInstruction,
+          service_ids: selectedServiceIds(),
+        }),
+      });
+
+      if (response.ok) {
+        await fetchAgents();
+      } else {
+        throw new Error('Failed to update agent');
+      }
+    }, {
+      loading: {
+        title: 'Saving...',
+        description: 'Your agent is being updated.',
+      },
+      success: {
+        title: 'Success!',
+        description: 'Agent has been updated successfully.',
+      },
+      error: {
+        title: 'Failed',
+        description: 'There was an error updating your agent. Please try again.',
+      },
     });
   };
 

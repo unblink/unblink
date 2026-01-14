@@ -120,7 +120,8 @@ func (r *AgentRegistry) RegisterAgent(info *AgentInfo) {
 	r.buildServiceIndexLocked()
 
 	log.Printf("[AgentRegistry] Registered agent %s for worker %s", info.ID, info.WorkerID)
-	log.Printf("[AgentRegistry] Agent monitors %d services", len(info.ServiceIDs))
+	log.Printf("[AgentRegistry] Agent monitors %d services: %v", len(info.ServiceIDs), info.ServiceIDs)
+	log.Printf("[AgentRegistry] Service index now contains %d services", len(r.serviceAgents))
 }
 
 // RemoveAgent removes an agent from the registry
@@ -147,10 +148,13 @@ func (r *AgentRegistry) GetAgentsForService(serviceID string) []*cv.AgentInfo {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
 
+	log.Printf("[AgentRegistry] Looking up agents for service %s (index has %d services)", serviceID, len(r.serviceAgents))
 	agents, exists := r.serviceAgents[serviceID]
 	if !exists {
+		log.Printf("[AgentRegistry] No agents found for service %s", serviceID)
 		return nil
 	}
+	log.Printf("[AgentRegistry] Found %d agents for service %s", len(agents), serviceID)
 
 	// Convert to cv.AgentInfo type
 	result := make([]*cv.AgentInfo, len(agents))

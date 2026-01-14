@@ -8,10 +8,10 @@ from events.process_frame_batch_event import process_frame_batch_event
 class CVWorker:
     def __init__(
         self,
-        relay_url: str = "ws://localhost:9020/worker/connect",
+        relay_address: str = "ws://localhost:9020/worker/connect",
         http_url: str = "http://localhost:9020",
     ):
-        self.relay_url = relay_url
+        self.relay_address = relay_address
         self.http_url = http_url
         self.worker_id = "unblink/base-vl"
         self.worker_key = None
@@ -35,8 +35,8 @@ class CVWorker:
         print(f"[Worker] Model loaded on device: {self.model.device}")
 
     async def connect(self):
-        print(f"[Worker] Connecting to {self.relay_url}")
-        self.ws = await websockets.connect(self.relay_url)
+        print(f"[Worker] Connecting to {self.relay_address}")
+        self.ws = await websockets.connect(self.relay_address)
 
     async def register(self):
         registration_msg = {"type": "register", "data": {"worker_id": self.worker_id}}
