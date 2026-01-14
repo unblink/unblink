@@ -90,8 +90,11 @@ async def process_single_agent(
         generated_ids = model.generate(**inputs, max_new_tokens=512)
         elapsed = time.time() - start
 
+        # Slice to get only generated tokens (exclude input prompt)
+        input_ids_len = inputs['input_ids'].shape[1]
+        generated_only = generated_ids[:, input_ids_len:]
         output_text = processor.batch_decode(
-            generated_ids,
+            generated_only,
             skip_special_tokens=True,
             clean_up_tokenization_spaces=False
         )[0]

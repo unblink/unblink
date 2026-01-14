@@ -218,6 +218,9 @@ function AgentCard(props: { agent: AgentInfo }) {
             <p class="mt-1 text-sm text-neu-300 line-clamp-3">{props.agent.instruction}</p>
           </div>
         </div>
+        <div class="mt-3 pt-3 border-t border-neu-750 flex items-center justify-between text-xs text-neu-500">
+          <span>{props.agent.service_ids?.length || 0} service{props.agent.service_ids?.length !== 1 ? 's' : ''}</span>
+        </div>
       </div>
 
       <AgentEditDialog
