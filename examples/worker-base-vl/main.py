@@ -61,15 +61,15 @@ class CVWorker:
                 if event_type == "frame_batch" and self.worker_key:
                     event = data.get("data")
                     if event:
-                        # Pass model and processor to enable inference
-                        summary = await process_frame_batch_event(
+                        # Process agents concurrently and stream results
+                        await process_frame_batch_event(
                             event,
                             self.http_url,
                             self.worker_key,
                             model=self.model,
                             processor=self.processor,
+                            emit_callback=self.emit_event  # Pass callback to stream results
                         )
-                        await self.emit_event(summary)
 
         except websockets.exceptions.ConnectionClosed:
             print(f"[Worker] Connection closed")

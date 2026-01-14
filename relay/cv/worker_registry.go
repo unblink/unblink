@@ -32,6 +32,20 @@ func (w *CVWorker) Close() {
 	})
 }
 
+// AgentRegistry interface for dependency injection
+type AgentRegistry interface {
+	GetAgentsForService(serviceID string) []*AgentInfo
+}
+
+// AgentInfo represents agent information from the registry
+type AgentInfo struct {
+	ID          string
+	Name        string
+	WorkerID    string
+	Instruction string
+	ServiceIDs  []string
+}
+
 // CVWorkerRegistry manages worker connections and event distribution
 type CVWorkerRegistry struct {
 	workers        map[string]*CVWorker // workerID → worker
@@ -39,6 +53,7 @@ type CVWorkerRegistry struct {
 	mu             sync.RWMutex
 	eventBus       *CVEventBus
 	storageManager *StorageManager
+	agentRegistry  AgentRegistry
 	upgrader       websocket.Upgrader
 }
 
@@ -112,6 +127,13 @@ func (r *CVWorkerRegistry) SetStorageManager(sm *StorageManager) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	r.storageManager = sm
+}
+
+// SetAgentRegistry sets the agent registry (used to filter frame_batch events)
+func (r *CVWorkerRegistry) SetAgentRegistry(ar AgentRegistry) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	r.agentRegistry = ar
 }
 
 // HandleWebSocket handles WebSocket connection requests
@@ -320,7 +342,7 @@ func (r *CVWorkerRegistry) BroadcastFrameEvent(event *FrameEvent, timestamp time
 	}
 }
 
-// BroadcastFrameBatchEvent broadcasts a frame batch event to all connected workers
+// BroadcastFrameBatchEvent broadcasts a frame batch event to workers with matching agents
 func (r *CVWorkerRegistry) BroadcastFrameBatchEvent(event *FrameBatchEvent, timestamp time.Time) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
@@ -329,25 +351,63 @@ func (r *CVWorkerRegistry) BroadcastFrameBatchEvent(event *FrameBatchEvent, time
 		return
 	}
 
-	msg := map[string]interface{}{
-		"type":       "frame_batch",
-		"id":         uuid.New().String(),
-		"created_at": timestamp.UTC().Format(time.RFC3339),
-		"data":       event,
-	}
-
-	data, err := json.Marshal(msg)
-	if err != nil {
-		log.Printf("[CVWorkerRegistry] Failed to marshal frame batch event: %v", err)
+	// Check if agent registry is set
+	if r.agentRegistry == nil {
+		log.Printf("[CVWorkerRegistry] AgentRegistry not set, skipping frame_batch broadcast")
 		return
 	}
 
-	// Send to all workers
-	for _, worker := range r.workers {
-		select {
-		case worker.sendChan <- data:
-		default:
-			log.Printf("[CVWorkerRegistry] Worker %s send channel full, skipping frame batch event", worker.ID)
+	// Look up agents for this service
+	agents := r.agentRegistry.GetAgentsForService(event.ServiceID)
+	if len(agents) == 0 {
+		log.Printf("[CVWorkerRegistry] No agents configured for service %s, skipping broadcast", event.ServiceID)
+		return
+	}
+
+	// Group agents by worker_id
+	workerAgents := make(map[string][]*AgentEventInfo)
+	for _, agent := range agents {
+		if _, exists := workerAgents[agent.WorkerID]; !exists {
+			workerAgents[agent.WorkerID] = []*AgentEventInfo{}
+		}
+		workerAgents[agent.WorkerID] = append(workerAgents[agent.WorkerID], &AgentEventInfo{
+			ID:          agent.ID,
+			Name:        agent.Name,
+			Instruction: agent.Instruction,
+		})
+	}
+
+	// Send to matching workers only
+	for workerID, agentList := range workerAgents {
+		// Find all workers with this worker_id
+		for _, worker := range r.workers {
+			if worker.ID != workerID {
+				continue
+			}
+
+			// Create event copy with filtered agents
+			eventCopy := *event
+			eventCopy.Agents = agentList
+
+			msg := map[string]interface{}{
+				"type":       "frame_batch",
+				"id":         uuid.New().String(),
+				"created_at": timestamp.UTC().Format(time.RFC3339),
+				"data":       &eventCopy,
+			}
+
+			data, err := json.Marshal(msg)
+			if err != nil {
+				log.Printf("[CVWorkerRegistry] Failed to marshal frame batch event: %v", err)
+				continue
+			}
+
+			select {
+			case worker.sendChan <- data:
+				log.Printf("[CVWorkerRegistry] Sent frame_batch to worker %s with %d agents", worker.ID, len(agentList))
+			default:
+				log.Printf("[CVWorkerRegistry] Worker %s send channel full, skipping frame batch event", worker.ID)
+			}
 		}
 	}
 }

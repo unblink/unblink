@@ -495,10 +495,10 @@ func (nc *NodeClient) pingLoop(wsConn *WebSocketConn) {
 // validateRelayAddr validates that the relay address is a proper WebSocket URL
 func validateRelayAddr(addr string) error {
 	if !strings.HasPrefix(addr, "ws://") && !strings.HasPrefix(addr, "wss://") {
-		return fmt.Errorf("relay_addr must be a WebSocket URL (ws:// or wss://), got: %s\nExample: ws://localhost:9020/node/connect", addr)
+		return fmt.Errorf("relay_address must be a WebSocket URL (ws:// or wss://), got: %s\nExample: ws://localhost:9020/node/connect", addr)
 	}
 	if !strings.Contains(addr, "/node/connect") {
-		return fmt.Errorf("relay_addr must include /node/connect path, got: %s\nExample: ws://localhost:9020/node/connect", addr)
+		return fmt.Errorf("relay_address must include /node/connect path, got: %s\nExample: ws://localhost:9020/node/connect", addr)
 	}
 	return nil
 }

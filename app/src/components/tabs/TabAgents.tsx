@@ -5,14 +5,17 @@ import { Dialog } from '@ark-ui/solid/dialog';
 import { Menu } from '@ark-ui/solid/menu';
 import { Portal } from 'solid-js/web';
 import { toaster } from '../../ark/ArkToast';
+import { AgentForm } from '../AgentForm';
 
 function AgentEditDialog(props: { agent: AgentInfo; open: boolean; onOpenChange: (details: { open: boolean }) => void }) {
   const [name, setName] = createSignal(props.agent.name);
   const [instruction, setInstruction] = createSignal(props.agent.instruction);
+  const [selectedServiceIds, setSelectedServiceIds] = createSignal<string[]>(props.agent.service_ids || []);
 
   onMount(() => {
     setName(props.agent.name);
     setInstruction(props.agent.instruction);
+    setSelectedServiceIds(props.agent.service_ids || []);
   });
 
   const handleSave = async () => {
@@ -49,32 +52,19 @@ function AgentEditDialog(props: { agent: AgentInfo; open: boolean; onOpenChange:
     <Dialog.Root open={props.open} onOpenChange={props.onOpenChange}>
       <Dialog.Backdrop class="fixed inset-0 bg-black/50 z-40" />
       <Dialog.Positioner class="fixed inset-0 z-50 flex items-center justify-center p-4">
-        <Dialog.Content class="bg-neu-900 border border-neu-750 rounded-lg p-6 w-full max-w-md shadow-xl">
+        <Dialog.Content class="bg-neu-900 border border-neu-750 rounded-lg p-6 w-full max-w-lg shadow-xl">
           <Dialog.Title class="text-lg font-semibold text-white">Edit Agent</Dialog.Title>
           <Dialog.Description class="text-sm text-neu-400 mt-1">Modify your agent's configuration</Dialog.Description>
           <div class="mt-4 space-y-4">
-            <div>
-              <label for="agent-name" class="text-sm font-medium text-neu-300">Agent Name</label>
-              <input
-                id="agent-name"
-                type="text"
-                value={name()}
-                onInput={(e) => setName(e.currentTarget.value)}
-                placeholder="Enter agent name"
-                class="px-3 py-1.5 mt-1 block w-full rounded-lg bg-neu-850 border border-neu-750 text-white focus:outline-none placeholder:text-neu-500"
-              />
-            </div>
-            <div>
-              <label for="agent-instruction" class="text-sm font-medium text-neu-300">Instruction</label>
-              <textarea
-                id="agent-instruction"
-                value={instruction()}
-                onInput={(e) => setInstruction(e.currentTarget.value)}
-                placeholder="What should the agent look for?"
-                class="min-h-32 px-3 py-1.5 mt-1 block w-full rounded-lg bg-neu-850 border border-neu-750 text-white focus:outline-none placeholder:text-neu-500 resize-none"
-                rows="4"
-              />
-            </div>
+            <AgentForm
+              name={name}
+              setName={setName}
+              instruction={instruction}
+              setInstruction={setInstruction}
+              selectedServiceIds={selectedServiceIds}
+              setSelectedServiceIds={setSelectedServiceIds}
+              showTemplates={false}
+            />
             <div class="flex justify-end pt-4">
               <Dialog.CloseTrigger>
                 <button
@@ -162,9 +152,9 @@ function AgentCard(props: { agent: AgentInfo }) {
             <div class="w-10 h-10 rounded-lg bg-neu-800 border border-neu-750 flex items-center justify-center">
               <FiEye class="w-5 h-5 text-neu-300" />
             </div>
-            <div>
-              <h3 class="text-white font-medium">{props.agent.name}</h3>
-              <p class="text-xs text-neu-500">
+            <div class="min-w-0 flex-1">
+              <h3 class="text-white font-medium line-clamp-1">{props.agent.name}</h3>
+              <p class="text-xs text-neu-500 line-clamp-1">
                 Worker: <span class="text-neu-400">{props.agent.worker_id}</span>
               </p>
             </div>

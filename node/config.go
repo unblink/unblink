@@ -86,12 +86,12 @@ func fieldToInt64(v *hujson.Value) int64 {
 
 // RelayAddr returns the relay server address
 func (c *Config) RelayAddr() string {
-	return fieldToString(getObjectField(c.ast, "relay_addr"))
+	return fieldToString(getObjectField(c.ast, "relay_address"))
 }
 
 // SetRelayAddr sets the relay server address
 func (c *Config) SetRelayAddr(v string) {
-	setStringField(c.ast, "relay_addr", v)
+	setStringField(c.ast, "relay_address", v)
 }
 
 // NodeID returns the node identifier

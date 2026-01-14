@@ -2,7 +2,6 @@ import asyncio
 import requests
 import time
 from datetime import datetime, timezone
-from typing import Callable, Awaitable
 from PIL import Image
 from io import BytesIO
 
@@ -25,33 +24,129 @@ async def download_frame(http_url: str, worker_key: str, frame_uuid: str) -> byt
         return None
 
 
+async def process_single_agent(
+    agent: dict,
+    pil_images: list,
+    service_id: str,
+    metadata: dict,
+    model,
+    processor,
+    emit_callback
+):
+    """Process one agent and emit result immediately"""
+    try:
+        instruction = agent['instruction']
+        agent_name = agent['name']
+
+        # Get timing info from metadata
+        duration_seconds = metadata.get('duration_seconds', 0)
+        start_time = metadata.get('start_time', 0)
+        fps = metadata.get('fps', 2.0)
+
+        # Build temporal context text
+        if start_time > 0:
+            end_time = start_time + duration_seconds
+            temporal_context = f"This video segment spans from {start_time:.1f}s to {end_time:.1f}s. "
+        else:
+            temporal_context = ""
+
+        # Build messages with agent's instruction
+        messages = [{
+            "role": "user",
+            "content": [
+                {
+                    "type": "video",
+                    "video": pil_images,
+                    "raw_fps": fps,
+                },
+                {
+                    "type": "text",
+                    "text": f"{temporal_context}{instruction}"  # Use agent's instruction
+                }
+            ]
+        }]
+
+        # Import qwen_vl_utils here (only when needed)
+        from qwen_vl_utils import process_vision_info
+
+        # Run inference
+        image_inputs, video_inputs = process_vision_info(messages)
+        text = processor.apply_chat_template(
+            messages,
+            tokenize=False,
+            add_generation_prompt=True
+        )
+        inputs = processor(
+            text=[text],
+            images=image_inputs,
+            videos=video_inputs,
+            padding=True,
+            return_tensors="pt"
+        )
+        inputs = inputs.to(model.device)
+
+        print(f"[Agent {agent_name}] Running inference...")
+        start = time.time()
+        generated_ids = model.generate(**inputs, max_new_tokens=512)
+        elapsed = time.time() - start
+
+        output_text = processor.batch_decode(
+            generated_ids,
+            skip_special_tokens=True,
+            clean_up_tokenization_spaces=False
+        )[0]
+
+        # Emit this agent's result immediately
+        result = {
+            "agent_id": agent['id'],
+            "data": {
+                "answer": output_text
+            },
+            "inference_time_seconds": elapsed,
+            "created_at": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
+        }
+
+        print(f"[Agent {agent_name}] Completed in {elapsed:.2f}s, emitting result")
+        await emit_callback(result)
+
+    except Exception as e:
+        print(f"[Agent {agent.get('name', 'Unknown')}] Error: {e}")
+        # Emit error result
+        await emit_callback({
+            "agent_id": agent['id'],
+            "error": {
+                "message": str(e)
+            },
+            "created_at": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
+        })
+
+
 async def process_frame_batch_event(
     event: dict,
     http_url: str,
     worker_key: str,
     model,
-    processor
-) -> dict:
+    processor,
+    emit_callback
+):
     """
-    Process a frame batch event as video input for Qwen3-VL.
+    Process frame batch with multiple agents, streaming results.
 
-    Args:
-        event: The frame_batch event dict
-        http_url: Base URL for frame downloads
-        worker_key: Worker authentication key
-        model: Qwen3-VL model instance (required)
-        processor: Qwen3-VL processor (required)
-
-    Returns:
-        Summary event dict
+    Each agent's result is emitted immediately upon completion via emit_callback.
+    Agents are processed in parallel using asyncio.gather().
     """
     frames = event.get('frames', [])
     service_id = event.get('service_id')
+    agents = event.get('agents', [])
     metadata = event.get('metadata', {})
 
-    print(f"\n[frame_batch_event] Processing batch: {len(frames)} frames from {service_id}")
+    if not agents:
+        print(f"[frame_batch_event] No agents for service {service_id}, skipping")
+        return
 
-    # Download all frames and convert to PIL Images
+    print(f"\n[frame_batch_event] Processing batch: {len(frames)} frames, {len(agents)} agents from {service_id}")
+
+    # Download frames once (shared across all agents)
     pil_images = []
     for frame_uuid in frames:
         jpeg_data = await download_frame(http_url, worker_key, frame_uuid)
@@ -60,89 +155,25 @@ async def process_frame_batch_event(
             pil_images.append(pil_image)
 
     if not pil_images:
-        raise ValueError("No frames downloaded")
+        print(f"[frame_batch_event] No frames downloaded, skipping")
+        return
 
-    from qwen_vl_utils import process_vision_info
+    # Process all agents concurrently
+    # Each agent will emit its own result as soon as it completes
+    tasks = [
+        process_single_agent(
+            agent,
+            pil_images,
+            service_id,
+            metadata,
+            model,
+            processor,
+            emit_callback
+        )
+        for agent in agents
+    ]
 
-    # Get timing info from metadata
-    duration_seconds = metadata.get('duration_seconds', 0)
-    start_time = metadata.get('start_time', 0)  # Offset in seconds from video start
-    num_frames = len(pil_images)
+    # Wait for all agents to complete (but each streams results independently)
+    await asyncio.gather(*tasks)
 
-    # Read fps from metadata (provided by relay)
-    fps = metadata.get('fps', 2.0)
-
-    # Build temporal context text
-    if start_time > 0:
-        end_time = start_time + duration_seconds
-        temporal_context = f"This video segment spans from {start_time:.1f}s to {end_time:.1f}s. "
-        print(f"[frame_batch_event] Using FPS={fps:.3f} for {num_frames} frames from {start_time:.1f}s to {end_time:.1f}s")
-    else:
-        temporal_context = ""
-        print(f"[frame_batch_event] Using FPS={fps:.3f} for {num_frames} frames over {duration_seconds:.1f}s")
-
-    # Construct video message (produces <|video_pad|> tokens)
-    messages = [{
-        "role": "user",
-        "content": [
-            {
-                "type": "video",
-                "video": pil_images,  # Pass all frames as video
-                "raw_fps": fps,  # FPS from metadata
-            },
-            {
-                "type": "text",
-                "text": f"{temporal_context}Analyze this video sequence. Describe any events, activities, or changes that occur."
-            }
-        ]
-    }]
-
-    # Process vision inputs
-    image_inputs, video_inputs = process_vision_info(messages)
-
-    # Apply chat template
-    text = processor.apply_chat_template(
-        messages,
-        tokenize=False,
-        add_generation_prompt=True
-    )
-
-    # Tokenize
-    inputs = processor(
-        text=[text],
-        images=image_inputs,
-        videos=video_inputs,
-        padding=True,
-        return_tensors="pt"
-    )
-
-    # Move to device
-    inputs = inputs.to(model.device)
-
-    # Generate
-    print(f"[frame_batch_event] Running inference on {len(pil_images)} frames...")
-    start = time.time()
-    generated_ids = model.generate(
-        **inputs,
-        max_new_tokens=512
-    )
-    elapsed = time.time() - start
-    print(f"[frame_batch_event] Inference took {elapsed:.2f}s")
-
-    # Decode output
-    output_text = processor.batch_decode(
-        generated_ids,
-        skip_special_tokens=True,
-        clean_up_tokenization_spaces=False
-    )[0]
-
-    summary = {
-        "summary": f"Video analysis: {output_text}",
-        "service_id": service_id,
-        "frame_count": len(pil_images),
-        "duration_seconds": metadata.get('duration_seconds', 0),
-        "created_at": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
-    }
-
-    print(f"[frame_batch_event] Summary: {summary}")
-    return summary
+    print(f"[frame_batch_event] All {len(agents)} agents completed for batch")

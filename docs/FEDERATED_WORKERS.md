@@ -2,33 +2,60 @@
 
 ## Overview
 
-Unblink uses a federated worker model for AI vision processing. Camera events are broadcast to authorized workers, which process frames and emit back events (summaries, detections, alerts, etc.) that are stored and searchable.
+Unblink uses a federated worker model for AI vision processing. Camera events are broadcast to workers with matching agent assignments, which process frames according to agent instructions and emit back events (summaries, detections, alerts, etc.) that are stored and searchable.
 
 You can self-host your AI workers, use public ones, or use dedicated workers provided by Unblink.
+
+## Agent-Based Processing
+
+Workers receive frame batches with **agent instructions** attached. Agents are user-configured entities that define:
+- **name**: Descriptive name (e.g., "Security Monitor")
+- **instruction**: Natural language prompt (e.g., "Are there any suspicious activities?")
+- **worker_id**: Which worker type processes this agent (e.g., "unblink/base-vl")
+- **service_ids**: Which cameras this agent monitors
+
+When a camera emits frames, only workers with matching agents receive the batch. This enables:
+- **Filtered broadcasting**: Workers only receive relevant events
+- **Custom instructions**: Each agent can have different analysis goals
+- **Parallel processing**: Multiple agents process the same frames concurrently
 
 ## Event Flow
 
 ```
-                    ┌─────────────────────────────────────┐
-                    │           Relay Event Bus           │
-                    └─────────────────────────────────────┘
-                                       │
-                    ┌──────────────────┼──────────────────┐
-                    │                  │                  │
-               ┌────▼────┐        ┌────▼────┐       ┌────▼────┐
-               │ Worker 1│        │ Worker 2 │      │ Worker 3│
-               │(self-   │        │ (public) │      │ (unblink│
-               │  hosted)│        │          │      │  hosted)│
-               └────┬────┘        └────┬────┘       └────┬────┘
-                    │                  │                  │
-                    │              Process frames        │
-                    │                  │                  │
-                    └──────────────────┼──────────────────┘
-                                       │
-                    ┌──────────────────▼──────────────────┐
-                    │    Worker Events (stored/searchable)│
-                    │  - summaries  - metrics  - alerts   │
-                    └─────────────────────────────────────┘
+                         ┌───────────────────────────────────┐
+                         │        Relay + AgentRegistry       │
+                         │  (service → agents in-memory map) │
+                         └───────────────────────────────────┘
+                                         │
+                    ┌────────────────────┼────────────────────┐
+                    │ Lookup agents      │                    │
+                    │ for service        │                    │
+                    │ (O(1) lookup)      │                    │
+                    └────────────────────┼────────────────────┘
+                                         │
+                    ┌────────────────────┼────────────────────┐
+                    │  Filter by worker_id                    │
+                    │  Attach agent instructions              │
+                    └────────────────────┼────────────────────┘
+                                         │
+                    ┌────────────────────┼────────────────────┐
+                    │                    │                    │
+               ┌────▼────┐          ┌────▼────┐         ┌────▼────┐
+               │ Worker 1│          │ Worker 2 │         │ Worker 3│
+               │ base-vl │          │ custom   │         │ base-vl │
+               │ (Agent A│          │ (Agent C)│         │ (Agent A│
+               │  Agent B)│          │          │         │  Agent B)│
+               └────┬────┘          └────┬────┘         └────┬────┘
+                    │                    │                    │
+                    │   Process frames with agent instructions│
+                    │   (parallel processing, streaming)      │
+                    │                    │                    │
+                    └────────────────────┼────────────────────┘
+                                         │
+                    ┌────────────────────▼────────────────────┐
+                    │     Agent Results (stored/searchable)   │
+                    │  {"agent_id": "...", "data": {...}}     │
+                    └─────────────────────────────────────────┘
 ```
 
 ## Worker Protocol
@@ -97,7 +124,9 @@ The `key` is a 256-bit cryptographic token used for HTTP requests (frame downloa
 }
 ```
 
-### Frame Batch Event
+### Frame Batch Event (with Agent Instructions)
+
+Frame batch events now include the `agents` array containing instructions for each agent monitoring this service.
 
 ```json
 {
@@ -108,11 +137,35 @@ The `key` is a 256-bit cryptographic token used for HTTP requests (frame downloa
     "service_id": "cam-uuid",
     "frames": ["uuid-1", "uuid-2", ..., "uuid-10"],
     "metadata": {
-      "duration_seconds": 50.5
-    }
+      "duration_seconds": 50.5,
+      "start_time": 0.0,
+      "fps": 2.0
+    },
+    "agents": [
+      {
+        "id": "agent-123",
+        "name": "Security Monitor",
+        "instruction": "Are there any suspicious activities or unauthorized persons?"
+      },
+      {
+        "id": "agent-456",
+        "name": "Safety Equipment Check",
+        "instruction": "Are all personnel wearing required safety equipment?"
+      }
+    ]
   }
 }
 ```
+
+**Key changes:**
+- **agents array**: Contains all agents assigned to this service that match the worker's `worker_id`
+- **Filtered broadcasting**: Only workers with matching `worker_id` receive the event
+- **Zero DB queries**: Agent lookup uses in-memory `AgentRegistry` (O(1) lookup)
+
+**Worker behavior:**
+- Process all agents in the array **in parallel** (using `asyncio.gather()` in Python)
+- Use each agent's `instruction` as the prompt for inference
+- Emit results immediately as each agent completes (streaming, not batched)
 
 ## Worker APIs
 
@@ -164,54 +217,160 @@ await ws.send(json.dumps(event_msg))
 
 ## Outgoing Events (Worker → Relay)
 
-Workers can emit any JSON-serializable data. Common patterns:
+Workers emit structured agent results back to the relay. Each result corresponds to one agent's processing.
 
-### Summary Event
+### Agent Result (Success)
 
 ```json
 {
-  "summary": "Processed 10 frames from cam-123. Duration: 50.5s"
+  "agent_id": "agent-123",
+  "data": {
+    "answer": "No suspicious activities detected. All personnel are authorized."
+  },
+  "inference_time_seconds": 8.5,
+  "created_at": "2026-01-14T12:00:00Z"
 }
 ```
 
-### Metrics Event
+### Agent Result (Error)
 
 ```json
 {
-  "metric_type": "detection_count",
-  "value": 42,
-  "created_at": "2026-01-10T12:00:00Z"
+  "agent_id": "agent-456",
+  "error": {
+    "message": "Model inference failed: CUDA out of memory"
+  },
+  "created_at": "2026-01-14T12:00:05Z"
 }
 ```
 
-### Alert Event
+### Result Structure
+
+**Required fields:**
+- `agent_id` (string): ID of the agent that processed this batch
+- `created_at` (string): ISO 8601 timestamp
+
+**Mutually exclusive fields (one of):**
+- `data` (object): Success result with semantic keys like `answer`, `summary`, `alert`
+- `error` (object): Error result with `message` key
+
+**Optional fields:**
+- `inference_time_seconds` (float): Processing duration (only for success)
+
+**Examples of different result types:**
 
 ```json
-{
-  "alert": "Motion detected in zone A",
-  "severity": "high",
-  "created_at": "2026-01-10T12:00:00Z"
-}
-```
+// Answer result (vision analysis)
+{"agent_id": "...", "data": {"answer": "..."}, "created_at": "..."}
 
-### Custom Event
+// Summary result (batch processing)
+{"agent_id": "...", "data": {"summary": "..."}, "created_at": "..."}
 
-```json
-{
-  "custom_field": "any data",
-  "detections": [
-    { "class": "person", "confidence": 0.95, "bbox": [10, 20, 30, 40] }
-  ],
-  "created_at": "2026-01-10T12:00:00Z"
-}
+// Alert result (detection)
+{"agent_id": "...", "data": {"alert": "Motion detected"}, "created_at": "..."}
 ```
 
 ## Worker Lifecycle
 
 1. **Connect** via WebSocket to `/worker/connect`
-2. **Register** and receive authentication key
-3. **Listen** for `frame` and `frame_batch` events via WebSocket
-4. **Download** frames using HTTP GET with the key
-5. **Process** frames with AI models
-6. **Emit** events back via WebSocket (not HTTP POST)
-7. **Disconnect** - key is invalidated
+2. **Register** with `worker_id` (e.g., "unblink/base-vl") and receive authentication key
+3. **Listen** for `frame_batch` events via WebSocket
+4. **Receive** events **only if** agents with matching `worker_id` exist for the service
+5. **Download** frames once using HTTP GET with the key (shared across all agents)
+6. **Process** all agents in the batch **in parallel** using each agent's instruction
+7. **Stream** results back via WebSocket as each agent completes (don't wait for all)
+8. **Disconnect** - key is invalidated
+
+## Agent Registry (Relay-Side Architecture)
+
+The relay maintains an in-memory `AgentRegistry` to avoid database queries during frame batch emission.
+
+**Data structure:**
+- `serviceID → []AgentInfo`: O(1) lookup for agents by service
+- `agentID → AgentInfo`: Quick lookups for agent details
+
+**Operations:**
+- `LoadFromDatabase()`: Called once at relay startup
+- `RegisterAgent(agent)`: Called when agent created/updated via API
+- `RemoveAgent(agentID)`: Called when agent deleted
+- `GetAgentsForService(serviceID)`: O(1) lookup during frame_batch emission
+
+**Performance:**
+- **Memory**: ~500 bytes per agent (negligible for thousands of agents)
+- **Lookup**: O(1) for service → agents mapping
+- **DB queries**: Zero during frame batch emission
+- **Updates**: Only on agent CRUD operations (low frequency)
+
+## Streaming Parallel Processing (Worker-Side)
+
+Workers process multiple agents concurrently and stream results back immediately.
+
+**Pattern (Python):**
+
+```python
+async def process_single_agent(agent, frames, model, processor, emit_callback):
+    """Process one agent and emit result immediately"""
+    instruction = agent['instruction']
+
+    # Run inference with agent's instruction
+    result = await run_inference(frames, instruction, model, processor)
+
+    # Emit immediately (don't wait for other agents)
+    await emit_callback({
+        "agent_id": agent['id'],
+        "data": {"answer": result},
+        "inference_time_seconds": elapsed,
+        "created_at": datetime.now(timezone.utc).isoformat()
+    })
+
+async def process_frame_batch(event, emit_callback):
+    agents = event['agents']
+    frames = download_frames(event['frames'])  # Download once
+
+    # Process all agents in parallel
+    tasks = [
+        process_single_agent(agent, frames, model, processor, emit_callback)
+        for agent in agents
+    ]
+    await asyncio.gather(*tasks)  # Parallel execution
+```
+
+**Benefits:**
+- **Parallel execution**: 3 agents × 10s = ~10s total (vs 30s sequential)
+- **Progressive results**: Frontend receives first result in 8-10s
+- **Failure isolation**: One agent error doesn't block others
+- **Resource efficiency**: GPU utilized continuously
+
+## Example Worker Implementation
+
+See [examples/worker-base-vl/](../examples/worker-base-vl/) for a complete reference implementation using Qwen3-VL-4B-Instruct.
+
+**Key files:**
+- `main.py`: WebSocket connection, registration, and event handling
+- `events/process_frame_batch_event.py`: Parallel agent processing with streaming
+
+**Running the example:**
+
+```bash
+cd examples/worker-base-vl
+
+# Install dependencies
+uv sync
+
+# Run worker (connects to localhost:9020 by default)
+uv run main.py
+```
+
+**How it works:**
+1. Connects to relay at `ws://localhost:9020/worker/connect`
+2. Registers with `worker_id="unblink/base-vl"`
+3. Loads Qwen3-VL model on GPU
+4. Receives `frame_batch` events with agents array
+5. Downloads frames once via HTTP GET
+6. Processes all agents in parallel using `asyncio.gather()`
+7. Streams each result back immediately via WebSocket
+
+**Customization:**
+- Change `worker_id` in `main.py` to create custom worker types
+- Modify `process_single_agent()` to use different models or logic
+- Add custom result types by changing the `data` object structure

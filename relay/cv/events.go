@@ -18,6 +18,14 @@ type FrameBatchEvent struct {
 	ServiceID string                 `json:"service_id"`
 	Frames    []string               `json:"frames"` // Frame UUIDs
 	Metadata  map[string]interface{} `json:"metadata"`
+	Agents    []*AgentEventInfo      `json:"agents,omitempty"` // Agents monitoring this service
+}
+
+// AgentEventInfo contains agent information sent with frame batch events
+type AgentEventInfo struct {
+	ID          string `json:"id"`
+	Name        string `json:"name"`
+	Instruction string `json:"instruction"`
 }
 
 // WorkerEvent represents an event emitted by a worker

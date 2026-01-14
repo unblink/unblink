@@ -34,7 +34,7 @@ The node creates a config file at `~/.unblink_config.jsonc` on first run. Edit i
 
 ```json
 {
-  "relay_addr": "wss://your-relay.com/node/connect",
+  "relay_address": "wss://your-relay.com/node/connect",
   "services": [
     { "addr": "192.168.1.100", "port": 554 },
     { "addr": "192.168.1.101", "port": 80 }
@@ -73,6 +73,7 @@ unblink service add
 ```
 
 You'll be prompted for:
+
 - **Type**: `rtsp` or `mjpeg`
 - **Address**: e.g., `192.168.1.100`
 - **Port**: e.g., `554` for RTSP, `80` for HTTP

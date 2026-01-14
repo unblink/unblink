@@ -1,0 +1,54 @@
+name: Slack Notify
+
+on:
+  push:
+    branches:
+      - main
+      - master
+
+jobs:
+  slack-notify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send Slack webhook
+        env:
+          COMMIT_MESSAGE: ${{ github.event.head_commit.message }}
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+        run: |
+          MESSAGE=$(printf '%s' "$COMMIT_MESSAGE" | jq -Rs .)
+          COMMIT_SHORT=$(echo "${{ github.sha }}" | cut -c1-7)
+          curl -X POST "$SLACK_WEBHOOK" \
+            -H "Content-Type: application/json" \
+            -d "{
+              \"text\": \"🚀 *New Push to ${{ github.repository }}*\",
+              \"blocks\": [
+                {
+                  \"type\": \"header\",
+                  \"text\": {
+                    \"type\": \"plain_text\",
+                    \"text\": \"🚀 New Push to ${{ github.repository }}\"
+                  }
+                },
+                {
+                  \"type\": \"section\",
+                  \"fields\": [
+                    {\"type\": \"mrkdwn\", \"text\": \"*Branch:*\n\`${{ github.ref_name }}\`\"},
+                    {\"type\": \"mrkdwn\", \"text\": \"*Author:*\n${{ github.actor }}\"},
+                    {\"type\": \"mrkdwn\", \"text\": \"*Commit:*\n\`${COMMIT_SHORT}\`\"}
+                  ]
+                },
+                {
+                  \"type\": \"section\",
+                  \"text\": {
+                    \"type\": \"mrkdwn\",
+                    \"text\": \"*Message:*\n$MESSAGE\"
+                  }
+                },
+                {
+                  \"type\": \"section\",
+                  \"text\": {
+                    \"type\": \"mrkdwn\",
+                    \"text\": \"<${{ github.event.head_commit.url }}|View Changes>\"}
+                }
+              ]
+            }"

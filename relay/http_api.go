@@ -452,6 +452,15 @@ func handleCreateAgent(w http.ResponseWriter, r *http.Request, relay *Relay, use
 		return
 	}
 
+	// Register agent in memory registry
+	relay.agentRegistry.RegisterAgent(&AgentInfo{
+		ID:          agent.ID,
+		Name:        agent.Name,
+		WorkerID:    agent.WorkerID,
+		Instruction: agent.Config.Instruction,
+		ServiceIDs:  agent.ServiceIDs,
+	})
+
 	log.Printf("[HTTP] Agent %s created by user %d", agent.ID, userID)
 
 	// Format response
@@ -538,6 +547,20 @@ func handleUpdateAgentServices(w http.ResponseWriter, r *http.Request, relay *Re
 		return
 	}
 
+	// Reload agent from database and update registry
+	agent, err := relay.agentTable.GetAgentByID(agentID)
+	if err != nil {
+		log.Printf("[HTTP] Warning: Failed to reload agent for registry update: %v", err)
+	} else {
+		relay.agentRegistry.RegisterAgent(&AgentInfo{
+			ID:          agent.ID,
+			Name:        agent.Name,
+			WorkerID:    agent.WorkerID,
+			Instruction: agent.Config.Instruction,
+			ServiceIDs:  agent.ServiceIDs,
+		})
+	}
+
 	log.Printf("[HTTP] Updated services for agent %s", agentID)
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]interface{}{
@@ -553,6 +576,9 @@ func handleDeleteAgent(w http.ResponseWriter, r *http.Request, relay *Relay, age
 		http.Error(w, "Failed to delete agent", http.StatusInternalServerError)
 		return
 	}
+
+	// Remove agent from memory registry
+	relay.agentRegistry.RemoveAgent(agentID)
 
 	log.Printf("[HTTP] Deleted agent %s", agentID)
 	w.Header().Set("Content-Type", "application/json")

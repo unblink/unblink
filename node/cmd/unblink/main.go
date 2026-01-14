@@ -1,8 +1,8 @@
 package main
 
 import (
-	_ "embed"
 	"bufio"
+	_ "embed"
 	"fmt"
 	"log"
 	"os"
@@ -51,9 +51,9 @@ func main() {
 		log.Fatalf("Failed to load config: %v", err)
 	}
 
-	// Validate relay_addr is set
+	// Validate relay_address is set
 	if config.RelayAddr() == "" {
-		log.Fatalf("[Node] relay_addr is not set in config. Please edit %s and add \"relay_addr\": \"<your-relay-address>\"", mustConfigPath())
+		log.Fatalf("[Node] relay_address is not set in config. Please edit %s and add \"relay_address\": \"<your-relay-address>\"", mustConfigPath())
 	}
 
 	// Log node ID
@@ -73,9 +73,9 @@ func doLogin() {
 		log.Fatalf("Failed to load config: %v", err)
 	}
 
-	// Validate relay_addr is set
+	// Validate relay_address is set
 	if config.RelayAddr() == "" {
-		log.Fatalf("[Node] relay_addr is not set in config. Please edit %s and add \"relay_addr\": \"<your-relay-address>\"", mustConfigPath())
+		log.Fatalf("[Node] relay_address is not set in config. Please edit %s and add \"relay_address\": \"<your-relay-address>\"", mustConfigPath())
 	}
 
 	if len(config.Services()) == 0 {
@@ -460,5 +460,5 @@ func printUsage() {
 	fmt.Println("  -h, --help  Show this help message")
 	fmt.Println()
 	fmt.Println("Configuration:")
-	fmt.Println("  Relay address is configured in the config file (relay_addr)")
+	fmt.Println("  Relay address is configured in the config file (relay_address)")
 }

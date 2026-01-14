@@ -2,7 +2,7 @@
   // Relay server WebSocket URL
   // Development: "ws://localhost:9020/node/connect"
   // Production: "wss://relay.unblink.net/node/connect"
-  "relay_addr": "wss://relay.unblink.net/node/connect",
+  "relay_address": "wss://relay.unblink.net/node/connect",
 
   // Authorization token (added after authorization)
   "token": "",

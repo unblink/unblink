@@ -14,7 +14,10 @@ export const ArkTabs = (props: {
   value?: string
   onValueChange?: Setter<string>
   listClass?: string
+  indicatorPosition?: 'top' | 'bottom'
 }) => {
+  const position = props.indicatorPosition || 'top'
+
   return (
     <Tabs.Root
       defaultValue={props.defaultValue || props.items[0]?.value}
@@ -32,7 +35,14 @@ export const ArkTabs = (props: {
             {item.label}
           </Tabs.Trigger>
         ))}
-        <Tabs.Indicator class="bg-violet-500" style={{ height: '2px', width: 'var(--width)' }} />
+        <Tabs.Indicator
+          class="bg-violet-500"
+          style={{
+            height: '2px',
+            width: 'var(--width)',
+            ...(position === 'bottom' ? { bottom: '0' } : { top: '0' })
+          }}
+        />
       </Tabs.List>
       {props.items.map((item) => (
         <Tabs.Content value={item.value} class="flex-1 overflow-auto focus:outline-none">

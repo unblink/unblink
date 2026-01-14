@@ -13,15 +13,16 @@ import (
 
 // Relay manages node connections and the service registry
 type Relay struct {
-	nodes      map[string]*NodeConn // node_id -> connection
-	nodesMu    sync.RWMutex
-	services   *ServiceRegistry
-	db         *Database
-	nodeTable  *NodeTable
-	agentTable *AgentTable
-	config     *Config // Centralized configuration
-	shutdown   chan struct{}
-	wg         sync.WaitGroup
+	nodes         map[string]*NodeConn // node_id -> connection
+	nodesMu       sync.RWMutex
+	services      *ServiceRegistry
+	db            *Database
+	nodeTable     *NodeTable
+	agentTable    *AgentTable
+	agentRegistry *AgentRegistry // In-memory agent cache
+	config        *Config        // Centralized configuration
+	shutdown      chan struct{}
+	wg            sync.WaitGroup
 
 	// Realtime streaming and CV processing
 	realtimeStreamManager *realtime.RealtimeStreamManager
@@ -45,13 +46,19 @@ func NewRelay() *Relay {
 	}
 
 	relay := &Relay{
-		nodes:      make(map[string]*NodeConn),
-		services:   NewServiceRegistry(),
-		shutdown:   make(chan struct{}),
-		db:         db,
-		nodeTable:  NewNodeTable(db.DB),
-		agentTable: NewAgentTable(db.DB),
-		config:     config,
+		nodes:         make(map[string]*NodeConn),
+		services:      NewServiceRegistry(),
+		shutdown:      make(chan struct{}),
+		db:            db,
+		nodeTable:     NewNodeTable(db.DB),
+		agentTable:    NewAgentTable(db.DB),
+		agentRegistry: NewAgentRegistry(),
+		config:        config,
+	}
+
+	// Load agents from database into registry
+	if err := relay.agentRegistry.LoadFromDatabase(relay.agentTable); err != nil {
+		log.Printf("[Relay] Warning: Failed to load agents into registry: %v", err)
 	}
 
 	// Initialize CV and realtime streaming subsystems
@@ -76,6 +83,9 @@ func (r *Relay) initializeCV() {
 
 	// Set storage manager reference in worker registry (complete the circular dependency)
 	r.cvWorkerRegistry.SetStorageManager(r.storageManager)
+
+	// Set agent registry reference in worker registry (for filtering frame_batch events)
+	r.cvWorkerRegistry.SetAgentRegistry(r.agentRegistry)
 
 	// Initialize realtime stream manager
 	nodeConnGetter := func(nodeID string) realtime.NodeConn {
