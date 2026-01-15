@@ -103,7 +103,7 @@ export function useAgentPanel(serviceId?: string) {
 
   // Component to display JSON data nicely formatted
   const JsonDisplay = (props: { data: unknown }) => (
-    <pre class="text-xs text-neu-300 overflow-x-auto font-mono">
+    <pre class="text-xs text-neu-300 whitespace-pre-wrap break-words font-mono">
       {JSON.stringify(props.data, null, 2)}
     </pre>
   );
