@@ -25,6 +25,9 @@ func StartHTTPAPIServer(relay *Relay, addr string, cfg *Config) (*http.Server, e
 		handleFlags(w, r, cfg)
 	})
 
+	// Browser client WebSocket connection (auth via registration message)
+	mux.HandleFunc("/client/connect", relay.clientEvents.HandleWebSocket)
+
 	// List all nodes (protected)
 	mux.HandleFunc("/nodes", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodGet {

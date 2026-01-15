@@ -25,16 +25,14 @@ func init() {
 }
 
 func main() {
-	flag.Parse()
-
 	// Check for help
 	if len(os.Args) > 1 && (os.Args[1] == "-h" || os.Args[1] == "--help" || os.Args[1] == "help") {
 		printUsage()
 		return
 	}
 
-	// Handle subcommands
-	if len(os.Args) > 1 && !flag.Parsed() {
+	// Handle subcommands before parsing flags
+	if len(os.Args) > 1 {
 		switch os.Args[1] {
 		case "config":
 			handleConfigCommand()
@@ -53,6 +51,9 @@ func main() {
 			return
 		}
 	}
+
+	// Parse flags for main node execution
+	flag.Parse()
 
 	// Load config (LoadConfig creates it with generated node ID if missing)
 	var config *node.Config

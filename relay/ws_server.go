@@ -19,9 +19,6 @@ func StartWebSocketServerAsync(r *Relay, addr string) (*http.Server, error) {
 	mux.HandleFunc("/worker/connect", r.cvWorkerRegistry.HandleWebSocket)
 	mux.HandleFunc("/worker/frames/", r.storageManager.HandleFrameDownload)
 
-	// Browser client connections
-	mux.HandleFunc("/client/connect", r.clientEvents.HandleWebSocket)
-
 	server := &http.Server{
 		Addr:    addr,
 		Handler: mux,
