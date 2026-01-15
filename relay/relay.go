@@ -233,10 +233,14 @@ func (r *Relay) Shutdown() {
 func (r *Relay) SendTokenToNode(nodeID, token string) {
 	r.nodesMu.RLock()
 	nc, exists := r.nodes[nodeID]
+	connectedNodes := make([]string, 0, len(r.nodes))
+	for id := range r.nodes {
+		connectedNodes = append(connectedNodes, id)
+	}
 	r.nodesMu.RUnlock()
 
 	if !exists {
-		log.Printf("[Relay] Node %s not connected", nodeID)
+		log.Printf("[Relay] Node %s not connected. Connected nodes: %v", nodeID, connectedNodes)
 		return
 	}
 

@@ -462,7 +462,9 @@ func logout() {
 		return
 	}
 
+	// Clear both token and node ID so re-authorization gets a fresh identity
 	config.SetToken("")
+	config.SetNodeID("")
 	if err := config.Save(); err != nil {
 		log.Fatalf("Failed to save config: %v", err)
 	}

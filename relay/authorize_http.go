@@ -69,9 +69,10 @@ func handleAuthorizeAPI(w http.ResponseWriter, r *http.Request, cfg *Config, rel
 		return
 	}
 
-	// Insert node with token and owner
+	// Insert or update node with token and owner
+	// Use INSERT OR REPLACE to handle case where node row exists but has no owner
 	_, err = relay.db.DB.Exec(
-		"INSERT INTO nodes (id, token, owner_id, name, authorized_at) VALUES (?, ?, ?, ?, datetime('now'))",
+		"INSERT OR REPLACE INTO nodes (id, token, owner_id, name, authorized_at) VALUES (?, ?, ?, ?, datetime('now'))",
 		req.NodeID, token, claims.UserID, nil,
 	)
 	if err != nil {
