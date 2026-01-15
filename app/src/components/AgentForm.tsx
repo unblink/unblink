@@ -1,5 +1,5 @@
 import { ArkTabs } from "../ark/ArkTabs";
-import { For, Show, createSignal, onMount } from "solid-js";
+import { For, Show, createSignal, onMount, untrack, Setter } from "solid-js";
 import { FiSettings, FiVideo } from "solid-icons/fi";
 import { nodes, fetchNodes } from "../shared";
 import ArkSwitch from "../ark/ArkSwitch";
@@ -35,8 +35,12 @@ export function AgentForm(props: {
     selectedServiceIds: () => string[];
     setSelectedServiceIds: (ids: string[]) => void;
     showTemplates?: boolean;
+    activeTab?: () => string;
+    setActiveTab?: Setter<string>;
 }) {
-    const [activeTab, setActiveTab] = createSignal("config");
+    const [localActiveTab, setLocalActiveTab] = createSignal("config");
+    const activeTab = props.activeTab ?? localActiveTab;
+    const setActiveTab = props.setActiveTab ?? setLocalActiveTab;
 
     const allServices = () => {
         const result: ServiceWithNode[] = [];
@@ -185,7 +189,7 @@ export function AgentForm(props: {
                 },
             ]}
             value={activeTab()}
-            onValueChange={setActiveTab}
+            onValueChange={(value) => setActiveTab(value)}
         />
     );
 }

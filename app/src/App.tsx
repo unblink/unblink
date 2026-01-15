@@ -1,5 +1,5 @@
 import { onMount, onCleanup, createEffect, createSignal, type Component } from 'solid-js';
-import { authState, initAuth } from './shared';
+import { authState, initAuth, fetchFlags, configState } from './shared';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import Authorize from './pages/Authorize';
@@ -26,6 +26,11 @@ const App: Component = () => {
   const path = usePath();
 
   onMount(async () => {
+    // Fetch config first to determine dev mode
+    await fetchFlags();
+    console.log('[App] Config loaded - DEV_IMPERSONATE:', configState().DEV_IMPERSONATE);
+
+    // Then init auth (will use impersonation header if configured)
     await initAuth();
     console.log('[App] After initAuth - isLoading:', authState().isLoading, 'isAuthenticated:', authState().isAuthenticated);
   });

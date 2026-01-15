@@ -5,10 +5,22 @@ import { relayFetch, setTab, fetchAgents } from "../shared";
 import { toaster } from "../ark/ArkToast";
 import { AgentForm } from "./AgentForm";
 
+const TABS = ["config", "services"] as const;
+
 export default function AddAgentButton() {
     const [name, setName] = createSignal("");
     const [instruction, setInstruction] = createSignal("");
     const [selectedServiceIds, setSelectedServiceIds] = createSignal<string[]>([]);
+    const [activeTab, setActiveTab] = createSignal<string>("config");
+
+    const isLastTab = () => activeTab() === TABS[TABS.length - 1];
+
+    const handleNext = () => {
+        const currentIndex = TABS.indexOf(activeTab() as typeof TABS[number]);
+        if (currentIndex < TABS.length - 1) {
+            setActiveTab(TABS[currentIndex + 1]);
+        }
+    };
 
     const handleSave = async (closeDialog: () => void) => {
         const _name = untrack(name).trim();
@@ -38,6 +50,7 @@ export default function AddAgentButton() {
                 setName("");
                 setInstruction("");
                 setSelectedServiceIds([]);
+                setActiveTab("config"); // Reset to first tab
                 closeDialog(); // Close dialog after success
                 setTab({ type: 'agents' }); // Redirect to agents tab
                 await fetchAgents(); // Refresh agents list
@@ -88,13 +101,21 @@ export default function AddAgentButton() {
                         selectedServiceIds={selectedServiceIds}
                         setSelectedServiceIds={setSelectedServiceIds}
                         showTemplates={true}
+                        activeTab={activeTab}
+                        setActiveTab={setActiveTab}
                     />
                     <div class="flex justify-end pt-4">
                         <button
-                            onClick={() => handleSave(() => setOpen(false))}
+                            onClick={() => {
+                                if (isLastTab()) {
+                                    handleSave(() => setOpen(false));
+                                } else {
+                                    handleNext();
+                                }
+                            }}
                             class="btn-primary"
                         >
-                            Create Agent
+                            {isLastTab() ? "Create Agent" : "Next"}
                         </button>
                     </div>
                 </div>

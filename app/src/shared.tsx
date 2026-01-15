@@ -18,12 +18,40 @@ export const clearToken = () => localStorage.removeItem(TOKEN_KEY);
 // Automatically adds JWT token and relay base URL
 export const relayFetch = async (path: string, options?: RequestInit): Promise<Response> => {
   const token = getToken();
+
+  // Convert HeadersInit to Record<string, string>
+  const headers: Record<string, string> = {};
+  if (options?.headers) {
+    if (options.headers instanceof Headers) {
+      options.headers.forEach((value, key) => {
+        headers[key] = value;
+      });
+    } else if (Array.isArray(options.headers)) {
+      options.headers.forEach(([key, value]) => {
+        headers[key] = value;
+      });
+    } else {
+      Object.assign(headers, options.headers);
+    }
+  }
+
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+
+  // Add dev impersonation header if config allows it
+  const devImpersonate = configState().DEV_IMPERSONATE;
+  if (devImpersonate === "true" || devImpersonate.includes("@")) {
+    // If devImpersonate is "true", caller must set X-Dev-Impersonate manually
+    // If devImpersonate is an email, we'll use it for auto-impersonation
+    if (devImpersonate.includes("@")) {
+      headers['X-Dev-Impersonate'] = devImpersonate;
+    }
+  }
+
   return fetch(relay(path), {
     ...options,
-    headers: {
-      ...options?.headers,
-      ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
-    },
+    headers,
     credentials: 'omit', // No longer need cookies
   });
 };
@@ -48,6 +76,37 @@ export const [authState, setAuthState] = createSignal<AuthState>({
   isAuthenticated: false,
   isLoading: true,
 });
+
+// Config state
+export interface ConfigState {
+  DEV_IMPERSONATE: string; // "", "true", or specific email
+  isLoading: boolean;
+}
+
+export const [configState, setConfigState] = createSignal<ConfigState>({
+  DEV_IMPERSONATE: "",
+  isLoading: true,
+});
+
+// Fetch flags from relay
+export const fetchFlags = async () => {
+  try {
+    const response = await relayFetch('/flags');
+    if (response.ok) {
+      const data = await response.json();
+      setConfigState({
+        DEV_IMPERSONATE: data.DEV_IMPERSONATE || "",
+        isLoading: false,
+      });
+      console.log('[fetchFlags] Config loaded:', data);
+    } else {
+      setConfigState({ DEV_IMPERSONATE: "", isLoading: false });
+    }
+  } catch (error) {
+    console.error('[fetchFlags] Failed to fetch flags:', error);
+    setConfigState({ DEV_IMPERSONATE: "", isLoading: false });
+  }
+};
 
 // Login function
 export const login = async (email: string, password: string): Promise<{ success: boolean; message?: string; user?: User }> => {

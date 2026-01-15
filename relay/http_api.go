@@ -20,13 +20,18 @@ func StartHTTPAPIServer(relay *Relay, addr string, cfg *Config) (*http.Server, e
 		handleAuthorizeAPI(w, r, cfg, relay)
 	})
 
+	// Feature flags endpoint (no auth required)
+	mux.HandleFunc("/flags", func(w http.ResponseWriter, r *http.Request) {
+		handleFlags(w, r, cfg)
+	})
+
 	// List all nodes (protected)
 	mux.HandleFunc("/nodes", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodGet {
 			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 			return
 		}
-		userID, err := requireAuth(w, r, cfg)
+		userID, err := requireAuth(w, r, cfg, authStore)
 		if err != nil {
 			return
 		}
@@ -48,7 +53,7 @@ func StartHTTPAPIServer(relay *Relay, addr string, cfg *Config) (*http.Server, e
 		endpoint := parts[1]
 
 		// Check authentication
-		userID, err := requireAuth(w, r, cfg)
+		userID, err := requireAuth(w, r, cfg, authStore)
 		if err != nil {
 			return
 		}
@@ -92,7 +97,7 @@ func StartHTTPAPIServer(relay *Relay, addr string, cfg *Config) (*http.Server, e
 
 	// Agent endpoints (protected)
 	mux.HandleFunc("/agents", func(w http.ResponseWriter, r *http.Request) {
-		userID, err := requireAuth(w, r, cfg)
+		userID, err := requireAuth(w, r, cfg, authStore)
 		if err != nil {
 			return
 		}
@@ -125,7 +130,7 @@ func StartHTTPAPIServer(relay *Relay, addr string, cfg *Config) (*http.Server, e
 		}
 
 		// Check authentication
-		userID, err := requireAuth(w, r, cfg)
+		userID, err := requireAuth(w, r, cfg, authStore)
 		if err != nil {
 			return
 		}
@@ -178,7 +183,7 @@ func corsMiddleware(next http.Handler) http.Handler {
 			w.Header().Set("Access-Control-Allow-Origin", origin)
 		}
 		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE, OPTIONS")
-		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
+		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Dev-Impersonate")
 		w.Header().Set("Access-Control-Allow-Credentials", "true") // Required for credentials mode
 
 		// Handle preflight requests

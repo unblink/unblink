@@ -94,7 +94,22 @@ func handleAuthorizeAPI(w http.ResponseWriter, r *http.Request, cfg *Config, rel
 }
 
 // requireAuth is a middleware that requires authentication and returns the userID
-func requireAuth(w http.ResponseWriter, r *http.Request, cfg *Config) (int64, error) {
+func requireAuth(w http.ResponseWriter, r *http.Request, cfg *Config, authStore *AuthStore) (int64, error) {
+	// Check for dev impersonation header (ONLY if enabled)
+	if cfg.DevImpersonate != "" {
+		if email := r.Header.Get("X-Dev-Impersonate"); email != "" {
+			user, err := authStore.GetUserByEmail(email)
+			if err != nil {
+				log.Printf("[HTTP] Dev impersonation failed for email %s: %v", email, err)
+				http.Error(w, "User not found for impersonation", http.StatusNotFound)
+				return 0, err
+			}
+			log.Printf("[HTTP] Dev impersonation: %s (ID: %d)", email, user.ID)
+			return user.ID, nil
+		}
+	}
+
+	// Normal JWT authentication
 	authHeader := r.Header.Get("Authorization")
 	if authHeader == "" {
 		http.Error(w, "Not authenticated", http.StatusUnauthorized)

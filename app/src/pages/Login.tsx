@@ -1,5 +1,5 @@
 import { createSignal, onMount, createEffect, type Component } from 'solid-js';
-import { login, authState } from '../shared';
+import { login, authState, configState, relayFetch } from '../shared';
 
 const Login: Component = () => {
   const [email, setEmail] = createSignal('');
@@ -7,6 +7,9 @@ const Login: Component = () => {
   const [error, setError] = createSignal('');
   const [success, setSuccess] = createSignal('');
   const [loading, setLoading] = createSignal(false);
+
+  // Check if we're in simplified login mode (dev impersonate = true)
+  const isSimplifiedLogin = () => configState().DEV_IMPERSONATE === 'true';
 
   // Check for message from registration on mount
   onMount(() => {
@@ -35,13 +38,42 @@ const Login: Component = () => {
     setError('');
     setLoading(true);
 
-    const result = await login(email(), password());
+    if (isSimplifiedLogin()) {
+      // Dev mode: impersonate user without password
+      try {
+        const response = await relayFetch('/auth/me', {
+          headers: {
+            'X-Dev-Impersonate': email(),
+          },
+        });
 
-    if (result.success) {
-      window.location.href = redirectParam() || '/';
+        if (response.ok) {
+          const data = await response.json();
+          if (data.success) {
+            window.location.href = redirectParam() || '/';
+          } else {
+            setError('User not found');
+            setLoading(false);
+          }
+        } else {
+          setError('Authentication failed');
+          setLoading(false);
+        }
+      } catch (err) {
+        console.error('Dev impersonation error:', err);
+        setError('Network error');
+        setLoading(false);
+      }
     } else {
-      setError(result.message || 'Login failed');
-      setLoading(false);
+      // Normal login
+      const result = await login(email(), password());
+
+      if (result.success) {
+        window.location.href = redirectParam() || '/';
+      } else {
+        setError(result.message || 'Login failed');
+        setLoading(false);
+      }
     }
   };
 
@@ -96,7 +128,8 @@ const Login: Component = () => {
             class="px-3 py-1.5 mt-1 block w-full rounded-lg bg-neu-850 border border-neu-750 text-white focus:outline-none placeholder:text-neu-500"
             value={password()}
             onInput={(e) => setPassword(e.currentTarget.value)}
-            required
+            required={!isSimplifiedLogin()}
+            classList={{ "hidden": isSimplifiedLogin() }}
           />
         </div>
 

@@ -32,6 +32,9 @@ type Config struct {
 
 	// Security
 	JWTSecret string // Secret for signing JWT tokens
+
+	// Dev Mode
+	DevImpersonate string // "", "true", or specific email like "dev@local"
 }
 
 // LoadConfig loads and validates all configuration from environment
@@ -88,6 +91,9 @@ func LoadConfig() (*Config, error) {
 		log.Printf("[Config] WARNING: Using default JWT_SECRET. Set JWT_SECRET in production!")
 	}
 
+	// Dev impersonation mode (optional, default: disabled)
+	devImpersonate := os.Getenv("DEV_IMPERSONATE")
+
 	// Stop if any required variables are missing
 	if len(missingVars) > 0 {
 		return nil, fmt.Errorf("missing required environment variables: %v\nPlease set them in .env file or environment", missingVars)
@@ -128,6 +134,7 @@ func LoadConfig() (*Config, error) {
 		DashboardURL:              dashboardURL,
 		AutoRequestRealtimeStream: autoRequestRealtimeStream,
 		JWTSecret:                 jwtSecret,
+		DevImpersonate:            devImpersonate,
 	}
 
 	// Log loaded configuration
@@ -141,6 +148,9 @@ func LoadConfig() (*Config, error) {
 	log.Printf("[Config]   CV_FRAME_BATCH_SIZE: %d", config.BatchSize)
 	log.Printf("[Config]   DASHBOARD_URL: %s", config.DashboardURL)
 	log.Printf("[Config]   AUTO_REQUEST_REALTIME_STREAM: %v", config.AutoRequestRealtimeStream)
+	if config.DevImpersonate != "" {
+		log.Printf("[Config]   DEV_IMPERSONATE: %s", config.DevImpersonate)
+	}
 
 	return config, nil
 }

@@ -148,6 +148,26 @@ func handleMe(w http.ResponseWriter, r *http.Request, authStore *AuthStore, cfg 
 		return
 	}
 
+	// Check for dev impersonation header (ONLY if enabled)
+	if cfg.DevImpersonate != "" {
+		if email := r.Header.Get("X-Dev-Impersonate"); email != "" {
+			user, err := authStore.GetUserByEmail(email)
+			if err != nil {
+				log.Printf("[Auth] Dev impersonation failed for email %s: %v", email, err)
+				writeJSONError(w, "User not found for impersonation", http.StatusNotFound)
+				return
+			}
+			log.Printf("[Auth] Dev impersonation via /auth/me: %s (ID: %d)", email, user.ID)
+			w.Header().Set("Content-Type", "application/json")
+			json.NewEncoder(w).Encode(MeResponse{
+				Success: true,
+				User:    user,
+			})
+			return
+		}
+	}
+
+	// Normal JWT authentication
 	// Get Authorization header
 	authHeader := r.Header.Get("Authorization")
 	if authHeader == "" {

@@ -26,18 +26,27 @@ export const ArkDialog = (props: {
             onClick={(e) => e.stopPropagation()}
           >
             <Dialog.Content
-              class="relative w-full max-w-md max-h-[85vh] p-6 bg-neu-900 rounded-2xl border border-neu-800 shadow-lg"
+              class="relative w-full max-w-md max-h-[85vh] flex flex-col bg-neu-900 rounded-2xl border border-neu-800 shadow-lg"
               onClick={(e) => e.stopPropagation()}
             >
-              <Dialog.Title class="m-0 text-lg font-medium text-white">
-                {props.title}
-              </Dialog.Title>
-              {props.description && (
-                <Dialog.Description class="my-4 text-sm leading-relaxed text-neu-400">
-                  {props.description}
-                </Dialog.Description>
-              )}
-              {typeof props.children === 'function' ? props.children(setOpen) : props.children}
+              {/* Fixed header - title, description */}
+              <div class="flex-shrink-0 px-6 pt-6 pb-2">
+                <Dialog.Title class="m-0 text-lg font-medium text-white">
+                  {props.title}
+                </Dialog.Title>
+                {props.description && (
+                  <Dialog.Description class="mt-2 text-sm leading-relaxed text-neu-400">
+                    {props.description}
+                  </Dialog.Description>
+                )}
+              </div>
+
+              {/* Scrollable content area */}
+              <div class="flex-1 overflow-y-auto px-6 pb-6 min-h-0">
+                {typeof props.children === 'function' ? props.children(setOpen) : props.children}
+              </div>
+
+              {/* Close button - absolutely positioned */}
               <Dialog.CloseTrigger
                 class="absolute top-2.5 right-2.5 text-neu-400 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 focus-visible:ring-offset-neu-800"
                 onClick={(e) => e.stopPropagation()}

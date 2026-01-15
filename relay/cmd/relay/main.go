@@ -45,6 +45,14 @@ func main() {
 
 	r := relay.NewRelay()
 
+	// Ensure dev user exists (for dev impersonation mode)
+	authStore := relay.NewAuthStore(r.GetDB().DB)
+	if _, err := authStore.EnsureDevUser(); err != nil {
+		log.Printf("[Main] Warning: Failed to ensure dev user: %v", err)
+	} else {
+		log.Printf("[Main] Dev user 'dev@local' is ready")
+	}
+
 	// Start HTTP API server
 	apiServer, err := relay.StartHTTPAPIServer(r, apiAddr, config)
 	if err != nil {

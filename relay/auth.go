@@ -1,11 +1,31 @@
 package relay
 
 import (
+	"crypto/rand"
 	"database/sql"
 	"errors"
+	"math/big"
 
 	"golang.org/x/crypto/bcrypt"
 )
+
+// generateRandomPassword generates a random 32-character password
+func generateRandomPassword() string {
+	const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+	const length = 32
+
+	result := make([]byte, length)
+	for i := range result {
+		n, err := rand.Int(rand.Reader, big.NewInt(int64(len(charset))))
+		if err != nil {
+			// Fallback to simple random if crypto rand fails
+			result[i] = charset[i%len(charset)]
+			continue
+		}
+		result[i] = charset[n.Int64()]
+	}
+	return string(result)
+}
 
 // User represents a user in the system
 type User struct {
@@ -97,4 +117,37 @@ func (s *AuthStore) GetUserByID(id int64) (*User, error) {
 	}
 
 	return &user, nil
+}
+
+// GetUserByEmail retrieves a user by email
+func (s *AuthStore) GetUserByEmail(email string) (*User, error) {
+	var user User
+	err := s.db.QueryRow(
+		"SELECT id, email, name FROM users WHERE email = ?",
+		email,
+	).Scan(&user.ID, &user.Email, &user.Name)
+
+	if err == sql.ErrNoRows {
+		return nil, errors.New("user not found")
+	}
+	if err != nil {
+		return nil, err
+	}
+
+	return &user, nil
+}
+
+// EnsureDevUser creates a dev user if it doesn't exist
+func (s *AuthStore) EnsureDevUser() (*User, error) {
+	// Check if dev user exists
+	user, err := s.GetUserByEmail("dev@local")
+	if err == nil {
+		return user, nil // Already exists
+	}
+
+	// Generate a random password (won't be used in dev mode)
+	randomPassword := generateRandomPassword()
+
+	// Create dev user
+	return s.Register("dev@local", randomPassword, "Dev User")
 }

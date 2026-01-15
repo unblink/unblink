@@ -195,6 +195,11 @@ func (r *Relay) Services() *ServiceRegistry {
 	return r.services
 }
 
+// GetDB returns the database
+func (r *Relay) GetDB() *Database {
+	return r.db
+}
+
 // Shutdown gracefully shuts down the relay
 func (r *Relay) Shutdown() {
 	close(r.shutdown)
