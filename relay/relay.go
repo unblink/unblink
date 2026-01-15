@@ -29,6 +29,7 @@ type Relay struct {
 	cvEventBus            *cv.CVEventBus
 	cvWorkerRegistry      *cv.CVWorkerRegistry
 	storageManager        *cv.StorageManager
+	clientEvents          *ClientEventRegistry
 }
 
 // NewRelay creates a new relay server
@@ -89,6 +90,19 @@ func (r *Relay) initializeCV() {
 
 	// Set database reference in worker registry (for storing agent events)
 	r.cvWorkerRegistry.SetDatabase(r.db)
+
+	// Initialize client event registry for browser WebSocket connections
+	r.clientEvents = NewClientEventRegistry(r.agentTable, r.config)
+
+	// Subscribe to worker events to forward to browser clients
+	r.cvEventBus.OnWorkerEvent(func(event *cv.WorkerEvent) {
+		// Extract agent_id from event data
+		if agentID, ok := event.Data["agent_id"].(string); ok {
+			data, _ := event.Data["data"].(map[string]interface{})
+			metadata, _ := event.Data["metadata"].(map[string]interface{})
+			r.clientEvents.BroadcastAgentEvent(agentID, data, metadata, event.CreatedAt)
+		}
+	})
 
 	// Initialize realtime stream manager
 	nodeConnGetter := func(nodeID string) realtime.NodeConn {

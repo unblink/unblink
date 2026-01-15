@@ -7,6 +7,7 @@ import TabHome from './tabs/TabHome';
 import TabAgents from './tabs/TabAgents';
 import ArkToast from '../ark/ArkToast';
 import { tab, type Tab } from '../shared';
+import { useAgentPanel } from './AgentPanel';
 
 const ComingSoon = () => (
   <div class="flex justify-center items-center h-full">
@@ -16,6 +17,7 @@ const ComingSoon = () => (
 
 const Main: Component = () => {
   const [isSavingSettings, setIsSavingSettings] = createSignal(false);
+  const agentPanel = useAgentPanel();
 
   const handleSaveSettings = async () => {
     setIsSavingSettings(true);
@@ -42,9 +44,14 @@ const Main: Component = () => {
             {(() => {
               const t = tab() as Extract<Tab, { type: 'view' }>;
               return (
-                <TabLayout title={t.name || 'Stream'}>
-                  <VideoTile nodeId={t.nodeId} serviceId={t.serviceId} name={t.name} />
-                </TabLayout>
+                <div class="flex h-screen">
+                  <div class="flex-1 h-screen overflow-hidden">
+                    <TabLayout title={t.name || 'Stream'}>
+                      <VideoTile nodeId={t.nodeId} serviceId={t.serviceId} name={t.name} />
+                    </TabLayout>
+                  </div>
+                  <agentPanel.Comp />
+                </div>
               );
             })()}
           </Match>

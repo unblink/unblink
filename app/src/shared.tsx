@@ -346,3 +346,89 @@ export const fetchNodes = async () => {
     setNodesLoading(false);
   }
 };
+
+// Agent Events WebSocket
+export interface AgentEvent {
+  id: string;
+  agent_id: string;
+  agent_name: string;
+  service_ids: string[];
+  data: Record<string, unknown>;
+  metadata?: Record<string, unknown>;
+  created_at: string;
+}
+
+let agentEventsWs: WebSocket | null = null;
+const agentEventListeners = new Set<(event: AgentEvent) => void>();
+
+export const connectAgentEventsWebSocket = () => {
+  const token = getToken();
+  if (!token) {
+    console.error('[AgentEvents] No token available');
+    return;
+  }
+
+  const wsUrl = relay('/client/connect').replace(/^http/, 'ws');
+
+  agentEventsWs = new WebSocket(wsUrl);
+
+  agentEventsWs.onopen = () => {
+    console.log('[AgentEvents] Connected, registering...');
+
+    // Send registration message with JWT token
+    agentEventsWs!.send(JSON.stringify({
+      type: 'register',
+      data: { token }
+    }));
+  };
+
+  agentEventsWs.onmessage = (event) => {
+    try {
+      const message = JSON.parse(event.data);
+
+      switch (message.type) {
+        case 'registered':
+          console.log('[AgentEvents] Registered as user', message.data.user_id);
+          break;
+
+        case 'error':
+          console.error('[AgentEvents] Error:', message.data.message);
+          agentEventsWs?.close();
+          break;
+
+        case 'agent_event':
+          const agentEvent = message.data as AgentEvent;
+          agentEventListeners.forEach(listener => listener(agentEvent));
+          break;
+
+        default:
+          console.warn('[AgentEvents] Unknown message type:', message.type);
+      }
+    } catch (error) {
+      console.error('[AgentEvents] Failed to parse message:', error);
+    }
+  };
+
+  agentEventsWs.onerror = (error) => {
+    console.error('[AgentEvents] WebSocket error:', error);
+  };
+
+  agentEventsWs.onclose = () => {
+    console.log('[AgentEvents] WebSocket closed, reconnecting in 3s...');
+    agentEventsWs = null;
+    setTimeout(connectAgentEventsWebSocket, 3000);
+  };
+};
+
+export const subscribeToAgentEvents = (callback: (event: AgentEvent) => void) => {
+  agentEventListeners.add(callback);
+  return () => agentEventListeners.delete(callback);
+};
+
+export const disconnectAgentEventsWebSocket = () => {
+  if (agentEventsWs) {
+    agentEventsWs.close();
+    agentEventsWs = null;
+  }
+  agentEventListeners.clear();
+};

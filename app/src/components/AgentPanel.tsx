@@ -1,62 +1,74 @@
 import { FiChevronLeft, FiChevronRight, FiEye } from 'solid-icons/fi';
-import { For, Show, createSignal } from 'solid-js';
+import { For, Show, createSignal, onMount, onCleanup } from 'solid-js';
 import { ArkSelect, type SelectItem } from '../ark/ArkSelect';
-
-// Example JSON data for testing - will be replaced with real data later
-const exampleCards = [
-  {
-    id: '1',
-    agent_name: 'Person Detector',
-    stream_name: 'Front Door Camera',
-    data: {
-      confidence: 0.95,
-      detected_class: 'person',
-      bbox: [100, 150, 300, 400],
-      timestamp: '2025-01-15T10:30:00Z'
-    }
-  },
-  {
-    id: '2',
-    agent_name: 'Vehicle Counter',
-    stream_name: 'Parking Lot',
-    data: {
-      confidence: 0.88,
-      detected_class: 'car',
-      bbox: [50, 80, 200, 180],
-      color: 'blue',
-      timestamp: '2025-01-15T10:29:45Z'
-    }
-  },
-  {
-    id: '3',
-    agent_name: 'Person Detector',
-    stream_name: 'Backyard Camera',
-    data: {
-      confidence: 0.92,
-      detected_class: 'person',
-      bbox: [120, 200, 350, 500],
-      timestamp: '2025-01-15T10:29:30Z'
-    }
-  }
-];
-
-const agentOptions: SelectItem[] = [
-  { label: 'All Agents', value: 'all' },
-  { label: 'Person Detector', value: 'Person Detector' },
-  { label: 'Vehicle Counter', value: 'Vehicle Counter' }
-];
+import { formatDistance } from 'date-fns';
+import {
+  connectAgentEventsWebSocket,
+  subscribeToAgentEvents,
+  disconnectAgentEventsWebSocket,
+  agents,
+  nodes,
+  type AgentEvent
+} from '../shared';
 
 export function useAgentPanel() {
   const [showAgentPanel, setShowAgentPanel] = createSignal(true);
   const [selectedAgent, setSelectedAgent] = createSignal('all');
+  const [events, setEvents] = createSignal<AgentEvent[]>([]);
 
-  // Filter cards based on selected agent
-  const filteredCards = () => {
+  onMount(() => {
+    // Connect to WebSocket
+    connectAgentEventsWebSocket();
+
+    // Subscribe to events
+    const unsubscribe = subscribeToAgentEvents((event) => {
+      setEvents(prev => [event, ...prev].slice(0, 100)); // Keep latest 100
+    });
+
+    onCleanup(() => {
+      unsubscribe();
+      disconnectAgentEventsWebSocket();
+    });
+  });
+
+  // Build agent filter options from real agents
+  const agentOptions = (): SelectItem[] => {
+    const agentList = agents();
+    return [
+      { label: 'All Agents', value: 'all' },
+      ...agentList.map(agent => ({
+        label: agent.name,
+        value: agent.id
+      }))
+    ];
+  };
+
+  // Filter events based on selected agent
+  const filteredEvents = () => {
     const selected = selectedAgent();
     if (selected === 'all') {
-      return exampleCards;
+      return events();
     }
-    return exampleCards.filter(card => card.agent_name === selected);
+    return events().filter(event => event.agent_id === selected);
+  };
+
+  // Map service_id to service name
+  const getServiceName = (serviceId: string): string => {
+    const nodeList = nodes();
+    for (const node of nodeList) {
+      const service = node.services.find(s => s.id === serviceId);
+      if (service) {
+        return service.name || serviceId;
+      }
+    }
+    return serviceId;
+  };
+
+  const getPrimaryServiceName = (event: AgentEvent): string => {
+    if (!event.service_ids || event.service_ids.length === 0) {
+      return 'No service';
+    }
+    return getServiceName(event.service_ids[0]);
   };
 
   const Toggle = () => (
@@ -77,7 +89,7 @@ export function useAgentPanel() {
 
   // Component to display JSON data nicely formatted
   const JsonDisplay = (props: { data: unknown }) => (
-    <pre class="text-xs text-neu-300 bg-neu-900 rounded-lg p-3 overflow-x-auto font-mono">
+    <pre class="text-xs text-neu-300 overflow-x-auto font-mono">
       {JSON.stringify(props.data, null, 2)}
     </pre>
   );
@@ -96,7 +108,7 @@ export function useAgentPanel() {
             <Toggle />
             <Show when={showAgentPanel()}>
               <ArkSelect
-                items={agentOptions}
+                items={agentOptions()}
                 value={selectedAgent}
                 onValueChange={(details) => setSelectedAgent(details.value[0] || 'all')}
                 placeholder="Filter by agent"
@@ -107,23 +119,34 @@ export function useAgentPanel() {
 
           <Show when={showAgentPanel()}>
             <div class="flex-1 p-2 overflow-y-auto space-y-4">
-              <For each={filteredCards()}>
-                {(card) => (
-                  <div class="animate-push-down p-4 bg-neu-850 rounded-2xl space-y-2">
-                    <div class="flex items-center justify-between">
-                      <div class="font-semibold text-white">{card.stream_name}</div>
-                      <Show when={card.agent_name}>
-                        <div class="flex items-center gap-1.5 text-xs px-2 py-1 bg-neu-800 rounded-lg text-neu-300 font-medium">
-                          <FiEye class="w-3 h-3" />
-                          {card.agent_name}
-                        </div>
-                      </Show>
+              <Show when={filteredEvents().length > 0} fallback={
+                <div class="text-center text-neu-500 py-8">
+                  No events yet
+                </div>
+              }>
+                <For each={filteredEvents()}>
+                  {(event) => (
+                    <div class="animate-push-down p-4 bg-neu-850 rounded-2xl space-y-2">
+                      <div class="flex items-center justify-between">
+                        <div class="font-semibold text-white">{getPrimaryServiceName(event)}</div>
+                        <Show when={event.agent_name}>
+                          <div class="flex items-center gap-1.5 text-xs px-2 py-1 bg-neu-800 rounded-lg text-neu-300 font-medium">
+                            <FiEye class="w-3 h-3" />
+                            {event.agent_name}
+                          </div>
+                        </Show>
+                      </div>
+                      <div class="text-neu-400 text-sm">
+                        {formatDistance(new Date(event.created_at), new Date(), {
+                          addSuffix: true,
+                          includeSeconds: true
+                        })}
+                      </div>
+                      <JsonDisplay data={event.data} />
                     </div>
-                    <div class="text-neu-400 text-sm">{card.id}</div>
-                    <JsonDisplay data={card.data} />
-                  </div>
-                )}
-              </For>
+                  )}
+                </For>
+              </Show>
             </div>
           </Show>
         </div>
