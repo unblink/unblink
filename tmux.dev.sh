@@ -23,6 +23,7 @@ if ! tmux has-session -t "=$SESSION_NAME" 2>/dev/null; then
   # Create all windows using the same function
   tmux_create_window "$SESSION_NAME" "relay" "$PROJECT_DIR/relay" "go run ./cmd/relay"
   tmux_create_window "$SESSION_NAME" "app" "$PROJECT_DIR/app" "bun dev"
+  tmux_create_window "$SESSION_NAME" "node" "$PROJECT_DIR/node" "sleep 3 && go run ./cmd/unblink -config /tmp/unblink-dev-config.hujson"
   tmux_create_window "$SESSION_NAME" "worker_simple" "$PROJECT_DIR/examples/worker-simple" "sleep 5 && uv run main.py"
 
   # Attach to relay window

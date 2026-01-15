@@ -3,7 +3,7 @@
 </p>
 
 [![GitHub Stars](https://img.shields.io/github/stars/unblink/unblink?style=flat)](https://github.com/unblink/unblink/stargazers)
-[![Discord](https://img.shields.io/badge/Discord-Join%20Server-5865F2?style=flat&logo=discord&logoColor=white)](https://discord.gg/YMAjT8A6e2)
+[![Discord](https://img.shields.io/badge/Discord-Join%20Server-5865F2?style=flat&logo=discord&logoColor=white)](https://discord.gg/34jpgpW9Hy)
 
 # Unblink
 
@@ -23,14 +23,11 @@ go install github.com/unblink/unblink/node/cmd/unblink@latest
 
 # Run (make sure ~/go/bin is in your PATH)
 unblink
-
-# First run: authorizes with relay and generates credentials
-# Subsequent runs: uses saved credentials
 ```
 
 ### Configuration
 
-The node creates a config file at `~/.unblink_config.jsonc` on first run. Edit it to add your cameras:
+The node creates a config file at `~/.unblink/config.hujson` on first run. Edit it to add your cameras:
 
 ```json
 {

@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	_ "embed"
+	"flag"
 	"fmt"
 	"log"
 	"os"
@@ -17,7 +18,15 @@ import (
 //go:embed default_config.hujson
 var defaultConfig []byte
 
+var configPath string
+
+func init() {
+	flag.StringVar(&configPath, "config", "", "Path to config file")
+}
+
 func main() {
+	flag.Parse()
+
 	// Check for help
 	if len(os.Args) > 1 && (os.Args[1] == "-h" || os.Args[1] == "--help" || os.Args[1] == "help") {
 		printUsage()
@@ -25,7 +34,7 @@ func main() {
 	}
 
 	// Handle subcommands
-	if len(os.Args) > 1 {
+	if len(os.Args) > 1 && !flag.Parsed() {
 		switch os.Args[1] {
 		case "config":
 			handleConfigCommand()
@@ -46,21 +55,30 @@ func main() {
 	}
 
 	// Load config (LoadConfig creates it with generated node ID if missing)
-	config, err := node.LoadConfigWithDefault(defaultConfig)
+	var config *node.Config
+	var err error
+	var actualConfigPath string
+	if configPath != "" {
+		config, err = node.LoadConfigFromFile(configPath, defaultConfig)
+		actualConfigPath = configPath
+	} else {
+		config, err = node.LoadConfigWithDefault(defaultConfig)
+		actualConfigPath = mustConfigPath()
+	}
 	if err != nil {
 		log.Fatalf("Failed to load config: %v", err)
 	}
 
 	// Validate relay_address is set
 	if config.RelayAddr() == "" {
-		log.Fatalf("[Node] relay_address is not set in config. Please edit %s and add \"relay_address\": \"<your-relay-address>\"", mustConfigPath())
+		log.Fatalf("[Node] relay_address is not set in config. Please edit %s and add \"relay_address\": \"<your-relay-address>\"", actualConfigPath)
 	}
 
 	// Log node ID
 	log.Printf("[Node] Node ID: %s", config.NodeID())
 
 	if len(config.Services()) == 0 {
-		log.Fatalf("[Node] No services configured. Edit %s to add services.", mustConfigPath())
+		log.Fatalf("[Node] No services configured. Edit %s to add services.", actualConfigPath)
 	}
 
 	// Run node (will authorize if needed, then continue running)

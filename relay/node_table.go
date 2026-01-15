@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"encoding/hex"
 	"errors"
+	"fmt"
 	"log"
 	"time"
 )
@@ -41,28 +42,49 @@ func generateSecureToken() (string, error) {
 
 // AuthorizeNode creates a node with token and links it to a user
 func (s *NodeTable) AuthorizeNode(nodeID string, ownerID int64, name, token string) error {
-	// Insert node with owner and token
-	result, err := s.db.Exec(
-		"INSERT OR REPLACE INTO nodes (id, token, owner_id, name, authorized_at) VALUES (?, ?, ?, ?, ?)",
-		nodeID, token, ownerID, name, time.Now(),
-	)
-	if err != nil {
-		return err
+	// Check if node exists
+	var existingID string
+	err := s.db.QueryRow("SELECT id FROM nodes WHERE id = ?", nodeID).Scan(&existingID)
+
+	if err == sql.ErrNoRows {
+		// Node doesn't exist, insert it
+		_, err = s.db.Exec(
+			"INSERT INTO nodes (id, token, owner_id, name, authorized_at) VALUES (?, ?, ?, ?, ?)",
+			nodeID, token, ownerID, name, time.Now(),
+		)
+		if err != nil {
+			return fmt.Errorf("insert node: %w", err)
+		}
+	} else if err != nil {
+		return fmt.Errorf("check node existence: %w", err)
+	} else {
+		// Node exists, update it
+		_, err = s.db.Exec(
+			"UPDATE nodes SET token = ?, owner_id = ?, name = ?, authorized_at = ? WHERE id = ?",
+			token, ownerID, name, time.Now(), nodeID,
+		)
+		if err != nil {
+			return fmt.Errorf("update node: %w", err)
+		}
 	}
 
-	// Also add to nodes_users junction table
-	_, err = s.db.Exec(
-		"INSERT OR REPLACE INTO nodes_users (node_id, user_id, role) VALUES (?, ?, 'owner')",
-		nodeID, ownerID,
-	)
-	if err != nil {
-		return err
-	}
+	// Check if junction table entry exists
+	var existingRole string
+	err = s.db.QueryRow("SELECT role FROM nodes_users WHERE node_id = ? AND user_id = ?", nodeID, ownerID).Scan(&existingRole)
 
-	rows, _ := result.RowsAffected()
-	if rows == 0 {
-		return errors.New("node not found")
+	if err == sql.ErrNoRows {
+		// Junction entry doesn't exist, insert it
+		_, err = s.db.Exec(
+			"INSERT INTO nodes_users (node_id, user_id, role) VALUES (?, ?, 'owner')",
+			nodeID, ownerID,
+		)
+		if err != nil {
+			return fmt.Errorf("insert nodes_users: %w", err)
+		}
+	} else if err != nil {
+		return fmt.Errorf("check nodes_users existence: %w", err)
 	}
+	// If entry exists, no need to update it
 
 	log.Printf("[NodeTable] Node %s authorized by user %d", nodeID, ownerID)
 	return nil
@@ -221,4 +243,36 @@ func (s *NodeTable) UserOwnsNode(userID int64, nodeID string) bool {
 		return false
 	}
 	return ownerID.Valid && ownerID.Int64 == userID
+}
+
+// EnsureDevMockNode creates a mock node entry for dev mode with a generated token
+// Returns the node and the generated token
+func (s *NodeTable) EnsureDevMockNode(ownerID int64) (*Node, string, error) {
+	nodeID := "mock-dev-1"
+
+	// Check if already exists
+	node, err := s.GetNodeByID(nodeID)
+	if err == nil {
+		// Node exists - return its existing token
+		return node, node.Token, nil
+	}
+
+	// Generate a random token for the mock node
+	devToken, err := generateSecureToken()
+	if err != nil {
+		return nil, "", fmt.Errorf("generate dev token: %w", err)
+	}
+
+	// Create node with generated token
+	err = s.AuthorizeNode(nodeID, ownerID, "Dev Mock Node", devToken)
+	if err != nil {
+		return nil, "", err
+	}
+
+	node, err = s.GetNodeByID(nodeID)
+	if err != nil {
+		return nil, "", err
+	}
+
+	return node, devToken, nil
 }

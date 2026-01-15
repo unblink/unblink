@@ -388,7 +388,10 @@ func (nc *NodeClient) handleData(msg *Message) error {
 	nc.bridgeMu.RUnlock()
 
 	if !exists {
-		return fmt.Errorf("data for unknown bridge: %s", data.BridgeID)
+		// Bridge doesn't exist - likely failed to open or was already closed
+		// Log and continue gracefully instead of treating as fatal error
+		log.Printf("[Node] Warning: Received data for unknown bridge %s, ignoring", data.BridgeID)
+		return nil
 	}
 
 	// Forward payload to service

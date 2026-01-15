@@ -457,12 +457,22 @@ func LoadConfigWithDefault(defaultConfig []byte) (*Config, error) {
 	return loadConfigWithDefault(defaultConfig)
 }
 
+// LoadConfigFromFile loads the config from a specific file path
+func LoadConfigFromFile(path string, defaultConfig []byte) (*Config, error) {
+	return loadConfigWithPath(path, defaultConfig)
+}
+
 // loadConfigWithDefault is the internal implementation
 func loadConfigWithDefault(defaultConfig []byte) (*Config, error) {
 	path, err := ConfigPath()
 	if err != nil {
 		return nil, err
 	}
+	return loadConfigWithPath(path, defaultConfig)
+}
+
+// loadConfigWithPath loads config from a specific path
+func loadConfigWithPath(path string, defaultConfig []byte) (*Config, error) {
 
 	data, err := os.ReadFile(path)
 	if err != nil {
