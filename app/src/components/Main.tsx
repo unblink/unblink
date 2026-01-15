@@ -1,4 +1,4 @@
-import { Match, Switch, createSignal, type Component } from 'solid-js';
+import { Match, Show, Switch, createSignal, type Component } from 'solid-js';
 import SideBar from './SideBar';
 import VideoTile from './VideoTile';
 import TabLayout from './TabLayout';
@@ -17,7 +17,6 @@ const ComingSoon = () => (
 
 const Main: Component = () => {
   const [isSavingSettings, setIsSavingSettings] = createSignal(false);
-  const agentPanel = useAgentPanel();
 
   const handleSaveSettings = async () => {
     setIsSavingSettings(true);
@@ -43,10 +42,19 @@ const Main: Component = () => {
           <Match when={tab().type === 'view'}>
             {(() => {
               const t = tab() as Extract<Tab, { type: 'view' }>;
+              const agentPanel = useAgentPanel(t.serviceId);
+
               return (
                 <div class="flex h-screen">
                   <div class="flex-1 h-screen overflow-hidden">
-                    <TabLayout title={t.name || 'Stream'}>
+                    <TabLayout
+                      title={t.name || 'Stream'}
+                      headerAction={
+                        <Show when={!agentPanel.showAgentPanel()}>
+                          <agentPanel.Toggle />
+                        </Show>
+                      }
+                    >
                       <VideoTile nodeId={t.nodeId} serviceId={t.serviceId} name={t.name} />
                     </TabLayout>
                   </div>

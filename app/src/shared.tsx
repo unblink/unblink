@@ -401,6 +401,16 @@ export const connectAgentEventsWebSocket = () => {
           agentEventListeners.forEach(listener => listener(agentEvent));
           break;
 
+        case 'res_agent_events':
+          // Handle historical events response
+          const events = message.data.events as AgentEvent[];
+          console.log('[AgentEvents] Received', events.length, 'historical events');
+          // Emit each historical event to listeners (in reverse order to maintain chronological order)
+          events.reverse().forEach(historicalEvent => {
+            agentEventListeners.forEach(listener => listener(historicalEvent));
+          });
+          break;
+
         default:
           console.warn('[AgentEvents] Unknown message type:', message.type);
       }
@@ -431,4 +441,16 @@ export const disconnectAgentEventsWebSocket = () => {
     agentEventsWs = null;
   }
   agentEventListeners.clear();
+};
+
+export const requestAgentEvents = (params: { agent_id?: string; service_id?: string; limit?: number }) => {
+  if (!agentEventsWs || agentEventsWs.readyState !== WebSocket.OPEN) {
+    console.error('[AgentEvents] WebSocket not connected');
+    return;
+  }
+
+  agentEventsWs.send(JSON.stringify({
+    type: 'req_agent_events',
+    data: params
+  }));
 };

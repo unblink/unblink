@@ -195,6 +195,63 @@ func (db *Database) GetAgentEvents(agentID string, limit int) ([]*AgentEvent, er
 	return events, nil
 }
 
+// GetAgentEventsByService retrieves agent events for agents monitoring a specific service
+func (db *Database) GetAgentEventsByService(serviceID string, userID int64, limit int) ([]*AgentEvent, error) {
+	if limit <= 0 {
+		limit = 100
+	}
+	if limit > 1000 {
+		limit = 1000
+	}
+
+	query := `
+		SELECT DISTINCT ae.id, ae.agent_id, ae.data, ae.metadata, ae.created_at
+		FROM agent_events ae
+		JOIN agents a ON ae.agent_id = a.id
+		WHERE a.user_id = ?
+		AND EXISTS (
+			SELECT 1 FROM json_each(a.service_ids)
+			WHERE json_each.value = ?
+		)
+		ORDER BY ae.created_at DESC
+		LIMIT ?
+	`
+
+	rows, err := db.Query(query, userID, serviceID, limit)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query agent events by service: %w", err)
+	}
+	defer rows.Close()
+
+	var events []*AgentEvent
+	for rows.Next() {
+		var event AgentEvent
+		var dataJSON, metadataJSON sql.NullString
+
+		if err := rows.Scan(&event.ID, &event.AgentID, &dataJSON, &metadataJSON, &event.CreatedAt); err != nil {
+			return nil, fmt.Errorf("failed to scan agent event: %w", err)
+		}
+
+		if err := json.Unmarshal([]byte(dataJSON.String), &event.Data); err != nil {
+			return nil, fmt.Errorf("failed to unmarshal agent event data: %w", err)
+		}
+
+		if metadataJSON.Valid {
+			if err := json.Unmarshal([]byte(metadataJSON.String), &event.Metadata); err != nil {
+				return nil, fmt.Errorf("failed to unmarshal agent event metadata: %w", err)
+			}
+		}
+
+		events = append(events, &event)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("error iterating agent events: %w", err)
+	}
+
+	return events, nil
+}
+
 // GetRecentAgentEvents retrieves recent agent events across all agents
 func (db *Database) GetRecentAgentEvents(limit int) ([]*AgentEvent, error) {
 	if limit <= 0 {

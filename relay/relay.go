@@ -92,7 +92,7 @@ func (r *Relay) initializeCV() {
 	r.cvWorkerRegistry.SetDatabase(r.db)
 
 	// Initialize client event registry for browser WebSocket connections
-	r.clientEvents = NewClientEventRegistry(r.agentTable, r.config)
+	r.clientEvents = NewClientEventRegistry(r.agentTable, r.db, r.config)
 
 	// Subscribe to worker events to forward to browser clients
 	r.cvEventBus.OnWorkerEvent(func(event *cv.WorkerEvent) {

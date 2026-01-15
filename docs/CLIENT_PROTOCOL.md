@@ -51,6 +51,65 @@ After connecting, the client must register by sending a JWT token.
 
 The relay validates the JWT token and extracts the `user_id`. Connection is closed if authentication fails.
 
+## Outgoing Messages (Client → Relay)
+
+### Request Agent Events
+
+After registration, clients can request historical events for specific agents or services.
+
+**Client → Relay:**
+
+```json
+{
+  "type": "req_agent_events",
+  "data": {
+    "agent_id": "agent-123",
+    "limit": 100
+  }
+}
+```
+
+Or request by service:
+
+```json
+{
+  "type": "req_agent_events",
+  "data": {
+    "service_id": "service-456",
+    "limit": 100
+  }
+}
+```
+
+- `agent_id` (optional): Filter events by specific agent
+- `service_id` (optional): Filter events by service (returns events from all agents monitoring this service)
+- `limit` (optional): Maximum events to return (default: 100, max: 1000)
+
+**Relay → Client:**
+
+```json
+{
+  "type": "res_agent_events",
+  "data": {
+    "events": [
+      {
+        "id": "event-uuid",
+        "agent_id": "agent-123",
+        "agent_name": "Security Monitor",
+        "service_ids": ["service-456"],
+        "data": {
+          "answer": "No suspicious activity detected"
+        },
+        "metadata": {
+          "inference_time_seconds": 8.5
+        },
+        "created_at": "2026-01-15T10:30:00Z"
+      }
+    ]
+  }
+}
+```
+
 ## Incoming Events (Relay → Client)
 
 ### Agent Event

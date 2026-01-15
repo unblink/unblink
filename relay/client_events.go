@@ -33,6 +33,7 @@ type ClientEventRegistry struct {
 	clients    map[string]*Client // clientID → client
 	mu         sync.RWMutex
 	agentTable *AgentTable
+	db         *Database
 	cfg        *Config
 	upgrader   websocket.Upgrader
 }
@@ -58,11 +59,19 @@ type ErrorClientMessage struct {
 	Message string `json:"message"`
 }
 
+// RequestAgentEventsMessage is sent by client to request historical events
+type RequestAgentEventsMessage struct {
+	AgentID   string `json:"agent_id,omitempty"`
+	ServiceID string `json:"service_id,omitempty"`
+	Limit     int    `json:"limit,omitempty"`
+}
+
 // NewClientEventRegistry creates a new client event registry
-func NewClientEventRegistry(agentTable *AgentTable, cfg *Config) *ClientEventRegistry {
+func NewClientEventRegistry(agentTable *AgentTable, db *Database, cfg *Config) *ClientEventRegistry {
 	return &ClientEventRegistry{
 		clients:    make(map[string]*Client),
 		agentTable: agentTable,
+		db:         db,
 		cfg:        cfg,
 		upgrader: websocket.Upgrader{
 			ReadBufferSize:  4096,
@@ -239,12 +248,136 @@ func (r *ClientEventRegistry) receiveLoop(client *Client) {
 	})
 
 	for {
-		_, _, err := client.Conn.ReadMessage()
+		_, msgBytes, err := client.Conn.ReadMessage()
 		if err != nil {
 			r.closeClient(client)
 			return
 		}
-		// Ignore client messages for now (just pings/pongs)
+
+		// Parse message
+		var msg WSClientMessage
+		if err := json.Unmarshal(msgBytes, &msg); err != nil {
+			log.Printf("[ClientEvents] Failed to parse message from client %s: %v", client.ID, err)
+			continue
+		}
+
+		// Handle message types
+		switch msg.Type {
+		case "req_agent_events":
+			r.handleRequestAgentEvents(client, msg.Data)
+		default:
+			log.Printf("[ClientEvents] Unknown message type from client %s: %s", client.ID, msg.Type)
+		}
+	}
+}
+
+func (r *ClientEventRegistry) handleRequestAgentEvents(client *Client, data json.RawMessage) {
+	var req RequestAgentEventsMessage
+	if err := json.Unmarshal(data, &req); err != nil {
+		log.Printf("[ClientEvents] Failed to parse req_agent_events: %v", err)
+		r.sendErrorToClient(client, "Invalid request format")
+		return
+	}
+
+	// Set default and max limit
+	if req.Limit <= 0 {
+		req.Limit = 100
+	}
+	if req.Limit > 1000 {
+		req.Limit = 1000
+	}
+
+	var dbEvents []*AgentEvent
+	var err error
+
+	if req.ServiceID != "" {
+		// Get events by service
+		dbEvents, err = r.db.GetAgentEventsByService(req.ServiceID, client.UserID, req.Limit)
+	} else if req.AgentID != "" {
+		// Verify agent ownership
+		agent, agentErr := r.agentTable.GetAgentByID(req.AgentID)
+		if agentErr != nil {
+			log.Printf("[ClientEvents] Agent %s not found: %v", req.AgentID, agentErr)
+			r.sendErrorToClient(client, "Agent not found")
+			return
+		}
+		if agent.UserID != client.UserID {
+			log.Printf("[ClientEvents] Client %d attempted to access agent %s owned by %d", client.UserID, req.AgentID, agent.UserID)
+			r.sendErrorToClient(client, "Unauthorized")
+			return
+		}
+
+		// Get events by agent
+		dbEvents, err = r.db.GetAgentEvents(req.AgentID, req.Limit)
+	} else {
+		// No filter specified - could return recent events for user
+		r.sendErrorToClient(client, "Must specify agent_id or service_id")
+		return
+	}
+
+	if err != nil {
+		log.Printf("[ClientEvents] Failed to get agent events: %v", err)
+		r.sendErrorToClient(client, "Failed to retrieve events")
+		return
+	}
+
+	// Convert database events to response format
+	events := make([]map[string]interface{}, 0, len(dbEvents))
+	for _, dbEvent := range dbEvents {
+		// Get agent info for each event
+		agent, err := r.agentTable.GetAgentByID(dbEvent.AgentID)
+		if err != nil {
+			log.Printf("[ClientEvents] Failed to get agent %s: %v", dbEvent.AgentID, err)
+			continue
+		}
+
+		event := map[string]interface{}{
+			"id":          dbEvent.ID,
+			"agent_id":    dbEvent.AgentID,
+			"agent_name":  agent.Name,
+			"service_ids": agent.ServiceIDs,
+			"data":        dbEvent.Data,
+			"metadata":    dbEvent.Metadata,
+			"created_at":  dbEvent.CreatedAt.Format(time.RFC3339),
+		}
+		events = append(events, event)
+	}
+
+	// Send response
+	response := map[string]interface{}{
+		"type": "res_agent_events",
+		"data": map[string]interface{}{
+			"events": events,
+		},
+	}
+
+	responseBytes, err := json.Marshal(response)
+	if err != nil {
+		log.Printf("[ClientEvents] Failed to marshal response: %v", err)
+		return
+	}
+
+	select {
+	case client.sendChan <- responseBytes:
+		log.Printf("[ClientEvents] Sent %d historical events to client %s", len(events), client.ID)
+	default:
+		log.Printf("[ClientEvents] Client %s buffer full, dropping response", client.ID)
+	}
+}
+
+func (r *ClientEventRegistry) sendErrorToClient(client *Client, message string) {
+	errorMsg := map[string]interface{}{
+		"type": "error",
+		"data": ErrorClientMessage{
+			Message: message,
+		},
+	}
+	if msgBytes, err := json.Marshal(errorMsg); err == nil {
+		select {
+		case client.sendChan <- msgBytes:
+		default:
+			log.Printf("[ClientEvents] Client %s buffer full, dropping error", client.ID)
+		}
 	}
 }
 

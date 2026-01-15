@@ -1,20 +1,22 @@
 import { FiChevronLeft, FiChevronRight, FiEye } from 'solid-icons/fi';
-import { For, Show, createSignal, onMount, onCleanup } from 'solid-js';
+import { For, Show, createSignal, onMount, onCleanup, createEffect } from 'solid-js';
 import { ArkSelect, type SelectItem } from '../ark/ArkSelect';
 import { formatDistance } from 'date-fns';
 import {
   connectAgentEventsWebSocket,
   subscribeToAgentEvents,
   disconnectAgentEventsWebSocket,
+  requestAgentEvents,
   agents,
   nodes,
   type AgentEvent
 } from '../shared';
 
-export function useAgentPanel() {
+export function useAgentPanel(serviceId?: string) {
   const [showAgentPanel, setShowAgentPanel] = createSignal(true);
   const [selectedAgent, setSelectedAgent] = createSignal('all');
   const [events, setEvents] = createSignal<AgentEvent[]>([]);
+  const [requestedHistory, setRequestedHistory] = createSignal(false);
 
   onMount(() => {
     // Connect to WebSocket
@@ -29,6 +31,18 @@ export function useAgentPanel() {
       unsubscribe();
       disconnectAgentEventsWebSocket();
     });
+  });
+
+  // Request historical events when serviceId is available
+  createEffect(() => {
+    if (serviceId && !requestedHistory()) {
+      // Wait a bit for WebSocket to be ready
+      setTimeout(() => {
+        console.log('[AgentPanel] Requesting historical events for service:', serviceId);
+        requestAgentEvents({ service_id: serviceId, limit: 100 });
+        setRequestedHistory(true);
+      }, 500);
+    }
   });
 
   // Build agent filter options from real agents
