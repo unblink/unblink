@@ -2,9 +2,13 @@ package relay
 
 import (
 	"database/sql"
+	"encoding/json"
+	"fmt"
 	"os"
 	"path/filepath"
+	"time"
 
+	"github.com/google/uuid"
 	_ "github.com/tursodatabase/turso-go"
 )
 
@@ -88,7 +92,153 @@ func initSchema(db *sql.DB) error {
 	);
 	CREATE INDEX IF NOT EXISTS idx_agents_user ON agents(user_id);
 	CREATE INDEX IF NOT EXISTS idx_agents_worker ON agents(worker_id);
+
+	CREATE TABLE IF NOT EXISTS agent_events (
+		id TEXT PRIMARY KEY,
+		agent_id TEXT NOT NULL,
+		data TEXT NOT NULL,
+		metadata TEXT,
+		created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+		FOREIGN KEY (agent_id) REFERENCES agents(id) ON DELETE CASCADE
+	);
+	CREATE INDEX IF NOT EXISTS idx_agent_events_agent_id ON agent_events(agent_id);
+	CREATE INDEX IF NOT EXISTS idx_agent_events_created_at ON agent_events(created_at);
 	`
 	_, err := db.Exec(schema)
 	return err
+}
+
+// AgentEvent represents an event emitted by an agent
+type AgentEvent struct {
+	ID        string                 `json:"id"`
+	AgentID   string                 `json:"agent_id"`
+	Data      map[string]interface{} `json:"data"`
+	Metadata  map[string]interface{} `json:"metadata,omitempty"`
+	CreatedAt time.Time              `json:"created_at"`
+}
+
+// StoreAgentEvent stores an agent event in the database
+func (db *Database) StoreAgentEvent(agentID string, data map[string]interface{}, metadata map[string]interface{}, createdAt time.Time) error {
+	eventID := uuid.New().String()
+
+	dataJSON, err := json.Marshal(data)
+	if err != nil {
+		return fmt.Errorf("failed to marshal agent event data: %w", err)
+	}
+
+	var metadataJSON sql.NullString
+	if metadata != nil {
+		metadataBytes, err := json.Marshal(metadata)
+		if err != nil {
+			return fmt.Errorf("failed to marshal agent event metadata: %w", err)
+		}
+		metadataJSON = sql.NullString{String: string(metadataBytes), Valid: true}
+	}
+
+	_, err = db.Exec(
+		"INSERT INTO agent_events (id, agent_id, data, metadata, created_at) VALUES (?, ?, ?, ?, ?)",
+		eventID, agentID, string(dataJSON), metadataJSON, createdAt,
+	)
+	if err != nil {
+		return fmt.Errorf("failed to store agent event: %w", err)
+	}
+
+	return nil
+}
+
+// GetAgentEvents retrieves events for a specific agent
+func (db *Database) GetAgentEvents(agentID string, limit int) ([]*AgentEvent, error) {
+	if limit <= 0 {
+		limit = 100
+	}
+
+	query := `
+		SELECT id, agent_id, data, metadata, created_at
+		FROM agent_events
+		WHERE agent_id = ?
+		ORDER BY created_at DESC
+		LIMIT ?
+	`
+
+	rows, err := db.Query(query, agentID, limit)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query agent events: %w", err)
+	}
+	defer rows.Close()
+
+	var events []*AgentEvent
+	for rows.Next() {
+		var event AgentEvent
+		var dataJSON, metadataJSON sql.NullString
+
+		if err := rows.Scan(&event.ID, &event.AgentID, &dataJSON, &metadataJSON, &event.CreatedAt); err != nil {
+			return nil, fmt.Errorf("failed to scan agent event: %w", err)
+		}
+
+		if err := json.Unmarshal([]byte(dataJSON.String), &event.Data); err != nil {
+			return nil, fmt.Errorf("failed to unmarshal agent event data: %w", err)
+		}
+
+		if metadataJSON.Valid {
+			if err := json.Unmarshal([]byte(metadataJSON.String), &event.Metadata); err != nil {
+				return nil, fmt.Errorf("failed to unmarshal agent event metadata: %w", err)
+			}
+		}
+
+		events = append(events, &event)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("error iterating agent events: %w", err)
+	}
+
+	return events, nil
+}
+
+// GetRecentAgentEvents retrieves recent agent events across all agents
+func (db *Database) GetRecentAgentEvents(limit int) ([]*AgentEvent, error) {
+	if limit <= 0 {
+		limit = 100
+	}
+
+	query := `
+		SELECT id, agent_id, data, metadata, created_at
+		FROM agent_events
+		ORDER BY created_at DESC
+		LIMIT ?
+	`
+
+	rows, err := db.Query(query, limit)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query recent agent events: %w", err)
+	}
+	defer rows.Close()
+
+	var events []*AgentEvent
+	for rows.Next() {
+		var event AgentEvent
+		var dataJSON, metadataJSON sql.NullString
+
+		if err := rows.Scan(&event.ID, &event.AgentID, &dataJSON, &metadataJSON, &event.CreatedAt); err != nil {
+			return nil, fmt.Errorf("failed to scan agent event: %w", err)
+		}
+
+		if err := json.Unmarshal([]byte(dataJSON.String), &event.Data); err != nil {
+			return nil, fmt.Errorf("failed to unmarshal agent event data: %w", err)
+		}
+
+		if metadataJSON.Valid {
+			if err := json.Unmarshal([]byte(metadataJSON.String), &event.Metadata); err != nil {
+				return nil, fmt.Errorf("failed to unmarshal agent event metadata: %w", err)
+			}
+		}
+
+		events = append(events, &event)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("error iterating agent events: %w", err)
+	}
+
+	return events, nil
 }

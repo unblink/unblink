@@ -231,8 +231,10 @@ Workers emit structured agent results back to the relay. Each result corresponds
   "data": {
     "answer": "No suspicious activities detected. All personnel are authorized."
   },
-  "inference_time_seconds": 8.5,
-  "created_at": "2026-01-14T12:00:00Z"
+  "metadata": {
+    "inference_time_seconds": 8.5,
+    "created_at": "2026-01-14T12:00:00Z"
+  }
 }
 ```
 
@@ -244,7 +246,9 @@ Workers emit structured agent results back to the relay. Each result corresponds
   "error": {
     "message": "Model inference failed: CUDA out of memory"
   },
-  "created_at": "2026-01-14T12:00:05Z"
+  "metadata": {
+    "created_at": "2026-01-14T12:00:05Z"
+  }
 }
 ```
 
@@ -252,26 +256,25 @@ Workers emit structured agent results back to the relay. Each result corresponds
 
 **Required fields:**
 - `agent_id` (string): ID of the agent that processed this batch
-- `created_at` (string): ISO 8601 timestamp
 
 **Mutually exclusive fields (one of):**
 - `data` (object): Success result with semantic keys like `answer`, `summary`, `alert`
 - `error` (object): Error result with `message` key
 
 **Optional fields:**
-- `inference_time_seconds` (float): Processing duration (only for success)
+- `metadata` (object): Contains `inference_time_seconds` (float) and `created_at` (ISO 8601 timestamp)
 
 **Examples of different result types:**
 
 ```json
 // Answer result (vision analysis)
-{"agent_id": "...", "data": {"answer": "..."}, "created_at": "..."}
+{"agent_id": "...", "data": {"answer": "..."}, "metadata": {"created_at": "..."}}
 
 // Summary result (batch processing)
-{"agent_id": "...", "data": {"summary": "..."}, "created_at": "..."}
+{"agent_id": "...", "data": {"summary": "..."}, "metadata": {"created_at": "..."}}
 
 // Alert result (detection)
-{"agent_id": "...", "data": {"alert": "Motion detected"}, "created_at": "..."}
+{"agent_id": "...", "data": {"alert": "Motion detected"}, "metadata": {"created_at": "..."}}
 ```
 
 ## Worker Lifecycle
@@ -323,8 +326,10 @@ async def process_single_agent(agent, frames, model, processor, emit_callback):
     await emit_callback({
         "agent_id": agent['id'],
         "data": {"answer": result},
-        "inference_time_seconds": elapsed,
-        "created_at": datetime.now(timezone.utc).isoformat()
+        "metadata": {
+            "inference_time_seconds": elapsed,
+            "created_at": datetime.now(timezone.utc).isoformat()
+        }
     })
 
 async def process_frame_batch(event, emit_callback):

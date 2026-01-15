@@ -105,8 +105,10 @@ async def process_single_agent(
             "data": {
                 "answer": output_text
             },
-            "inference_time_seconds": elapsed,
-            "created_at": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
+            "metadata": {
+                "inference_time_seconds": elapsed,
+                "created_at": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
+            }
         }
 
         print(f"[Agent {agent_name}] Completed in {elapsed:.2f}s, emitting result")
@@ -120,7 +122,9 @@ async def process_single_agent(
             "error": {
                 "message": str(e)
             },
-            "created_at": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
+            "metadata": {
+                "created_at": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
+            }
         })
 
 

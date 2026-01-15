@@ -87,6 +87,9 @@ func (r *Relay) initializeCV() {
 	// Set agent registry reference in worker registry (for filtering frame_batch events)
 	r.cvWorkerRegistry.SetAgentRegistry(r.agentRegistry)
 
+	// Set database reference in worker registry (for storing agent events)
+	r.cvWorkerRegistry.SetDatabase(r.db)
+
 	// Initialize realtime stream manager
 	nodeConnGetter := func(nodeID string) realtime.NodeConn {
 		nc := r.GetNode(nodeID)

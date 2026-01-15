@@ -62,6 +62,12 @@ type CVWorkerRegistry struct {
 	storageManager *StorageManager
 	agentRegistry  AgentRegistry
 	upgrader       websocket.Upgrader
+	db             AgentEventStorage // Database for storing agent events
+}
+
+// AgentEventStorage interface for storing agent events
+type AgentEventStorage interface {
+	StoreAgentEvent(agentID string, data map[string]interface{}, metadata map[string]interface{}, createdAt time.Time) error
 }
 
 // WebSocket message types
@@ -141,6 +147,13 @@ func (r *CVWorkerRegistry) SetAgentRegistry(ar AgentRegistry) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	r.agentRegistry = ar
+}
+
+// SetDatabase sets the database for storing agent events
+func (r *CVWorkerRegistry) SetDatabase(db AgentEventStorage) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	r.db = db
 }
 
 // groupAgentsByWorker groups agents by their worker_id
@@ -342,11 +355,26 @@ func (r *CVWorkerRegistry) receiveLoop(worker *CVWorker) {
 				continue
 			}
 
+			// Extract agent_id, data, and metadata for database storage
+			agentID, _ := eventData["agent_id"].(string)
+			data, _ := eventData["data"].(map[string]interface{})
+			metadata, _ := eventData["metadata"].(map[string]interface{})
+			createdAt := time.Now()
+
+			// Store agent event in database
+			if r.db != nil && agentID != "" && data != nil {
+				if err := r.db.StoreAgentEvent(agentID, data, metadata, createdAt); err != nil {
+					log.Printf("[CVWorkerRegistry] Failed to store agent event: %v", err)
+				} else {
+					log.Printf("[CVWorkerRegistry] Stored agent event for agent %s", agentID)
+				}
+			}
+
 			// Create worker event
 			workerEvent := &WorkerEvent{
 				EventID:   fmt.Sprintf("%s-%d", worker.ID, time.Now().UnixNano()),
 				WorkerID:  worker.ID,
-				CreatedAt: time.Now(),
+				CreatedAt: createdAt,
 				Data:      eventData,
 			}
 
