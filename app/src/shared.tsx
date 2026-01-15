@@ -370,19 +370,20 @@ export const connectAgentEventsWebSocket = () => {
 
   const wsUrl = relay('/client/connect').replace(/^http/, 'ws');
 
-  agentEventsWs = new WebSocket(wsUrl);
+  const ws = new WebSocket(wsUrl);
+  agentEventsWs = ws;
 
-  agentEventsWs.onopen = () => {
+  ws.onopen = () => {
     console.log('[AgentEvents] Connected, registering...');
 
     // Send registration message with JWT token
-    agentEventsWs!.send(JSON.stringify({
+    ws.send(JSON.stringify({
       type: 'register',
       data: { token }
     }));
   };
 
-  agentEventsWs.onmessage = (event) => {
+  ws.onmessage = (event) => {
     try {
       const message = JSON.parse(event.data);
 
@@ -393,7 +394,7 @@ export const connectAgentEventsWebSocket = () => {
 
         case 'error':
           console.error('[AgentEvents] Error:', message.data.message);
-          agentEventsWs?.close();
+          ws.close();
           break;
 
         case 'agent_event':
@@ -419,13 +420,16 @@ export const connectAgentEventsWebSocket = () => {
     }
   };
 
-  agentEventsWs.onerror = (error) => {
+  ws.onerror = (error) => {
     console.error('[AgentEvents] WebSocket error:', error);
   };
 
-  agentEventsWs.onclose = () => {
+  ws.onclose = () => {
     console.log('[AgentEvents] WebSocket closed, reconnecting in 3s...');
-    agentEventsWs = null;
+    // Only clear if this is still the active connection
+    if (agentEventsWs === ws) {
+      agentEventsWs = null;
+    }
     setTimeout(connectAgentEventsWebSocket, 3000);
   };
 };

@@ -204,20 +204,22 @@ func (db *Database) GetAgentEventsByService(serviceID string, userID int64, limi
 		limit = 1000
 	}
 
+	// Use LIKE to search for service_id in the JSON array
+	// service_ids is stored as JSON like: ["id1","id2"]
+	// We search for the pattern "service_id" (with quotes) to avoid partial matches
+	servicePattern := fmt.Sprintf("%%%q%%", serviceID) // Creates %"service_id"% pattern
+
 	query := `
 		SELECT DISTINCT ae.id, ae.agent_id, ae.data, ae.metadata, ae.created_at
 		FROM agent_events ae
 		JOIN agents a ON ae.agent_id = a.id
 		WHERE a.user_id = ?
-		AND EXISTS (
-			SELECT 1 FROM json_each(a.service_ids)
-			WHERE json_each.value = ?
-		)
+		AND a.service_ids LIKE ?
 		ORDER BY ae.created_at DESC
 		LIMIT ?
 	`
 
-	rows, err := db.Query(query, userID, serviceID, limit)
+	rows, err := db.Query(query, userID, servicePattern, limit)
 	if err != nil {
 		return nil, fmt.Errorf("failed to query agent events by service: %w", err)
 	}
