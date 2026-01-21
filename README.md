@@ -11,33 +11,16 @@ Unblink is an AI camera monitoring application.
 
 # Get started
 
-## Run the Relay
-
-The relay is the public-facing server that coordinates connections between nodes and clients.
-
-```bash
-# From the unblink directory
-cd relay
-go run ../cmd/relay
-```
-
-The relay will:
-
-- Start WebSocket server on `:9020` for node connections
-- Start HTTP API on `:8020` for client requests
-- Create a SQLite database at `data/database/relay.db`
-
-### Configuration
-
-Copy from `.env.example` to create your `.env` file:
-
 ## Run the Node
 
 The node runs in your private network and forwards traffic from the relay to your local cameras.
 
 ```bash
-# From the unblink directory
-go run ./cmd/node
+# Install
+go install github.com/unblink/unblink/node/cmd/unblink@latest
+
+# Run (make sure ~/go/bin is in your PATH)
+unblink
 ```
 
 The node will:
@@ -46,24 +29,7 @@ The node will:
 - Load config from `~/.unblink/config.json`
 - Create bridges to local services on demand
 
-### Configuration
-
-The node creates a config file at `~/.unblink/config.json` on first run. Edit it:
-
-```json
-{
-  "relay_address": "ws://localhost:9020/node/connect",
-  "node_id": "my-node",
-  "reconnect": {
-    "enabled": true,
-    "max_num_attempts": 10
-  }
-}
-```
-
-### Authorization Flow
-
-On first run, the node will request authorization. The relay will provide an authorization URL that you can open in your browser to authorize the node with your account. The node will then receive a token and connect automatically on subsequent runs.
+On first run, a URL will be shown to your so that you can open in your browser and authorize (link) the node with your account.
 
 ### Relay
 
@@ -87,49 +53,6 @@ Private proxy that runs in your private network. The node:
 ### Protocol
 
 See [docs/NODE_RELAY_PROTOCOL.md](docs/NODE_RELAY_PROTOCOL.md) for detailed protocol specifications.
-
-## API Endpoints
-
-### Authentication
-
-```bash
-# Register new user
-POST /auth/register
-{
-  "email": "user@example.com",
-  "password": "password123",
-  "name": "John Doe"
-}
-
-# Login
-POST /auth/login
-{
-  "email": "user@example.com",
-  "password": "password123"
-}
-
-# Get current user
-GET /auth/me
-Authorization: Bearer <token>
-
-# Logout
-POST /auth/logout
-```
-
-## Development
-
-### Build from source
-
-```bash
-# Build relay
-./tmux.dev.sh
-```
-
-### Run tests
-
-```bash
-go test ./tests/...
-```
 
 ## Contributing
 
