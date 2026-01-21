@@ -13,8 +13,6 @@ import (
 	nodev1connect "github.com/unblink/unblink/relay/gen/unblink/node/v1/nodev1connect"
 	servicev1connect "github.com/unblink/unblink/relay/gen/unblink/service/v1/servicev1connect"
 	webrtcv1connect "github.com/unblink/unblink/relay/gen/unblink/webrtc/v1/webrtcv1connect"
-	"golang.org/x/net/http2"
-	"golang.org/x/net/http2/h2c"
 )
 
 // StartHTTPAPIServer starts the HTTP API server
@@ -96,9 +94,6 @@ func StartHTTPAPIServer(relay *Relay, addr string, cfg *Config) (*http.Server, e
 	mux.Handle("/storage/", storageHandler)
 	log.Printf("[HTTP] Mounted StorageHandler at /storage/")
 
-	// Wrap with CORS middleware (applies to non-RPC routes)
-	handler := corsMiddleware(mux)
-
 	// Initialize WebRTC session manager
 	relay.WebRTCSessionMgr = NewWebRTCSessionManager(relay)
 
@@ -107,16 +102,17 @@ func StartHTTPAPIServer(relay *Relay, addr string, cfg *Config) (*http.Server, e
 		handleNodeConnect(w, r, relay)
 	})
 
-	// Use h2c to support HTTP/2 without TLS for Connect RPC
-	// This allows both gRPC (HTTP/2 required) and Connect (HTTP/1.1 or HTTP/2) to work
-	h2cHandler := h2c.NewHandler(handler, &http2.Server{})
+	// Wrap with CORS middleware
+	// Connect RPC works over HTTP/1.1, so no h2c wrapper needed
+	// If TLS is enabled, Go's http.Server will automatically use HTTP/2
+	handler := corsMiddleware(mux)
 
 	server := &http.Server{
 		Addr:    addr,
-		Handler: h2cHandler,
+		Handler: handler,
 	}
 
-	log.Printf("[HTTP] Starting HTTP API on %s (with h2c for HTTP/2 support)", addr)
+	log.Printf("[HTTP] Starting HTTP API on %s", addr)
 	go func() {
 		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			log.Printf("[HTTP] Server error: %v", err)
