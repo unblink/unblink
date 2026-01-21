@@ -1,0 +1,20 @@
+syntax = "proto3";
+
+package unblink.webrtc.v1;
+
+option go_package = "github.com/unblink/unblink/relay/gen/unblink/webrtc/v1;webrtcv1";
+
+message CreateWebRTCSessionRequest {
+  string node_id = 1;
+  string service_id = 2;
+  string sdp = 3;
+}
+
+message CreateWebRTCSessionResponse {
+  string type = 1;
+  string sdp = 2;
+}
+
+service WebRTCService {
+  rpc CreateWebRTCSession(CreateWebRTCSessionRequest) returns (CreateWebRTCSessionResponse);
+}

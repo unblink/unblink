@@ -1,0 +1,125 @@
+syntax = "proto3";
+
+package unblink.agent.v1;
+
+option go_package = "github.com/unblink/unblink/relay/gen/unblink/agent/v1;agentv1";
+
+import "google/protobuf/struct.proto";
+
+message ListAgentsRequest {}
+
+message ListAgentsResponse {
+  repeated Agent agents = 1;
+}
+
+message CreateAgentRequest {
+  string name = 1;
+  string type = 2;
+  AgentConfig config = 3;
+  repeated string service_ids = 4;
+}
+
+message CreateAgentResponse {
+  bool success = 1;
+  string id = 2;
+  Agent agent = 3;
+}
+
+message GetAgentRequest {
+  string agent_id = 1;
+}
+
+message GetAgentResponse {
+  Agent agent = 1;
+}
+
+message UpdateAgentRequest {
+  string agent_id = 1;
+  string name = 2;
+  string type = 3;
+  AgentConfig config = 4;
+  repeated string service_ids = 5;
+}
+
+message UpdateAgentResponse {
+  Agent agent = 1;
+}
+
+message DeleteAgentRequest {
+  string agent_id = 1;
+}
+
+message DeleteAgentResponse {}
+
+message AgentConfig {
+  string instruction = 1;
+  string base_url = 2;
+  string model = 3;
+  string api_key = 4;
+}
+
+message Agent {
+  string id = 1;
+  string name = 2;
+  string type = 3;
+  AgentConfig config = 4;
+  repeated string service_ids = 5;
+  int64 created_at = 6;
+  int64 updated_at = 7;
+}
+
+// === Agent Event Types ===
+
+message AgentEvent {
+  string id = 1;
+  string agent_id = 2;
+  string agent_name = 3;
+  string service_id = 4;
+  google.protobuf.Struct data = 5;
+  google.protobuf.Struct metadata = 6;
+  int64 created_at = 7;
+}
+
+// === Client Realtime Stream ===
+
+message StreamClientRealtimeEventsRequest {
+  // Empty - authentication via auth header
+}
+
+message ClientRealtimeEvent {
+  oneof event {
+    AgentEvent agent = 1;
+    // Future: NodeStatusEvent node = 2;
+    // Future: ServiceEvent service = 3;
+  }
+}
+
+message StreamClientRealtimeEventsResponse {
+  ClientRealtimeEvent event = 1;
+}
+
+// === Historical Events ===
+
+message ListAgentEventsRequest {
+  string agent_id = 1;
+  string service_id = 2;
+  int32 limit = 3;
+}
+
+message ListAgentEventsResponse {
+  repeated AgentEvent events = 1;
+}
+
+service AgentService {
+  rpc ListAgents(ListAgentsRequest) returns (ListAgentsResponse);
+  rpc CreateAgent(CreateAgentRequest) returns (CreateAgentResponse);
+  rpc GetAgent(GetAgentRequest) returns (GetAgentResponse);
+  rpc UpdateAgent(UpdateAgentRequest) returns (UpdateAgentResponse);
+  rpc DeleteAgent(DeleteAgentRequest) returns (DeleteAgentResponse);
+
+  // Server-streaming RPC for all client realtime events
+  rpc StreamClientRealtimeEvents(StreamClientRealtimeEventsRequest) returns (stream StreamClientRealtimeEventsResponse);
+
+  // Unary RPC for historical agent events
+  rpc ListAgentEvents(ListAgentEventsRequest) returns (ListAgentEventsResponse);
+}

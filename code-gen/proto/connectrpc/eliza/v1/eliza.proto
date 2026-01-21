@@ -1,0 +1,49 @@
+syntax = "proto3";
+
+package connectrpc.eliza.v1;
+
+option go_package = "github.com/unblink/unblink/relay/gen/connectrpc/eliza/v1;elizav1";
+
+import "buf/validate/validate.proto";
+
+message SayRequest {
+  string sentence = 1 [
+    (buf.validate.field).string.min_len = 1,
+    (buf.validate.field).string.max_len = 250
+  ];
+}
+
+message SayResponse {
+  string sentence = 1;
+}
+
+message IntroduceRequest {
+  string name = 1;
+}
+
+message IntroduceResponse {
+  string sentence = 1;
+}
+
+message ConsultRequest {
+  string sentence = 1;
+}
+
+message ConsultResponse {
+  string sentence = 1;
+}
+
+message ChatRequest {
+  string sentence = 1;
+}
+
+message ChatResponse {
+  string sentence = 1;
+}
+
+service ElizaService {
+  rpc Say(SayRequest) returns (SayResponse) {}
+  rpc Introduce(IntroduceRequest) returns (stream IntroduceResponse) {}
+  rpc Consult(stream ConsultRequest) returns (ConsultResponse) {}
+  rpc Chat(stream ChatRequest) returns (stream ChatResponse) {}
+}

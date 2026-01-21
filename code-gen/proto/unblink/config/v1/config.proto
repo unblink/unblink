@@ -1,0 +1,15 @@
+syntax = "proto3";
+
+package unblink.config.v1;
+
+option go_package = "github.com/unblink/unblink/relay/gen/unblink/config/v1;configv1";
+
+message GetFlagsRequest {}
+
+message GetFlagsResponse {
+  string dev_impersonate_email = 1;
+}
+
+service ConfigService {
+  rpc GetFlags(GetFlagsRequest) returns (GetFlagsResponse);
+}

@@ -1,0 +1,81 @@
+syntax = "proto3";
+
+package unblink.service.v1;
+
+option go_package = "github.com/unblink/unblink/relay/gen/unblink/service/v1;servicev1";
+
+message ListServicesRequest {}
+
+message ListServicesResponse {
+  repeated Service services = 1;
+}
+
+message CreateServiceRequest {
+  string name = 1;
+  string description = 2;
+  string node_id = 3;
+  string service_url = 4;
+  repeated string tags = 5;
+}
+
+message CreateServiceResponse {
+  bool success = 1;
+  string id = 2;
+  Service service = 3;
+}
+
+message GetServiceRequest {
+  string service_id = 1;
+}
+
+message GetServiceResponse {
+  Service service = 1;
+}
+
+message UpdateServiceRequest {
+  string service_id = 1;
+  string name = 2;
+  string description = 3;
+  string service_url = 4;
+  string status = 5;
+}
+
+message UpdateServiceResponse {
+  Service service = 1;
+}
+
+message DeleteServiceRequest {
+  string service_id = 1;
+}
+
+message DeleteServiceResponse {}
+
+message ListServicesByNodeRequest {
+  string node_id = 1;
+}
+
+message ListServicesByNodeResponse {
+  repeated Service services = 1;
+}
+
+message Service {
+  string id = 1;
+  string name = 2;
+  string description = 3;
+  string node_id = 4;
+  string service_url = 5;
+  repeated string tags = 6;
+  string status = 7;
+  int64 owner_id = 8;
+  int64 created_at = 9;
+  int64 updated_at = 10;
+}
+
+service ServiceService {
+  rpc ListServices(ListServicesRequest) returns (ListServicesResponse);
+  rpc CreateService(CreateServiceRequest) returns (CreateServiceResponse);
+  rpc GetService(GetServiceRequest) returns (GetServiceResponse);
+  rpc UpdateService(UpdateServiceRequest) returns (UpdateServiceResponse);
+  rpc DeleteService(DeleteServiceRequest) returns (DeleteServiceResponse);
+  rpc ListServicesByNode(ListServicesByNodeRequest) returns (ListServicesByNodeResponse);
+}

@@ -1,0 +1,136 @@
+import { Match, Show, Switch, createSignal, onCleanup, onMount, type Component } from 'solid-js';
+import SideBar from './SideBar';
+import VideoTile from './VideoTile';
+import TabLayout from './TabLayout';
+import TabSettings from './tabs/TabSettings';
+import TabHome from './tabs/TabHome';
+import TabAgents from './tabs/TabAgents';
+import TabChat from './tabs/TabChat';
+import ChatHeaderAction from './chat/ChatHeaderAction';
+import ArkToast from '../ark/ArkToast';
+import { tab, type Tab, connectClientRealtimeStream, disconnectClientRealtimeStream, fetchNodes, fetchAgents, fetchNodesAndServices } from '../shared';
+import { useAgentPanel } from './AgentPanel';
+
+const ComingSoon = () => (
+  <div class="flex justify-center items-center h-full">
+    <p class="text-neu-500">Coming soon</p>
+  </div>
+);
+
+const Main: Component = () => {
+  const [isSavingSettings, setIsSavingSettings] = createSignal(false);
+
+  // Connect to client realtime stream for agent events
+  onMount(() => {
+    console.log('[Main] Connecting to client realtime stream...');
+    connectClientRealtimeStream();
+
+    onCleanup(() => {
+      console.log('[Main] Disconnecting client realtime stream...');
+      disconnectClientRealtimeStream();
+    });
+  });
+
+
+  onMount(fetchNodesAndServices);
+  onMount(fetchAgents);
+
+  const handleSaveSettings = async () => {
+    setIsSavingSettings(true);
+    // TODO: Implement server-side save
+    console.log('Saving settings...');
+    await new Promise((resolve) => setTimeout(resolve, 500));
+    setIsSavingSettings(false);
+  };
+
+  return (
+    <div class="flex gap-2 h-screen bg-neutral-950">
+      <ArkToast />
+      <SideBar />
+
+      <div class="flex-1 h-screen overflow-hidden">
+        <Switch fallback={
+          <TabLayout title="Home">
+            <div class="flex justify-center items-center h-full">
+              <p class="text-neu-500">Welcome to Unblink Dashboard</p>
+            </div>
+          </TabLayout>
+        }>
+          <Match when={tab().type === 'view'}>
+            {(() => {
+              // Create accessor for serviceId to handle reactivity
+              const serviceIdAccessor = () => {
+                const t = tab();
+                return t.type === 'view' ? t.serviceId : undefined;
+              };
+
+              const agentPanel = useAgentPanel(serviceIdAccessor);
+              const t = () => tab() as Extract<Tab, { type: 'view' }>;
+
+              return (
+                <div class="flex h-screen">
+                  <div class="flex-1 h-screen overflow-hidden">
+                    <TabLayout
+                      title={t().name || 'Stream'}
+                      headerAction={
+                        <Show when={!agentPanel.showAgentPanel()}>
+                          <agentPanel.Toggle />
+                        </Show>
+                      }
+                    >
+                      <VideoTile nodeId={t().nodeId || ''} serviceId={t().serviceId} name={t().name || ''} />
+                    </TabLayout>
+                  </div>
+                  <agentPanel.Comp />
+                </div>
+              );
+            })()}
+          </Match>
+
+          <Match when={tab().type === 'chat'}>
+            <TabLayout title="Chat" headerAction={<ChatHeaderAction />}>
+              <TabChat />
+            </TabLayout>
+          </Match>
+
+          <Match when={tab().type === 'moments'}>
+            <TabLayout title="Moments">
+              <ComingSoon />
+            </TabLayout>
+          </Match>
+
+          <Match when={tab().type === 'agents'}>
+            <TabLayout title="Agents">
+              <TabAgents />
+            </TabLayout>
+          </Match>
+
+          <Match when={tab().type === 'settings'}>
+            <TabLayout
+              title="Settings"
+              headerAction={
+                <button
+                  onClick={handleSaveSettings}
+                  disabled={isSavingSettings()}
+                  class="drop-shadow-2xl px-4 py-2 rounded-xl border border-neu-750 bg-neu-800 hover:bg-neu-850 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  {isSavingSettings() ? 'Saving...' : 'Save Settings'}
+                </button>
+              }
+            >
+              <TabSettings onSave={handleSaveSettings} isSaving={isSavingSettings()} />
+            </TabLayout>
+          </Match>
+
+          <Match when={tab().type === 'home'}>
+            <TabLayout title="Home">
+              <TabHome />
+            </TabLayout>
+          </Match>
+        </Switch>
+      </div>
+    </div>
+  );
+};
+
+export default Main;

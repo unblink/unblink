@@ -1,0 +1,30 @@
+syntax = "proto3";
+
+package unblink.node.v1;
+
+option go_package = "github.com/unblink/unblink/relay/gen/unblink/node/v1;nodev1";
+
+message ListNodesRequest {}
+
+message ListNodesResponse {
+  repeated Node nodes = 1;
+}
+
+message DeleteNodeRequest {
+  string node_id = 1;
+}
+
+message DeleteNodeResponse {}
+
+message Node {
+  string id = 1;
+  string status = 2;
+  string hostname = 3;
+  repeated string mac_addresses = 4;
+  int64 last_connected_at = 5;
+}
+
+service NodeService {
+  rpc ListNodes(ListNodesRequest) returns (ListNodesResponse);
+  rpc DeleteNode(DeleteNodeRequest) returns (DeleteNodeResponse);
+}

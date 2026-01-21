@@ -1,0 +1,64 @@
+syntax = "proto3";
+
+package unblink.auth.v1;
+
+option go_package = "github.com/unblink/unblink/relay/gen/unblink/auth/v1;authv1";
+
+// Register
+message RegisterRequest {
+  string email = 1;
+  string password = 2;
+  string name = 3;
+}
+
+message RegisterResponse {
+  bool success = 1;
+  string token = 2;
+  User user = 3;
+}
+
+// Login
+message LoginRequest {
+  string email = 1;
+  string password = 2;
+}
+
+message LoginResponse {
+  bool success = 1;
+  string token = 2;
+  User user = 3;
+}
+
+// GetUser
+message GetUserRequest {}
+
+message GetUserResponse {
+  bool success = 1;
+  User user = 2;
+}
+
+// AuthorizeNode
+message AuthorizeNodeRequest {
+  string node_id = 1;
+}
+
+message AuthorizeNodeResponse {
+  bool success = 1;
+  string node_id = 2;
+  string message = 3;
+}
+
+// User
+message User {
+  string id = 1;
+  string email = 2;
+  string name = 3;
+  int64 created_at = 4;
+}
+
+service AuthService {
+  rpc Register(RegisterRequest) returns (RegisterResponse);
+  rpc Login(LoginRequest) returns (LoginResponse);
+  rpc GetUser(GetUserRequest) returns (GetUserResponse);
+  rpc AuthorizeNode(AuthorizeNodeRequest) returns (AuthorizeNodeResponse);
+}
