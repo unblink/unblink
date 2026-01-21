@@ -86,6 +86,9 @@ func main() {
 	}
 	r.SetChatService(chatService)
 
+	// Register relay tools with chat service
+	r.RegisterChatTools(chatService)
+
 	// Initialize AutoStreamManager if auto-streaming is enabled
 	if config.AutostreamEnable {
 		log.Printf("[INFO] Initializing AutoStreamManager (frame_interval=%.1fs, batch_size=%d)",

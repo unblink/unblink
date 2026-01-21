@@ -50,14 +50,6 @@ func (d *DB) initSchema() error {
 			created_at DATETIME,
 			FOREIGN KEY(conversation_id) REFERENCES conversations(id)
 		)`,
-		`CREATE TABLE IF NOT EXISTS artifacts (
-			id TEXT PRIMARY KEY,
-			message_id TEXT NOT NULL,
-			type TEXT NOT NULL,
-			data_json TEXT NOT NULL,
-			created_at DATETIME,
-			FOREIGN KEY(message_id) REFERENCES messages(id)
-		)`,
 	}
 
 	for _, query := range queries {

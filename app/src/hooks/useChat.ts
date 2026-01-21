@@ -110,8 +110,46 @@ export function useChat() {
         } else if (response.event.case === "toolCall") {
           const toolEvent = response.event.value;
           console.log("Tool event:", toolEvent);
-          // TODO: Display tool call UI (spinner, result badge, etc.)
-          // For now, you could append to message content or show in a separate UI
+
+          // Update the model message with tool call info
+          setMessages((prev) => {
+            const updated = [...prev];
+            const lastMsg = updated[updated.length - 1];
+            if (lastMsg && lastMsg.type === "model") {
+              const existingToolCalls = lastMsg.toolCalls || [];
+              // Find existing tool call or create new one
+              const toolCallIndex = existingToolCalls.findIndex(tc => tc.toolName === toolEvent.toolName);
+
+              const newToolCall: {
+                toolName: string;
+                state: "invoked" | "completed" | "error";
+                error?: string;
+              } = {
+                toolName: toolEvent.toolName,
+                state: toolEvent.state as "invoked" | "completed" | "error",
+              };
+
+              if (toolEvent.state === "error" && toolEvent.error) {
+                newToolCall.error = toolEvent.error;
+              }
+
+              let updatedToolCalls;
+              if (toolCallIndex >= 0) {
+                // Update existing tool call
+                updatedToolCalls = [...existingToolCalls];
+                updatedToolCalls[toolCallIndex] = newToolCall;
+              } else {
+                // Add new tool call
+                updatedToolCalls = [...existingToolCalls, newToolCall];
+              }
+
+              updated[updated.length - 1] = {
+                ...lastMsg,
+                toolCalls: updatedToolCalls,
+              };
+            }
+            return updated;
+          });
         }
       }
     } catch (error) {

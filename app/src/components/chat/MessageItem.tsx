@@ -1,11 +1,35 @@
 import { Switch, Match } from "solid-js";
-import type { UIMessage } from "../../signals/chatSignals";
+import { FaSolidSpinner, FaSolidCircleCheck } from "solid-icons/fa";
+import { BsX } from "solid-icons/bs";
+import type { UIMessage, ToolCall } from "../../signals/chatSignals";
 import { ProseText } from "./ProseText";
 
 interface MessageItemProps {
   message: UIMessage;
   showLoading?: boolean;
   isLast?: boolean;
+}
+
+function ToolCallItem(props: { toolCall: ToolCall }) {
+  return (
+    <div class="flex items-center gap-2 text-sm text-white">
+      <Switch>
+        <Match when={props.toolCall.state === "invoked"}>
+          <FaSolidSpinner class="animate-spin" size={14} />
+        </Match>
+        <Match when={props.toolCall.state === "completed"}>
+          <FaSolidCircleCheck size={14} />
+        </Match>
+        <Match when={props.toolCall.state === "error"}>
+          <BsX size={16} />
+        </Match>
+      </Switch>
+      <span class="capitalize">{props.toolCall.toolName}</span>
+      {props.toolCall.error && (
+        <span class="text-xs ml-1">{props.toolCall.error}</span>
+      )}
+    </div>
+  );
 }
 
 export default function MessageItem(props: MessageItemProps) {
@@ -23,6 +47,15 @@ export default function MessageItem(props: MessageItemProps) {
         <Match when={props.message.type === "model"}>
           <div class="px-4 py-4 flex flex-col">
             <ProseText content={props.message.content} />
+
+            {/* Tool calls */}
+            {props.message.toolCalls && props.message.toolCalls.length > 0 && (
+              <div class="mt-3 flex flex-wrap gap-2">
+                {props.message.toolCalls.map((toolCall) => (
+                  <ToolCallItem toolCall={toolCall} />
+                ))}
+              </div>
+            )}
 
             {props.showLoading && (
               <div class="mt-4 flex gap-1">

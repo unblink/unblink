@@ -1,10 +1,10 @@
 # Run scripts
 
-This is a monorepo. When run scripts, use cd.
+This is a monorepo. When run scripts, use cd absolute_path
 
 ```
-cd path && bun script.ts
-cd path && go run script.go
+cd absolute_path && bun script.ts
+cd absolute_path && go run script.go
 ```
 
 # Makefile

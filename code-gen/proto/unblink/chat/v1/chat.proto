@@ -45,14 +45,6 @@ message Message {
   google.protobuf.Timestamp created_at = 4;
 }
 
-message Artifact {
-  string id = 1;
-  string message_id = 2;
-  string type = 3;
-  string data_json = 4;
-  google.protobuf.Timestamp created_at = 5;
-}
-
 // Request/Response messages
 
 message CreateConversationRequest {
@@ -121,8 +113,7 @@ message SendMessageResponse {
   oneof event {
     string text_delta = 1;
     string status_update = 2;
-    Artifact artifact = 3;
-    ToolCallEvent tool_call = 4;
+    ToolCallEvent tool_call = 3;
   }
 }
 

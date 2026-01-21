@@ -1,5 +1,13 @@
 import { createSignal } from "solid-js";
 
+export type ToolCallState = "invoked" | "completed" | "error";
+
+export interface ToolCall {
+  toolName: string;
+  state: ToolCallState;
+  error?: string;
+}
+
 export interface UIMessage {
   id: string;
   type: "user" | "model";
@@ -8,6 +16,8 @@ export interface UIMessage {
   conversationId: string;
   // Optional: full OpenAI message body as JSON
   body?: string;
+  // Tool calls during this message
+  toolCalls?: ToolCall[];
 }
 
 export interface ConversationSummary {

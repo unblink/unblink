@@ -20,6 +20,7 @@ import (
 
 type Service struct {
 	db     *DB
+	tools  *ToolRegistry
 	openai openai.Client
 	model  string
 }
@@ -32,6 +33,7 @@ func NewService(unblinkDir string, openai openai.Client, model string) (*Service
 	log.Printf("[ChatService] Initializing with model: %s", model)
 	return &Service{
 		db:     db,
+		tools:  NewToolRegistry(),
 		openai: openai,
 		model:  model,
 	}, nil
@@ -39,6 +41,11 @@ func NewService(unblinkDir string, openai openai.Client, model string) (*Service
 
 // Ensure Service implements interface
 var _ chatv1connect.ChatServiceHandler = (*Service)(nil)
+
+// RegisterTool registers a tool with the chat service
+func (s *Service) RegisterTool(tool Tool) {
+	s.tools.Register(tool)
+}
 
 func (s *Service) CreateConversation(ctx context.Context, req *connect.Request[chatv1.CreateConversationRequest]) (*connect.Response[chatv1.CreateConversationResponse], error) {
 	id := uuid.New().String()
@@ -221,23 +228,8 @@ func (s *Service) SendMessage(ctx context.Context, req *connect.Request[chatv1.S
 		return connect.NewError(connect.CodeInternal, fmt.Errorf("failed to get history: %w", err))
 	}
 
-	// 3. Define available tools
-	tools := []openai.ChatCompletionToolUnionParam{
-		openai.ChatCompletionFunctionTool(openai.FunctionDefinitionParam{
-			Name:        "search_video",
-			Description: openai.String("Search for video frames"),
-			Parameters: openai.FunctionParameters{
-				"type": "object",
-				"properties": map[string]any{
-					"query": map[string]string{
-						"type":        "string",
-						"description": "Search query describing what to look for",
-					},
-				},
-				"required": []string{"query"},
-			},
-		}),
-	}
+	// 3. Get available tools from registry
+	tools := s.tools.AsOpenAITools()
 
 	// 4. Prepare OpenAI Request with tools
 	log.Printf("[ChatService] Using model: %s", s.model)
@@ -407,7 +399,7 @@ func (s *Service) SendMessage(ctx context.Context, req *connect.Request[chatv1.S
 				return err
 			}
 
-			result := s.executeTool(ctx, toolCall.Name, toolCall.Arguments)
+			result := s.tools.Execute(ctx, toolCall.Name, toolCall.Arguments)
 			log.Printf("[ChatService] Tool result: %s", result)
 
 			// Send tool result event
@@ -531,17 +523,4 @@ func (s *Service) getConversationHistory(conversationID string) ([]openai.ChatCo
 		}
 	}
 	return messages, nil
-}
-
-// executeTool executes a tool call and returns the result
-func (s *Service) executeTool(ctx context.Context, toolName string, argumentsJSON string) string {
-	fmt.Printf("[ChatService] Executing tool: %s with args: %s", toolName, argumentsJSON)
-	switch toolName {
-	case "search_video":
-		// Simple example - just return fixed text
-		// In a real implementation, this would parse arguments and search video
-		return "There was a man"
-	default:
-		return fmt.Sprintf("Unknown tool: %s", toolName)
-	}
 }
