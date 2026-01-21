@@ -1,7 +1,39 @@
 import { createSignal } from "solid-js";
 
+export type UIRole = "user" | "model" | "tool" | "system";
 export type ToolCallState = "invoked" | "completed" | "error";
 
+// Data structures for each UI block type
+export interface UserData {
+  content: string;
+}
+
+export interface ModelData {
+  content: string;
+}
+
+export interface ToolData {
+  toolName: string;
+  state: ToolCallState;
+  error?: string;
+  content?: string;
+}
+
+export interface SystemData {
+  content: string;
+}
+
+export type UIBlockData = UserData | ModelData | ToolData | SystemData;
+
+export interface UIBlock {
+  id: string;
+  conversationId: string;
+  role: UIRole;
+  data: UIBlockData;
+  createdAt?: number;
+}
+
+// For backward compatibility during transition
 export interface ToolCall {
   toolName: string;
   state: ToolCallState;
@@ -26,7 +58,10 @@ export interface ConversationSummary {
   lastUpdated: number;
 }
 
-// Messages in current conversation
+// UI blocks in current conversation (replaces messages)
+export const [uiBlocks, setUIBlocks] = createSignal<UIBlock[]>([]);
+
+// For backward compatibility - alias to uiBlocks
 export const [messages, setMessages] = createSignal<UIMessage[]>([]);
 
 // Current input value

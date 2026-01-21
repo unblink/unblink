@@ -1,12 +1,11 @@
 import { createSignal } from "solid-js";
 import { chatClient } from "../lib/rpc";
 import {
-  type Message,
   type Conversation,
 } from "../../gen/unblink/chat/v1/chat_pb";
 import {
-  messages,
-  setMessages,
+  uiBlocks,
+  setUIBlocks,
   inputValue,
   setInputValue,
   isLoading,
@@ -16,11 +15,29 @@ import {
   conversations,
   setConversations,
   setChatInputState,
-  type UIMessage,
+  type UIBlock,
+  type UIBlockData,
+  type UserData,
+  type ModelData,
+  type ToolData,
+  type UIRole,
 } from "../signals/chatSignals";
 
 let abortController: AbortController | null = null;
 let firstChunkReceived = false;
+
+// Track UI blocks by ID for replacement (same ID = replace, different ID = new)
+const blockMap = new Map<string, UIBlock>();
+
+// Helper function to upsert a block (update if exists, insert if new)
+const upsertBlock = (block: UIBlock) => {
+  blockMap.set(block.id, block);
+  // Return sorted blocks by created_at
+  const sorted = Array.from(blockMap.values()).sort((a, b) =>
+    (a.createdAt || 0) - (b.createdAt || 0)
+  );
+  setUIBlocks(sorted);
+};
 
 export function useChat() {
   const [streamingContent, setStreamingContent] = createSignal("");
@@ -36,35 +53,19 @@ export function useChat() {
       if (!newConv) return;
       currentId = newConv.id;
       setActiveConversationId(currentId);
+      // Clear block map for new conversation
+      blockMap.clear();
     }
 
-    // Add user message immediately
-    const userMsg: UIMessage = {
-      id: `user_${Date.now()}`,
-      type: "user",
-      content: message,
-      timestamp: Date.now(),
-      conversationId: currentId,
-    };
-    setMessages((prev) => [...prev, userMsg]);
     setInputValue("");
     setIsLoading(true);
     setStreamingContent("");
     setChatInputState('user_sent');
     firstChunkReceived = false;
 
-    // Create placeholder for model response
-    const modelMsgId = `model_${Date.now()}`;
-    setMessages((prev) => [
-      ...prev,
-      {
-        id: modelMsgId,
-        type: "model",
-        content: "",
-        timestamp: Date.now(),
-        conversationId: currentId,
-      },
-    ]);
+    // Track accumulated model content for display
+    let accumulatedModelContent = "";
+    let tempModelBlockId = `temp_model_${Date.now()}`;
 
     // Set up abort controller for this request
     abortController = new AbortController();
@@ -89,76 +90,59 @@ export function useChat() {
           }
 
           console.log('Received delta:', delta);
-          setMessages((prev) => {
-            const updated = [...prev];
-            try {
-              const lastMsg = updated[updated.length - 1];
-              if (lastMsg && lastMsg.type === "model") {
-                const newContent = lastMsg.content + delta;
-                updated[updated.length - 1] = {
-                  ...lastMsg,
-                  content: newContent,
-                };
-                console.log('Updated model message:', updated[updated.length - 1]);
-              }
-            } catch (e) {
-              console.error("FUCK:", e);
-            }
-            return updated;
-          });
+          accumulatedModelContent += delta;
+
+          // Update temporary model block for immediate display
+          const tempModelBlock: UIBlock = {
+            id: tempModelBlockId,
+            conversationId: currentId,
+            role: "model",
+            data: { content: accumulatedModelContent } as ModelData,
+            createdAt: Date.now(),
+          };
+          upsertBlock(tempModelBlock);
+
           setStreamingContent((prev) => prev + delta);
-        } else if (response.event.case === "toolCall") {
-          const toolEvent = response.event.value;
-          console.log("Tool event:", toolEvent);
+        } else if (response.event.case === "uiBlock") {
+          const uiBlockEvent = response.event.value;
+          console.log("UI block event:", uiBlockEvent);
 
-          // Update the model message with tool call info
-          setMessages((prev) => {
-            const updated = [...prev];
-            const lastMsg = updated[updated.length - 1];
-            if (lastMsg && lastMsg.type === "model") {
-              const existingToolCalls = lastMsg.toolCalls || [];
-              // Find existing tool call or create new one
-              const toolCallIndex = existingToolCalls.findIndex(tc => tc.toolName === toolEvent.toolName);
+          // Parse the data_json from the event
+          let data: UIBlockData;
+          try {
+            const dataJson = JSON.parse(uiBlockEvent.dataJson);
+            data = dataJson;
+          } catch (e) {
+            console.error("Failed to parse UI block data:", e);
+            continue;
+          }
 
-              const newToolCall: {
-                toolName: string;
-                state: "invoked" | "completed" | "error";
-                error?: string;
-              } = {
-                toolName: toolEvent.toolName,
-                state: toolEvent.state as "invoked" | "completed" | "error",
-              };
+          // Create UI block from event
+          const block: UIBlock = {
+            id: uiBlockEvent.id,
+            conversationId: uiBlockEvent.conversationId,
+            role: uiBlockEvent.role as UIRole,
+            data,
+            createdAt: uiBlockEvent.createdAt ? Number(uiBlockEvent.createdAt.seconds) * 1000 : Date.now(),
+          };
 
-              if (toolEvent.state === "error" && toolEvent.error) {
-                newToolCall.error = toolEvent.error;
-              }
+          // If this is a model block, it replaces the temporary accumulated block
+          if (block.role === "model") {
+            // Remove the temporary block if it exists
+            blockMap.delete(tempModelBlockId);
+          }
 
-              let updatedToolCalls;
-              if (toolCallIndex >= 0) {
-                // Update existing tool call
-                updatedToolCalls = [...existingToolCalls];
-                updatedToolCalls[toolCallIndex] = newToolCall;
-              } else {
-                // Add new tool call
-                updatedToolCalls = [...existingToolCalls, newToolCall];
-              }
-
-              updated[updated.length - 1] = {
-                ...lastMsg,
-                toolCalls: updatedToolCalls,
-              };
-            }
-            return updated;
-          });
+          // Upsert the block (same ID = replace, different ID = new)
+          upsertBlock(block);
         }
       }
     } catch (error) {
       console.error("Error sending message:", error);
-      // Remove the placeholder message on error
-      setMessages((prev) => {
-        const updated = prev.filter((m) => m.id !== modelMsgId);
-        return updated;
-      });
+      // Remove the temporary model block on error
+      blockMap.delete(tempModelBlockId);
+      setUIBlocks(Array.from(blockMap.values()).sort((a, b) =>
+        (a.createdAt || 0) - (b.createdAt || 0)
+      ));
     } finally {
       setIsLoading(false);
       setStreamingContent("");
@@ -207,36 +191,36 @@ export function useChat() {
 
   const loadConversation = async (conversationId: string) => {
     try {
-      const response = await chatClient.listMessages({
+      // Clear block map for new conversation
+      blockMap.clear();
+
+      const response = await chatClient.listUIBlocks({
         conversationId,
-        pageSize: 100,
-        pageToken: "",
       });
 
-      const msgs: UIMessage[] = response.messages.map((m) => {
-        // Parse body JSON to extract role and content
-        let role = "model";
-        let content = "";
-
+      const blocks: UIBlock[] = response.uiBlocks.map((b) => {
+        let data: UIBlockData;
         try {
-          const body = JSON.parse(m.body);
-          role = body.role || "model";
-          content = body.content || "";
+          const dataJson = JSON.parse(b.dataJson);
+          data = dataJson;
         } catch (e) {
-          console.error("Failed to parse message body:", e);
+          console.error("Failed to parse UI block data:", e);
+          // Default to empty model data
+          data = { content: "" } as ModelData;
         }
 
         return {
-          id: m.id,
-          type: role === "user" ? "user" : "model",
-          content,
-          timestamp: m.createdAt ? Number(m.createdAt.seconds) * 1000 : Date.now(),
-          conversationId: m.conversationId,
-          body: m.body,
+          id: b.id,
+          conversationId: b.conversationId,
+          role: b.role as UIRole,
+          data,
+          createdAt: b.createdAt ? Number(b.createdAt.seconds) * 1000 : Date.now(),
         };
       });
 
-      setMessages(msgs);
+      // Populate block map and set UI blocks
+      blocks.forEach((block) => blockMap.set(block.id, block));
+      setUIBlocks(blocks);
       setActiveConversationId(conversationId);
     } catch (error) {
       console.error("Error loading conversation:", error);
@@ -249,7 +233,8 @@ export function useChat() {
       // If we deleted the active conversation, clear state
       if (activeConversationId() === conversationId) {
         setActiveConversationId(null);
-        setMessages([]);
+        blockMap.clear();
+        setUIBlocks([]);
       }
       await listConversations();
     } catch (error) {
@@ -269,13 +254,15 @@ export function useChat() {
   const handleSelectConversation = (id: string) => {
     if (id === activeConversationId()) return;
     setActiveConversationId(id);
-    setMessages([]); // Clear while loading
+    blockMap.clear();
+    setUIBlocks([]); // Clear while loading
     loadConversation(id);
   };
 
   const handleNewChat = () => {
     setActiveConversationId(null);
-    setMessages([]);
+    blockMap.clear();
+    setUIBlocks([]);
     setInputValue("");
     setIsLoading(false);
   };

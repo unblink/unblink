@@ -1,6 +1,6 @@
 import { ArkDialog } from "../ark/ArkDialog";
 import { createSignal, untrack } from "solid-js";
-import AgentPlusSVG from "../assets/icons/AgentPlus.svg";
+import AgentPlusSVG from "../../public/icons/AgentPlus.svg";
 import { setTab, fetchAgents } from "../shared";
 import { toaster } from "../ark/ArkToast";
 import { AgentForm } from "./AgentForm";

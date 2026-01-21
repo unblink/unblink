@@ -218,6 +218,82 @@ func (x *Message) GetCreatedAt() *timestamppb.Timestamp {
 	return nil
 }
 
+type UIBlock struct {
+	state          protoimpl.MessageState `protogen:"open.v1"`
+	Id             string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	ConversationId string                 `protobuf:"bytes,2,opt,name=conversation_id,json=conversationId,proto3" json:"conversation_id,omitempty"`
+	Role           string                 `protobuf:"bytes,3,opt,name=role,proto3" json:"role,omitempty"` // 'user', 'model', 'tool', 'system'
+	DataJson       string                 `protobuf:"bytes,4,opt,name=data_json,json=dataJson,proto3" json:"data_json,omitempty"`
+	CreatedAt      *timestamppb.Timestamp `protobuf:"bytes,5,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
+}
+
+func (x *UIBlock) Reset() {
+	*x = UIBlock{}
+	mi := &file_unblink_chat_v1_chat_proto_msgTypes[2]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *UIBlock) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*UIBlock) ProtoMessage() {}
+
+func (x *UIBlock) ProtoReflect() protoreflect.Message {
+	mi := &file_unblink_chat_v1_chat_proto_msgTypes[2]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use UIBlock.ProtoReflect.Descriptor instead.
+func (*UIBlock) Descriptor() ([]byte, []int) {
+	return file_unblink_chat_v1_chat_proto_rawDescGZIP(), []int{2}
+}
+
+func (x *UIBlock) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+func (x *UIBlock) GetConversationId() string {
+	if x != nil {
+		return x.ConversationId
+	}
+	return ""
+}
+
+func (x *UIBlock) GetRole() string {
+	if x != nil {
+		return x.Role
+	}
+	return ""
+}
+
+func (x *UIBlock) GetDataJson() string {
+	if x != nil {
+		return x.DataJson
+	}
+	return ""
+}
+
+func (x *UIBlock) GetCreatedAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.CreatedAt
+	}
+	return nil
+}
+
 type CreateConversationRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Title         string                 `protobuf:"bytes,1,opt,name=title,proto3" json:"title,omitempty"`
@@ -228,7 +304,7 @@ type CreateConversationRequest struct {
 
 func (x *CreateConversationRequest) Reset() {
 	*x = CreateConversationRequest{}
-	mi := &file_unblink_chat_v1_chat_proto_msgTypes[2]
+	mi := &file_unblink_chat_v1_chat_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -240,7 +316,7 @@ func (x *CreateConversationRequest) String() string {
 func (*CreateConversationRequest) ProtoMessage() {}
 
 func (x *CreateConversationRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_unblink_chat_v1_chat_proto_msgTypes[2]
+	mi := &file_unblink_chat_v1_chat_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -253,7 +329,7 @@ func (x *CreateConversationRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateConversationRequest.ProtoReflect.Descriptor instead.
 func (*CreateConversationRequest) Descriptor() ([]byte, []int) {
-	return file_unblink_chat_v1_chat_proto_rawDescGZIP(), []int{2}
+	return file_unblink_chat_v1_chat_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *CreateConversationRequest) GetTitle() string {
@@ -279,7 +355,7 @@ type CreateConversationResponse struct {
 
 func (x *CreateConversationResponse) Reset() {
 	*x = CreateConversationResponse{}
-	mi := &file_unblink_chat_v1_chat_proto_msgTypes[3]
+	mi := &file_unblink_chat_v1_chat_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -291,7 +367,7 @@ func (x *CreateConversationResponse) String() string {
 func (*CreateConversationResponse) ProtoMessage() {}
 
 func (x *CreateConversationResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_unblink_chat_v1_chat_proto_msgTypes[3]
+	mi := &file_unblink_chat_v1_chat_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -304,7 +380,7 @@ func (x *CreateConversationResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateConversationResponse.ProtoReflect.Descriptor instead.
 func (*CreateConversationResponse) Descriptor() ([]byte, []int) {
-	return file_unblink_chat_v1_chat_proto_rawDescGZIP(), []int{3}
+	return file_unblink_chat_v1_chat_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *CreateConversationResponse) GetConversation() *Conversation {
@@ -324,7 +400,7 @@ type ListConversationsRequest struct {
 
 func (x *ListConversationsRequest) Reset() {
 	*x = ListConversationsRequest{}
-	mi := &file_unblink_chat_v1_chat_proto_msgTypes[4]
+	mi := &file_unblink_chat_v1_chat_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -336,7 +412,7 @@ func (x *ListConversationsRequest) String() string {
 func (*ListConversationsRequest) ProtoMessage() {}
 
 func (x *ListConversationsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_unblink_chat_v1_chat_proto_msgTypes[4]
+	mi := &file_unblink_chat_v1_chat_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -349,7 +425,7 @@ func (x *ListConversationsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListConversationsRequest.ProtoReflect.Descriptor instead.
 func (*ListConversationsRequest) Descriptor() ([]byte, []int) {
-	return file_unblink_chat_v1_chat_proto_rawDescGZIP(), []int{4}
+	return file_unblink_chat_v1_chat_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *ListConversationsRequest) GetPageSize() int32 {
@@ -376,7 +452,7 @@ type ListConversationsResponse struct {
 
 func (x *ListConversationsResponse) Reset() {
 	*x = ListConversationsResponse{}
-	mi := &file_unblink_chat_v1_chat_proto_msgTypes[5]
+	mi := &file_unblink_chat_v1_chat_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -388,7 +464,7 @@ func (x *ListConversationsResponse) String() string {
 func (*ListConversationsResponse) ProtoMessage() {}
 
 func (x *ListConversationsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_unblink_chat_v1_chat_proto_msgTypes[5]
+	mi := &file_unblink_chat_v1_chat_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -401,7 +477,7 @@ func (x *ListConversationsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListConversationsResponse.ProtoReflect.Descriptor instead.
 func (*ListConversationsResponse) Descriptor() ([]byte, []int) {
-	return file_unblink_chat_v1_chat_proto_rawDescGZIP(), []int{5}
+	return file_unblink_chat_v1_chat_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *ListConversationsResponse) GetConversations() []*Conversation {
@@ -427,7 +503,7 @@ type GetConversationRequest struct {
 
 func (x *GetConversationRequest) Reset() {
 	*x = GetConversationRequest{}
-	mi := &file_unblink_chat_v1_chat_proto_msgTypes[6]
+	mi := &file_unblink_chat_v1_chat_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -439,7 +515,7 @@ func (x *GetConversationRequest) String() string {
 func (*GetConversationRequest) ProtoMessage() {}
 
 func (x *GetConversationRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_unblink_chat_v1_chat_proto_msgTypes[6]
+	mi := &file_unblink_chat_v1_chat_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -452,7 +528,7 @@ func (x *GetConversationRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetConversationRequest.ProtoReflect.Descriptor instead.
 func (*GetConversationRequest) Descriptor() ([]byte, []int) {
-	return file_unblink_chat_v1_chat_proto_rawDescGZIP(), []int{6}
+	return file_unblink_chat_v1_chat_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *GetConversationRequest) GetConversationId() string {
@@ -471,7 +547,7 @@ type GetConversationResponse struct {
 
 func (x *GetConversationResponse) Reset() {
 	*x = GetConversationResponse{}
-	mi := &file_unblink_chat_v1_chat_proto_msgTypes[7]
+	mi := &file_unblink_chat_v1_chat_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -483,7 +559,7 @@ func (x *GetConversationResponse) String() string {
 func (*GetConversationResponse) ProtoMessage() {}
 
 func (x *GetConversationResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_unblink_chat_v1_chat_proto_msgTypes[7]
+	mi := &file_unblink_chat_v1_chat_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -496,7 +572,7 @@ func (x *GetConversationResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetConversationResponse.ProtoReflect.Descriptor instead.
 func (*GetConversationResponse) Descriptor() ([]byte, []int) {
-	return file_unblink_chat_v1_chat_proto_rawDescGZIP(), []int{7}
+	return file_unblink_chat_v1_chat_proto_rawDescGZIP(), []int{8}
 }
 
 func (x *GetConversationResponse) GetConversation() *Conversation {
@@ -517,7 +593,7 @@ type UpdateConversationRequest struct {
 
 func (x *UpdateConversationRequest) Reset() {
 	*x = UpdateConversationRequest{}
-	mi := &file_unblink_chat_v1_chat_proto_msgTypes[8]
+	mi := &file_unblink_chat_v1_chat_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -529,7 +605,7 @@ func (x *UpdateConversationRequest) String() string {
 func (*UpdateConversationRequest) ProtoMessage() {}
 
 func (x *UpdateConversationRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_unblink_chat_v1_chat_proto_msgTypes[8]
+	mi := &file_unblink_chat_v1_chat_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -542,7 +618,7 @@ func (x *UpdateConversationRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateConversationRequest.ProtoReflect.Descriptor instead.
 func (*UpdateConversationRequest) Descriptor() ([]byte, []int) {
-	return file_unblink_chat_v1_chat_proto_rawDescGZIP(), []int{8}
+	return file_unblink_chat_v1_chat_proto_rawDescGZIP(), []int{9}
 }
 
 func (x *UpdateConversationRequest) GetConversationId() string {
@@ -575,7 +651,7 @@ type UpdateConversationResponse struct {
 
 func (x *UpdateConversationResponse) Reset() {
 	*x = UpdateConversationResponse{}
-	mi := &file_unblink_chat_v1_chat_proto_msgTypes[9]
+	mi := &file_unblink_chat_v1_chat_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -587,7 +663,7 @@ func (x *UpdateConversationResponse) String() string {
 func (*UpdateConversationResponse) ProtoMessage() {}
 
 func (x *UpdateConversationResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_unblink_chat_v1_chat_proto_msgTypes[9]
+	mi := &file_unblink_chat_v1_chat_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -600,7 +676,7 @@ func (x *UpdateConversationResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateConversationResponse.ProtoReflect.Descriptor instead.
 func (*UpdateConversationResponse) Descriptor() ([]byte, []int) {
-	return file_unblink_chat_v1_chat_proto_rawDescGZIP(), []int{9}
+	return file_unblink_chat_v1_chat_proto_rawDescGZIP(), []int{10}
 }
 
 func (x *UpdateConversationResponse) GetConversation() *Conversation {
@@ -619,7 +695,7 @@ type DeleteConversationRequest struct {
 
 func (x *DeleteConversationRequest) Reset() {
 	*x = DeleteConversationRequest{}
-	mi := &file_unblink_chat_v1_chat_proto_msgTypes[10]
+	mi := &file_unblink_chat_v1_chat_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -631,7 +707,7 @@ func (x *DeleteConversationRequest) String() string {
 func (*DeleteConversationRequest) ProtoMessage() {}
 
 func (x *DeleteConversationRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_unblink_chat_v1_chat_proto_msgTypes[10]
+	mi := &file_unblink_chat_v1_chat_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -644,7 +720,7 @@ func (x *DeleteConversationRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteConversationRequest.ProtoReflect.Descriptor instead.
 func (*DeleteConversationRequest) Descriptor() ([]byte, []int) {
-	return file_unblink_chat_v1_chat_proto_rawDescGZIP(), []int{10}
+	return file_unblink_chat_v1_chat_proto_rawDescGZIP(), []int{11}
 }
 
 func (x *DeleteConversationRequest) GetConversationId() string {
@@ -663,7 +739,7 @@ type DeleteConversationResponse struct {
 
 func (x *DeleteConversationResponse) Reset() {
 	*x = DeleteConversationResponse{}
-	mi := &file_unblink_chat_v1_chat_proto_msgTypes[11]
+	mi := &file_unblink_chat_v1_chat_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -675,7 +751,7 @@ func (x *DeleteConversationResponse) String() string {
 func (*DeleteConversationResponse) ProtoMessage() {}
 
 func (x *DeleteConversationResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_unblink_chat_v1_chat_proto_msgTypes[11]
+	mi := &file_unblink_chat_v1_chat_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -688,7 +764,7 @@ func (x *DeleteConversationResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteConversationResponse.ProtoReflect.Descriptor instead.
 func (*DeleteConversationResponse) Descriptor() ([]byte, []int) {
-	return file_unblink_chat_v1_chat_proto_rawDescGZIP(), []int{11}
+	return file_unblink_chat_v1_chat_proto_rawDescGZIP(), []int{12}
 }
 
 func (x *DeleteConversationResponse) GetSuccess() bool {
@@ -709,7 +785,7 @@ type ListMessagesRequest struct {
 
 func (x *ListMessagesRequest) Reset() {
 	*x = ListMessagesRequest{}
-	mi := &file_unblink_chat_v1_chat_proto_msgTypes[12]
+	mi := &file_unblink_chat_v1_chat_proto_msgTypes[13]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -721,7 +797,7 @@ func (x *ListMessagesRequest) String() string {
 func (*ListMessagesRequest) ProtoMessage() {}
 
 func (x *ListMessagesRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_unblink_chat_v1_chat_proto_msgTypes[12]
+	mi := &file_unblink_chat_v1_chat_proto_msgTypes[13]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -734,7 +810,7 @@ func (x *ListMessagesRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListMessagesRequest.ProtoReflect.Descriptor instead.
 func (*ListMessagesRequest) Descriptor() ([]byte, []int) {
-	return file_unblink_chat_v1_chat_proto_rawDescGZIP(), []int{12}
+	return file_unblink_chat_v1_chat_proto_rawDescGZIP(), []int{13}
 }
 
 func (x *ListMessagesRequest) GetConversationId() string {
@@ -768,7 +844,7 @@ type ListMessagesResponse struct {
 
 func (x *ListMessagesResponse) Reset() {
 	*x = ListMessagesResponse{}
-	mi := &file_unblink_chat_v1_chat_proto_msgTypes[13]
+	mi := &file_unblink_chat_v1_chat_proto_msgTypes[14]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -780,7 +856,7 @@ func (x *ListMessagesResponse) String() string {
 func (*ListMessagesResponse) ProtoMessage() {}
 
 func (x *ListMessagesResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_unblink_chat_v1_chat_proto_msgTypes[13]
+	mi := &file_unblink_chat_v1_chat_proto_msgTypes[14]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -793,7 +869,7 @@ func (x *ListMessagesResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListMessagesResponse.ProtoReflect.Descriptor instead.
 func (*ListMessagesResponse) Descriptor() ([]byte, []int) {
-	return file_unblink_chat_v1_chat_proto_rawDescGZIP(), []int{13}
+	return file_unblink_chat_v1_chat_proto_rawDescGZIP(), []int{14}
 }
 
 func (x *ListMessagesResponse) GetMessages() []*Message {
@@ -810,6 +886,94 @@ func (x *ListMessagesResponse) GetNextPageToken() string {
 	return ""
 }
 
+type ListUIBlocksRequest struct {
+	state          protoimpl.MessageState `protogen:"open.v1"`
+	ConversationId string                 `protobuf:"bytes,1,opt,name=conversation_id,json=conversationId,proto3" json:"conversation_id,omitempty"`
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
+}
+
+func (x *ListUIBlocksRequest) Reset() {
+	*x = ListUIBlocksRequest{}
+	mi := &file_unblink_chat_v1_chat_proto_msgTypes[15]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListUIBlocksRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListUIBlocksRequest) ProtoMessage() {}
+
+func (x *ListUIBlocksRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_unblink_chat_v1_chat_proto_msgTypes[15]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListUIBlocksRequest.ProtoReflect.Descriptor instead.
+func (*ListUIBlocksRequest) Descriptor() ([]byte, []int) {
+	return file_unblink_chat_v1_chat_proto_rawDescGZIP(), []int{15}
+}
+
+func (x *ListUIBlocksRequest) GetConversationId() string {
+	if x != nil {
+		return x.ConversationId
+	}
+	return ""
+}
+
+type ListUIBlocksResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	UiBlocks      []*UIBlock             `protobuf:"bytes,1,rep,name=ui_blocks,json=uiBlocks,proto3" json:"ui_blocks,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListUIBlocksResponse) Reset() {
+	*x = ListUIBlocksResponse{}
+	mi := &file_unblink_chat_v1_chat_proto_msgTypes[16]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListUIBlocksResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListUIBlocksResponse) ProtoMessage() {}
+
+func (x *ListUIBlocksResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_unblink_chat_v1_chat_proto_msgTypes[16]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListUIBlocksResponse.ProtoReflect.Descriptor instead.
+func (*ListUIBlocksResponse) Descriptor() ([]byte, []int) {
+	return file_unblink_chat_v1_chat_proto_rawDescGZIP(), []int{16}
+}
+
+func (x *ListUIBlocksResponse) GetUiBlocks() []*UIBlock {
+	if x != nil {
+		return x.UiBlocks
+	}
+	return nil
+}
+
 type SendMessageRequest struct {
 	state          protoimpl.MessageState `protogen:"open.v1"`
 	ConversationId string                 `protobuf:"bytes,1,opt,name=conversation_id,json=conversationId,proto3" json:"conversation_id,omitempty"`
@@ -821,7 +985,7 @@ type SendMessageRequest struct {
 
 func (x *SendMessageRequest) Reset() {
 	*x = SendMessageRequest{}
-	mi := &file_unblink_chat_v1_chat_proto_msgTypes[14]
+	mi := &file_unblink_chat_v1_chat_proto_msgTypes[17]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -833,7 +997,7 @@ func (x *SendMessageRequest) String() string {
 func (*SendMessageRequest) ProtoMessage() {}
 
 func (x *SendMessageRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_unblink_chat_v1_chat_proto_msgTypes[14]
+	mi := &file_unblink_chat_v1_chat_proto_msgTypes[17]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -846,7 +1010,7 @@ func (x *SendMessageRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SendMessageRequest.ProtoReflect.Descriptor instead.
 func (*SendMessageRequest) Descriptor() ([]byte, []int) {
-	return file_unblink_chat_v1_chat_proto_rawDescGZIP(), []int{14}
+	return file_unblink_chat_v1_chat_proto_rawDescGZIP(), []int{17}
 }
 
 func (x *SendMessageRequest) GetConversationId() string {
@@ -877,6 +1041,7 @@ type SendMessageResponse struct {
 	//	*SendMessageResponse_TextDelta
 	//	*SendMessageResponse_StatusUpdate
 	//	*SendMessageResponse_ToolCall
+	//	*SendMessageResponse_UiBlock
 	Event         isSendMessageResponse_Event `protobuf_oneof:"event"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -884,7 +1049,7 @@ type SendMessageResponse struct {
 
 func (x *SendMessageResponse) Reset() {
 	*x = SendMessageResponse{}
-	mi := &file_unblink_chat_v1_chat_proto_msgTypes[15]
+	mi := &file_unblink_chat_v1_chat_proto_msgTypes[18]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -896,7 +1061,7 @@ func (x *SendMessageResponse) String() string {
 func (*SendMessageResponse) ProtoMessage() {}
 
 func (x *SendMessageResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_unblink_chat_v1_chat_proto_msgTypes[15]
+	mi := &file_unblink_chat_v1_chat_proto_msgTypes[18]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -909,7 +1074,7 @@ func (x *SendMessageResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SendMessageResponse.ProtoReflect.Descriptor instead.
 func (*SendMessageResponse) Descriptor() ([]byte, []int) {
-	return file_unblink_chat_v1_chat_proto_rawDescGZIP(), []int{15}
+	return file_unblink_chat_v1_chat_proto_rawDescGZIP(), []int{18}
 }
 
 func (x *SendMessageResponse) GetEvent() isSendMessageResponse_Event {
@@ -946,6 +1111,15 @@ func (x *SendMessageResponse) GetToolCall() *ToolCallEvent {
 	return nil
 }
 
+func (x *SendMessageResponse) GetUiBlock() *UIBlock {
+	if x != nil {
+		if x, ok := x.Event.(*SendMessageResponse_UiBlock); ok {
+			return x.UiBlock
+		}
+	}
+	return nil
+}
+
 type isSendMessageResponse_Event interface {
 	isSendMessageResponse_Event()
 }
@@ -962,11 +1136,17 @@ type SendMessageResponse_ToolCall struct {
 	ToolCall *ToolCallEvent `protobuf:"bytes,3,opt,name=tool_call,json=toolCall,proto3,oneof"`
 }
 
+type SendMessageResponse_UiBlock struct {
+	UiBlock *UIBlock `protobuf:"bytes,4,opt,name=ui_block,json=uiBlock,proto3,oneof"`
+}
+
 func (*SendMessageResponse_TextDelta) isSendMessageResponse_Event() {}
 
 func (*SendMessageResponse_StatusUpdate) isSendMessageResponse_Event() {}
 
 func (*SendMessageResponse_ToolCall) isSendMessageResponse_Event() {}
+
+func (*SendMessageResponse_UiBlock) isSendMessageResponse_Event() {}
 
 type ToolCallEvent struct {
 	state     protoimpl.MessageState `protogen:"open.v1"`
@@ -982,7 +1162,7 @@ type ToolCallEvent struct {
 
 func (x *ToolCallEvent) Reset() {
 	*x = ToolCallEvent{}
-	mi := &file_unblink_chat_v1_chat_proto_msgTypes[16]
+	mi := &file_unblink_chat_v1_chat_proto_msgTypes[19]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -994,7 +1174,7 @@ func (x *ToolCallEvent) String() string {
 func (*ToolCallEvent) ProtoMessage() {}
 
 func (x *ToolCallEvent) ProtoReflect() protoreflect.Message {
-	mi := &file_unblink_chat_v1_chat_proto_msgTypes[16]
+	mi := &file_unblink_chat_v1_chat_proto_msgTypes[19]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1007,7 +1187,7 @@ func (x *ToolCallEvent) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ToolCallEvent.ProtoReflect.Descriptor instead.
 func (*ToolCallEvent) Descriptor() ([]byte, []int) {
-	return file_unblink_chat_v1_chat_proto_rawDescGZIP(), []int{16}
+	return file_unblink_chat_v1_chat_proto_rawDescGZIP(), []int{19}
 }
 
 func (x *ToolCallEvent) GetToolName() string {
@@ -1063,7 +1243,14 @@ const file_unblink_chat_v1_chat_proto_rawDesc = "" +
 	"\x0fconversation_id\x18\x02 \x01(\tR\x0econversationId\x12\x12\n" +
 	"\x04body\x18\x03 \x01(\tR\x04body\x129\n" +
 	"\n" +
-	"created_at\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\"V\n" +
+	"created_at\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\"\xae\x01\n" +
+	"\aUIBlock\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x12'\n" +
+	"\x0fconversation_id\x18\x02 \x01(\tR\x0econversationId\x12\x12\n" +
+	"\x04role\x18\x03 \x01(\tR\x04role\x12\x1b\n" +
+	"\tdata_json\x18\x04 \x01(\tR\bdataJson\x129\n" +
+	"\n" +
+	"created_at\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\"V\n" +
 	"\x19CreateConversationRequest\x12\x14\n" +
 	"\x05title\x18\x01 \x01(\tR\x05title\x12#\n" +
 	"\rsystem_prompt\x18\x02 \x01(\tR\fsystemPrompt\"_\n" +
@@ -1099,16 +1286,21 @@ const file_unblink_chat_v1_chat_proto_rawDesc = "" +
 	"page_token\x18\x03 \x01(\tR\tpageToken\"t\n" +
 	"\x14ListMessagesResponse\x124\n" +
 	"\bmessages\x18\x01 \x03(\v2\x18.unblink.chat.v1.MessageR\bmessages\x12&\n" +
-	"\x0fnext_page_token\x18\x02 \x01(\tR\rnextPageToken\"}\n" +
+	"\x0fnext_page_token\x18\x02 \x01(\tR\rnextPageToken\">\n" +
+	"\x13ListUIBlocksRequest\x12'\n" +
+	"\x0fconversation_id\x18\x01 \x01(\tR\x0econversationId\"M\n" +
+	"\x14ListUIBlocksResponse\x125\n" +
+	"\tui_blocks\x18\x01 \x03(\v2\x18.unblink.chat.v1.UIBlockR\buiBlocks\"}\n" +
 	"\x12SendMessageRequest\x12'\n" +
 	"\x0fconversation_id\x18\x01 \x01(\tR\x0econversationId\x12\x18\n" +
 	"\acontent\x18\x02 \x01(\tR\acontent\x12$\n" +
-	"\x0euse_web_search\x18\x03 \x01(\bR\fuseWebSearch\"\xa5\x01\n" +
+	"\x0euse_web_search\x18\x03 \x01(\bR\fuseWebSearch\"\xdc\x01\n" +
 	"\x13SendMessageResponse\x12\x1f\n" +
 	"\n" +
 	"text_delta\x18\x01 \x01(\tH\x00R\ttextDelta\x12%\n" +
 	"\rstatus_update\x18\x02 \x01(\tH\x00R\fstatusUpdate\x12=\n" +
-	"\ttool_call\x18\x03 \x01(\v2\x1e.unblink.chat.v1.ToolCallEventH\x00R\btoolCallB\a\n" +
+	"\ttool_call\x18\x03 \x01(\v2\x1e.unblink.chat.v1.ToolCallEventH\x00R\btoolCall\x125\n" +
+	"\bui_block\x18\x04 \x01(\v2\x18.unblink.chat.v1.UIBlockH\x00R\auiBlockB\a\n" +
 	"\x05event\"\x8e\x01\n" +
 	"\rToolCallEvent\x12\x1b\n" +
 	"\ttool_name\x18\x01 \x01(\tR\btoolName\x12\x1c\n" +
@@ -1121,14 +1313,15 @@ const file_unblink_chat_v1_chat_proto_rawDesc = "" +
 	"\tROLE_USER\x10\x01\x12\x0e\n" +
 	"\n" +
 	"ROLE_MODEL\x10\x02\x12\r\n" +
-	"\tROLE_TOOL\x10\x032\xe5\x05\n" +
+	"\tROLE_TOOL\x10\x032\xc2\x06\n" +
 	"\vChatService\x12m\n" +
 	"\x12CreateConversation\x12*.unblink.chat.v1.CreateConversationRequest\x1a+.unblink.chat.v1.CreateConversationResponse\x12j\n" +
 	"\x11ListConversations\x12).unblink.chat.v1.ListConversationsRequest\x1a*.unblink.chat.v1.ListConversationsResponse\x12d\n" +
 	"\x0fGetConversation\x12'.unblink.chat.v1.GetConversationRequest\x1a(.unblink.chat.v1.GetConversationResponse\x12m\n" +
 	"\x12UpdateConversation\x12*.unblink.chat.v1.UpdateConversationRequest\x1a+.unblink.chat.v1.UpdateConversationResponse\x12m\n" +
 	"\x12DeleteConversation\x12*.unblink.chat.v1.DeleteConversationRequest\x1a+.unblink.chat.v1.DeleteConversationResponse\x12[\n" +
-	"\fListMessages\x12$.unblink.chat.v1.ListMessagesRequest\x1a%.unblink.chat.v1.ListMessagesResponse\x12Z\n" +
+	"\fListMessages\x12$.unblink.chat.v1.ListMessagesRequest\x1a%.unblink.chat.v1.ListMessagesResponse\x12[\n" +
+	"\fListUIBlocks\x12$.unblink.chat.v1.ListUIBlocksRequest\x1a%.unblink.chat.v1.ListUIBlocksResponse\x12Z\n" +
 	"\vSendMessage\x12#.unblink.chat.v1.SendMessageRequest\x1a$.unblink.chat.v1.SendMessageResponse0\x01B=Z;github.com/unblink/unblink/relay/gen/unblink/chat/v1;chatv1b\x06proto3"
 
 var (
@@ -1144,57 +1337,65 @@ func file_unblink_chat_v1_chat_proto_rawDescGZIP() []byte {
 }
 
 var file_unblink_chat_v1_chat_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_unblink_chat_v1_chat_proto_msgTypes = make([]protoimpl.MessageInfo, 17)
+var file_unblink_chat_v1_chat_proto_msgTypes = make([]protoimpl.MessageInfo, 20)
 var file_unblink_chat_v1_chat_proto_goTypes = []any{
 	(Role)(0),                          // 0: unblink.chat.v1.Role
 	(*Conversation)(nil),               // 1: unblink.chat.v1.Conversation
 	(*Message)(nil),                    // 2: unblink.chat.v1.Message
-	(*CreateConversationRequest)(nil),  // 3: unblink.chat.v1.CreateConversationRequest
-	(*CreateConversationResponse)(nil), // 4: unblink.chat.v1.CreateConversationResponse
-	(*ListConversationsRequest)(nil),   // 5: unblink.chat.v1.ListConversationsRequest
-	(*ListConversationsResponse)(nil),  // 6: unblink.chat.v1.ListConversationsResponse
-	(*GetConversationRequest)(nil),     // 7: unblink.chat.v1.GetConversationRequest
-	(*GetConversationResponse)(nil),    // 8: unblink.chat.v1.GetConversationResponse
-	(*UpdateConversationRequest)(nil),  // 9: unblink.chat.v1.UpdateConversationRequest
-	(*UpdateConversationResponse)(nil), // 10: unblink.chat.v1.UpdateConversationResponse
-	(*DeleteConversationRequest)(nil),  // 11: unblink.chat.v1.DeleteConversationRequest
-	(*DeleteConversationResponse)(nil), // 12: unblink.chat.v1.DeleteConversationResponse
-	(*ListMessagesRequest)(nil),        // 13: unblink.chat.v1.ListMessagesRequest
-	(*ListMessagesResponse)(nil),       // 14: unblink.chat.v1.ListMessagesResponse
-	(*SendMessageRequest)(nil),         // 15: unblink.chat.v1.SendMessageRequest
-	(*SendMessageResponse)(nil),        // 16: unblink.chat.v1.SendMessageResponse
-	(*ToolCallEvent)(nil),              // 17: unblink.chat.v1.ToolCallEvent
-	(*timestamppb.Timestamp)(nil),      // 18: google.protobuf.Timestamp
+	(*UIBlock)(nil),                    // 3: unblink.chat.v1.UIBlock
+	(*CreateConversationRequest)(nil),  // 4: unblink.chat.v1.CreateConversationRequest
+	(*CreateConversationResponse)(nil), // 5: unblink.chat.v1.CreateConversationResponse
+	(*ListConversationsRequest)(nil),   // 6: unblink.chat.v1.ListConversationsRequest
+	(*ListConversationsResponse)(nil),  // 7: unblink.chat.v1.ListConversationsResponse
+	(*GetConversationRequest)(nil),     // 8: unblink.chat.v1.GetConversationRequest
+	(*GetConversationResponse)(nil),    // 9: unblink.chat.v1.GetConversationResponse
+	(*UpdateConversationRequest)(nil),  // 10: unblink.chat.v1.UpdateConversationRequest
+	(*UpdateConversationResponse)(nil), // 11: unblink.chat.v1.UpdateConversationResponse
+	(*DeleteConversationRequest)(nil),  // 12: unblink.chat.v1.DeleteConversationRequest
+	(*DeleteConversationResponse)(nil), // 13: unblink.chat.v1.DeleteConversationResponse
+	(*ListMessagesRequest)(nil),        // 14: unblink.chat.v1.ListMessagesRequest
+	(*ListMessagesResponse)(nil),       // 15: unblink.chat.v1.ListMessagesResponse
+	(*ListUIBlocksRequest)(nil),        // 16: unblink.chat.v1.ListUIBlocksRequest
+	(*ListUIBlocksResponse)(nil),       // 17: unblink.chat.v1.ListUIBlocksResponse
+	(*SendMessageRequest)(nil),         // 18: unblink.chat.v1.SendMessageRequest
+	(*SendMessageResponse)(nil),        // 19: unblink.chat.v1.SendMessageResponse
+	(*ToolCallEvent)(nil),              // 20: unblink.chat.v1.ToolCallEvent
+	(*timestamppb.Timestamp)(nil),      // 21: google.protobuf.Timestamp
 }
 var file_unblink_chat_v1_chat_proto_depIdxs = []int32{
-	18, // 0: unblink.chat.v1.Conversation.created_at:type_name -> google.protobuf.Timestamp
-	18, // 1: unblink.chat.v1.Conversation.updated_at:type_name -> google.protobuf.Timestamp
-	18, // 2: unblink.chat.v1.Message.created_at:type_name -> google.protobuf.Timestamp
-	1,  // 3: unblink.chat.v1.CreateConversationResponse.conversation:type_name -> unblink.chat.v1.Conversation
-	1,  // 4: unblink.chat.v1.ListConversationsResponse.conversations:type_name -> unblink.chat.v1.Conversation
-	1,  // 5: unblink.chat.v1.GetConversationResponse.conversation:type_name -> unblink.chat.v1.Conversation
-	1,  // 6: unblink.chat.v1.UpdateConversationResponse.conversation:type_name -> unblink.chat.v1.Conversation
-	2,  // 7: unblink.chat.v1.ListMessagesResponse.messages:type_name -> unblink.chat.v1.Message
-	17, // 8: unblink.chat.v1.SendMessageResponse.tool_call:type_name -> unblink.chat.v1.ToolCallEvent
-	3,  // 9: unblink.chat.v1.ChatService.CreateConversation:input_type -> unblink.chat.v1.CreateConversationRequest
-	5,  // 10: unblink.chat.v1.ChatService.ListConversations:input_type -> unblink.chat.v1.ListConversationsRequest
-	7,  // 11: unblink.chat.v1.ChatService.GetConversation:input_type -> unblink.chat.v1.GetConversationRequest
-	9,  // 12: unblink.chat.v1.ChatService.UpdateConversation:input_type -> unblink.chat.v1.UpdateConversationRequest
-	11, // 13: unblink.chat.v1.ChatService.DeleteConversation:input_type -> unblink.chat.v1.DeleteConversationRequest
-	13, // 14: unblink.chat.v1.ChatService.ListMessages:input_type -> unblink.chat.v1.ListMessagesRequest
-	15, // 15: unblink.chat.v1.ChatService.SendMessage:input_type -> unblink.chat.v1.SendMessageRequest
-	4,  // 16: unblink.chat.v1.ChatService.CreateConversation:output_type -> unblink.chat.v1.CreateConversationResponse
-	6,  // 17: unblink.chat.v1.ChatService.ListConversations:output_type -> unblink.chat.v1.ListConversationsResponse
-	8,  // 18: unblink.chat.v1.ChatService.GetConversation:output_type -> unblink.chat.v1.GetConversationResponse
-	10, // 19: unblink.chat.v1.ChatService.UpdateConversation:output_type -> unblink.chat.v1.UpdateConversationResponse
-	12, // 20: unblink.chat.v1.ChatService.DeleteConversation:output_type -> unblink.chat.v1.DeleteConversationResponse
-	14, // 21: unblink.chat.v1.ChatService.ListMessages:output_type -> unblink.chat.v1.ListMessagesResponse
-	16, // 22: unblink.chat.v1.ChatService.SendMessage:output_type -> unblink.chat.v1.SendMessageResponse
-	16, // [16:23] is the sub-list for method output_type
-	9,  // [9:16] is the sub-list for method input_type
-	9,  // [9:9] is the sub-list for extension type_name
-	9,  // [9:9] is the sub-list for extension extendee
-	0,  // [0:9] is the sub-list for field type_name
+	21, // 0: unblink.chat.v1.Conversation.created_at:type_name -> google.protobuf.Timestamp
+	21, // 1: unblink.chat.v1.Conversation.updated_at:type_name -> google.protobuf.Timestamp
+	21, // 2: unblink.chat.v1.Message.created_at:type_name -> google.protobuf.Timestamp
+	21, // 3: unblink.chat.v1.UIBlock.created_at:type_name -> google.protobuf.Timestamp
+	1,  // 4: unblink.chat.v1.CreateConversationResponse.conversation:type_name -> unblink.chat.v1.Conversation
+	1,  // 5: unblink.chat.v1.ListConversationsResponse.conversations:type_name -> unblink.chat.v1.Conversation
+	1,  // 6: unblink.chat.v1.GetConversationResponse.conversation:type_name -> unblink.chat.v1.Conversation
+	1,  // 7: unblink.chat.v1.UpdateConversationResponse.conversation:type_name -> unblink.chat.v1.Conversation
+	2,  // 8: unblink.chat.v1.ListMessagesResponse.messages:type_name -> unblink.chat.v1.Message
+	3,  // 9: unblink.chat.v1.ListUIBlocksResponse.ui_blocks:type_name -> unblink.chat.v1.UIBlock
+	20, // 10: unblink.chat.v1.SendMessageResponse.tool_call:type_name -> unblink.chat.v1.ToolCallEvent
+	3,  // 11: unblink.chat.v1.SendMessageResponse.ui_block:type_name -> unblink.chat.v1.UIBlock
+	4,  // 12: unblink.chat.v1.ChatService.CreateConversation:input_type -> unblink.chat.v1.CreateConversationRequest
+	6,  // 13: unblink.chat.v1.ChatService.ListConversations:input_type -> unblink.chat.v1.ListConversationsRequest
+	8,  // 14: unblink.chat.v1.ChatService.GetConversation:input_type -> unblink.chat.v1.GetConversationRequest
+	10, // 15: unblink.chat.v1.ChatService.UpdateConversation:input_type -> unblink.chat.v1.UpdateConversationRequest
+	12, // 16: unblink.chat.v1.ChatService.DeleteConversation:input_type -> unblink.chat.v1.DeleteConversationRequest
+	14, // 17: unblink.chat.v1.ChatService.ListMessages:input_type -> unblink.chat.v1.ListMessagesRequest
+	16, // 18: unblink.chat.v1.ChatService.ListUIBlocks:input_type -> unblink.chat.v1.ListUIBlocksRequest
+	18, // 19: unblink.chat.v1.ChatService.SendMessage:input_type -> unblink.chat.v1.SendMessageRequest
+	5,  // 20: unblink.chat.v1.ChatService.CreateConversation:output_type -> unblink.chat.v1.CreateConversationResponse
+	7,  // 21: unblink.chat.v1.ChatService.ListConversations:output_type -> unblink.chat.v1.ListConversationsResponse
+	9,  // 22: unblink.chat.v1.ChatService.GetConversation:output_type -> unblink.chat.v1.GetConversationResponse
+	11, // 23: unblink.chat.v1.ChatService.UpdateConversation:output_type -> unblink.chat.v1.UpdateConversationResponse
+	13, // 24: unblink.chat.v1.ChatService.DeleteConversation:output_type -> unblink.chat.v1.DeleteConversationResponse
+	15, // 25: unblink.chat.v1.ChatService.ListMessages:output_type -> unblink.chat.v1.ListMessagesResponse
+	17, // 26: unblink.chat.v1.ChatService.ListUIBlocks:output_type -> unblink.chat.v1.ListUIBlocksResponse
+	19, // 27: unblink.chat.v1.ChatService.SendMessage:output_type -> unblink.chat.v1.SendMessageResponse
+	20, // [20:28] is the sub-list for method output_type
+	12, // [12:20] is the sub-list for method input_type
+	12, // [12:12] is the sub-list for extension type_name
+	12, // [12:12] is the sub-list for extension extendee
+	0,  // [0:12] is the sub-list for field type_name
 }
 
 func init() { file_unblink_chat_v1_chat_proto_init() }
@@ -1202,11 +1403,12 @@ func file_unblink_chat_v1_chat_proto_init() {
 	if File_unblink_chat_v1_chat_proto != nil {
 		return
 	}
-	file_unblink_chat_v1_chat_proto_msgTypes[8].OneofWrappers = []any{}
-	file_unblink_chat_v1_chat_proto_msgTypes[15].OneofWrappers = []any{
+	file_unblink_chat_v1_chat_proto_msgTypes[9].OneofWrappers = []any{}
+	file_unblink_chat_v1_chat_proto_msgTypes[18].OneofWrappers = []any{
 		(*SendMessageResponse_TextDelta)(nil),
 		(*SendMessageResponse_StatusUpdate)(nil),
 		(*SendMessageResponse_ToolCall)(nil),
+		(*SendMessageResponse_UiBlock)(nil),
 	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
@@ -1214,7 +1416,7 @@ func file_unblink_chat_v1_chat_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_unblink_chat_v1_chat_proto_rawDesc), len(file_unblink_chat_v1_chat_proto_rawDesc)),
 			NumEnums:      1,
-			NumMessages:   17,
+			NumMessages:   20,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

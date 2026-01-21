@@ -222,6 +222,23 @@ func (s *Service) SendMessage(ctx context.Context, req *connect.Request[chatv1.S
 		return connect.NewError(connect.CodeInternal, fmt.Errorf("failed to save user message: %w", err))
 	}
 
+	// Send and save UI block for user message
+	userUIBlock, err := s.saveUIBlock(conversationID, "user", map[string]interface{}{
+		"content": content,
+	})
+	if err != nil {
+		log.Printf("[ChatService] Failed to save user UI block: %v", err)
+	} else {
+		// Send UI block event to client
+		if err := stream.Send(&chatv1.SendMessageResponse{
+			Event: &chatv1.SendMessageResponse_UiBlock{
+				UiBlock: userUIBlock,
+			},
+		}); err != nil {
+			return err
+		}
+	}
+
 	// 2. Fetch History
 	history, err := s.getConversationHistory(conversationID)
 	if err != nil {
@@ -360,6 +377,24 @@ func (s *Service) SendMessage(ctx context.Context, req *connect.Request[chatv1.S
 			if err := s.saveMessage(modelMsg); err != nil {
 				log.Printf("[ChatService] Failed to save model message: %v", err)
 			}
+
+			// Send and save final model UI block (replaces accumulated content)
+			modelUIBlock, err := s.saveUIBlock(conversationID, "model", map[string]interface{}{
+				"content": fullContent,
+			})
+			if err != nil {
+				log.Printf("[ChatService] Failed to save model UI block: %v", err)
+			} else {
+				// Send UI block event to client
+				if err := stream.Send(&chatv1.SendMessageResponse{
+					Event: &chatv1.SendMessageResponse_UiBlock{
+						UiBlock: modelUIBlock,
+					},
+				}); err != nil {
+					return err
+				}
+			}
+
 			log.Printf("[ChatService] Completed with no tool calls on pass %d", pass+1)
 			return nil
 		}
@@ -383,36 +418,66 @@ func (s *Service) SendMessage(ctx context.Context, req *connect.Request[chatv1.S
 			log.Printf("[ChatService] Failed to save assistant message: %v", err)
 		}
 
-		// Execute each tool call and save tool messages
-		for i, toolCall := range toolCalls {
-			log.Printf("[ChatService] Executing tool %d/%d: %s", i+1, len(toolCalls), toolCall.Name)
-			// Send tool invoked event
+		// Send and save final model UI block (replaces accumulated content before tools)
+		modelUIBlock, err := s.saveUIBlock(conversationID, "model", map[string]interface{}{
+			"content": fullContent,
+		})
+		if err != nil {
+			log.Printf("[ChatService] Failed to save model UI block: %v", err)
+		} else {
+			// Send UI block event to client
 			if err := stream.Send(&chatv1.SendMessageResponse{
-				Event: &chatv1.SendMessageResponse_ToolCall{
-					ToolCall: &chatv1.ToolCallEvent{
-						ToolName:  toolCall.Name,
-						Arguments: toolCall.Arguments,
-						State:     "invoked",
-					},
+				Event: &chatv1.SendMessageResponse_UiBlock{
+					UiBlock: modelUIBlock,
 				},
 			}); err != nil {
 				return err
+			}
+		}
+
+		// Execute each tool call and save tool messages
+		for i, toolCall := range toolCalls {
+			log.Printf("[ChatService] Executing tool %d/%d: %s", i+1, len(toolCalls), toolCall.Name)
+
+			// Use OpenAI's tool call ID as stable ID for replacement across state changes
+			toolBlockID := toolCall.ID
+
+			// Send and save UI block for tool invoked state (creates with toolBlockID)
+			toolInvokedBlock, err := s.saveUIBlockWithID(toolBlockID, conversationID, "tool", map[string]interface{}{
+				"toolName": toolCall.Name,
+				"state":    "invoked",
+			})
+			if err != nil {
+				log.Printf("[ChatService] Failed to save tool invoked UI block: %v", err)
+			} else {
+				if err := stream.Send(&chatv1.SendMessageResponse{
+					Event: &chatv1.SendMessageResponse_UiBlock{
+						UiBlock: toolInvokedBlock,
+					},
+				}); err != nil {
+					return err
+				}
 			}
 
 			result := s.tools.Execute(ctx, toolCall.Name, toolCall.Arguments)
 			log.Printf("[ChatService] Tool result: %s", result)
 
-			// Send tool result event
-			if err := stream.Send(&chatv1.SendMessageResponse{
-				Event: &chatv1.SendMessageResponse_ToolCall{
-					ToolCall: &chatv1.ToolCallEvent{
-						ToolName: toolCall.Name,
-						Result:   result,
-						State:    "completed",
+			// Send and save UI block for tool completed state (updates same toolBlockID)
+			toolCompletedBlock, err := s.saveUIBlockWithID(toolBlockID, conversationID, "tool", map[string]interface{}{
+				"toolName": toolCall.Name,
+				"state":    "completed",
+				"content":  result,
+			})
+			if err != nil {
+				log.Printf("[ChatService] Failed to save tool completed UI block: %v", err)
+			} else {
+				if err := stream.Send(&chatv1.SendMessageResponse{
+					Event: &chatv1.SendMessageResponse_UiBlock{
+						UiBlock: toolCompletedBlock,
 					},
-				},
-			}); err != nil {
-				return err
+				}); err != nil {
+					return err
+				}
 			}
 
 			// Save tool message to database
@@ -460,6 +525,48 @@ func (s *Service) saveMessage(msg *chatv1.Message) error {
 	query := `INSERT INTO messages (id, conversation_id, body, created_at) VALUES (?, ?, ?, ?)`
 	_, err := s.db.Exec(query, msg.Id, msg.ConversationId, msg.Body, msg.CreatedAt.AsTime())
 	return err
+}
+
+func (s *Service) saveUIBlock(conversationID, role string, data interface{}) (*chatv1.UIBlock, error) {
+	return s.saveUIBlockWithID("", conversationID, role, data)
+}
+
+func (s *Service) saveUIBlockWithID(id, conversationID, role string, data interface{}) (*chatv1.UIBlock, error) {
+	dataJSON, err := json.Marshal(data)
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal UI block data: %w", err)
+	}
+
+	var blockID string
+	var createdAt time.Time
+
+	if id != "" {
+		// Update existing block
+		blockID = id
+		createdAt = time.Now()
+		query := `UPDATE ui_blocks SET data_json = ?, created_at = ? WHERE id = ?`
+		_, err = s.db.Exec(query, dataJSON, createdAt, id)
+		if err != nil {
+			return nil, fmt.Errorf("failed to update UI block: %w", err)
+		}
+	} else {
+		// Create new block
+		blockID = uuid.New().String()
+		createdAt = time.Now()
+		query := `INSERT INTO ui_blocks (id, conversation_id, role, data_json, created_at) VALUES (?, ?, ?, ?, ?)`
+		_, err = s.db.Exec(query, blockID, conversationID, role, dataJSON, createdAt)
+		if err != nil {
+			return nil, fmt.Errorf("failed to save UI block: %w", err)
+		}
+	}
+
+	return &chatv1.UIBlock{
+		Id:           blockID,
+		ConversationId: conversationID,
+		Role:         role,
+		DataJson:     string(dataJSON),
+		CreatedAt:    timestamppb.New(createdAt),
+	}, nil
 }
 
 func (s *Service) getConversationHistory(conversationID string) ([]openai.ChatCompletionMessageParamUnion, error) {
@@ -523,4 +630,33 @@ func (s *Service) getConversationHistory(conversationID string) ([]openai.ChatCo
 		}
 	}
 	return messages, nil
+}
+
+func (s *Service) ListUIBlocks(ctx context.Context, req *connect.Request[chatv1.ListUIBlocksRequest]) (*connect.Response[chatv1.ListUIBlocksResponse], error) {
+	query := `SELECT id, conversation_id, role, data_json, created_at FROM ui_blocks WHERE conversation_id = ? ORDER BY created_at ASC`
+	rows, err := s.db.Query(query, req.Msg.ConversationId)
+	if err != nil {
+		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("failed to list UI blocks: %w", err))
+	}
+	defer rows.Close()
+
+	var uiBlocks []*chatv1.UIBlock
+	for rows.Next() {
+		var id, conversationID, role, dataJSON string
+		var createdAt time.Time
+		if err := rows.Scan(&id, &conversationID, &role, &dataJSON, &createdAt); err != nil {
+			return nil, connect.NewError(connect.CodeInternal, err)
+		}
+		uiBlocks = append(uiBlocks, &chatv1.UIBlock{
+			Id:             id,
+			ConversationId: conversationID,
+			Role:           role,
+			DataJson:       dataJSON,
+			CreatedAt:      timestamppb.New(createdAt),
+		})
+	}
+
+	return connect.NewResponse(&chatv1.ListUIBlocksResponse{
+		UiBlocks: uiBlocks,
+	}), nil
 }

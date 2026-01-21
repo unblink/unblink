@@ -1,5 +1,5 @@
 import { onMount, onCleanup } from 'solid-js';
-import { messages } from '../../signals/chatSignals';
+import { uiBlocks } from '../../signals/chatSignals';
 import { useChat } from '../../hooks/useChat';
 import HeroSection from '../chat/HeroSection';
 import MessageList from '../chat/MessageList';
@@ -26,7 +26,7 @@ export default function TabChat() {
     <div class="flex h-full relative">
       {/* Main Content Area */}
       <div class="flex-1 flex flex-col h-full transition-all duration-300 w-full relative">
-        {messages().length === 0 ? (
+        {uiBlocks().length === 0 ? (
           // HERO / EMPTY STATE LAYOUT
           <HeroSection />
         ) : (

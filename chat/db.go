@@ -50,6 +50,15 @@ func (d *DB) initSchema() error {
 			created_at DATETIME,
 			FOREIGN KEY(conversation_id) REFERENCES conversations(id)
 		)`,
+		`CREATE TABLE IF NOT EXISTS ui_blocks (
+			id TEXT PRIMARY KEY,
+			conversation_id TEXT NOT NULL,
+			role TEXT NOT NULL,
+			data_json TEXT NOT NULL,
+			created_at DATETIME,
+			FOREIGN KEY(conversation_id) REFERENCES conversations(id)
+		)`,
+		`CREATE INDEX IF NOT EXISTS idx_ui_blocks_conv_created ON ui_blocks(conversation_id, created_at)`,
 	}
 
 	for _, query := range queries {

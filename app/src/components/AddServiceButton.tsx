@@ -1,6 +1,6 @@
 import { ArkDialog } from "../ark/ArkDialog";
 import { createSignal, untrack } from "solid-js";
-import ServicePlusSVG from "../assets/icons/ServicePlus.svg";
+import ServicePlusSVG from "../../public/icons/ServicePlus.svg";
 import { setTab, fetchServices } from "../shared";
 import { toaster } from "../ark/ArkToast";
 import { ServiceForm } from "./ServiceForm";

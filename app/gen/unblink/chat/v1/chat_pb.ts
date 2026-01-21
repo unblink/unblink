@@ -12,7 +12,7 @@ import type { Message as Message$1 } from "@bufbuild/protobuf";
  * Describes the file unblink/chat/v1/chat.proto.
  */
 export const file_unblink_chat_v1_chat: GenFile = /*@__PURE__*/
-  fileDesc("Chp1bmJsaW5rL2NoYXQvdjEvY2hhdC5wcm90bxIPdW5ibGluay5jaGF0LnYxIqABCgxDb252ZXJzYXRpb24SCgoCaWQYASABKAkSDQoFdGl0bGUYAiABKAkSFQoNc3lzdGVtX3Byb21wdBgDIAEoCRIuCgpjcmVhdGVkX2F0GAQgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBIuCgp1cGRhdGVkX2F0GAUgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcCJsCgdNZXNzYWdlEgoKAmlkGAEgASgJEhcKD2NvbnZlcnNhdGlvbl9pZBgCIAEoCRIMCgRib2R5GAMgASgJEi4KCmNyZWF0ZWRfYXQYBCABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wIkEKGUNyZWF0ZUNvbnZlcnNhdGlvblJlcXVlc3QSDQoFdGl0bGUYASABKAkSFQoNc3lzdGVtX3Byb21wdBgCIAEoCSJRChpDcmVhdGVDb252ZXJzYXRpb25SZXNwb25zZRIzCgxjb252ZXJzYXRpb24YASABKAsyHS51bmJsaW5rLmNoYXQudjEuQ29udmVyc2F0aW9uIkEKGExpc3RDb252ZXJzYXRpb25zUmVxdWVzdBIRCglwYWdlX3NpemUYASABKAUSEgoKcGFnZV90b2tlbhgCIAEoCSJqChlMaXN0Q29udmVyc2F0aW9uc1Jlc3BvbnNlEjQKDWNvbnZlcnNhdGlvbnMYASADKAsyHS51bmJsaW5rLmNoYXQudjEuQ29udmVyc2F0aW9uEhcKD25leHRfcGFnZV90b2tlbhgCIAEoCSIxChZHZXRDb252ZXJzYXRpb25SZXF1ZXN0EhcKD2NvbnZlcnNhdGlvbl9pZBgBIAEoCSJOChdHZXRDb252ZXJzYXRpb25SZXNwb25zZRIzCgxjb252ZXJzYXRpb24YASABKAsyHS51bmJsaW5rLmNoYXQudjEuQ29udmVyc2F0aW9uIoABChlVcGRhdGVDb252ZXJzYXRpb25SZXF1ZXN0EhcKD2NvbnZlcnNhdGlvbl9pZBgBIAEoCRISCgV0aXRsZRgCIAEoCUgAiAEBEhoKDXN5c3RlbV9wcm9tcHQYAyABKAlIAYgBAUIICgZfdGl0bGVCEAoOX3N5c3RlbV9wcm9tcHQiUQoaVXBkYXRlQ29udmVyc2F0aW9uUmVzcG9uc2USMwoMY29udmVyc2F0aW9uGAEgASgLMh0udW5ibGluay5jaGF0LnYxLkNvbnZlcnNhdGlvbiI0ChlEZWxldGVDb252ZXJzYXRpb25SZXF1ZXN0EhcKD2NvbnZlcnNhdGlvbl9pZBgBIAEoCSItChpEZWxldGVDb252ZXJzYXRpb25SZXNwb25zZRIPCgdzdWNjZXNzGAEgASgIIlUKE0xpc3RNZXNzYWdlc1JlcXVlc3QSFwoPY29udmVyc2F0aW9uX2lkGAEgASgJEhEKCXBhZ2Vfc2l6ZRgCIAEoBRISCgpwYWdlX3Rva2VuGAMgASgJIlsKFExpc3RNZXNzYWdlc1Jlc3BvbnNlEioKCG1lc3NhZ2VzGAEgAygLMhgudW5ibGluay5jaGF0LnYxLk1lc3NhZ2USFwoPbmV4dF9wYWdlX3Rva2VuGAIgASgJIlYKElNlbmRNZXNzYWdlUmVxdWVzdBIXCg9jb252ZXJzYXRpb25faWQYASABKAkSDwoHY29udGVudBgCIAEoCRIWCg51c2Vfd2ViX3NlYXJjaBgDIAEoCCKCAQoTU2VuZE1lc3NhZ2VSZXNwb25zZRIUCgp0ZXh0X2RlbHRhGAEgASgJSAASFwoNc3RhdHVzX3VwZGF0ZRgCIAEoCUgAEjMKCXRvb2xfY2FsbBgDIAEoCzIeLnVuYmxpbmsuY2hhdC52MS5Ub29sQ2FsbEV2ZW50SABCBwoFZXZlbnQiYwoNVG9vbENhbGxFdmVudBIRCgl0b29sX25hbWUYASABKAkSEQoJYXJndW1lbnRzGAIgASgJEg4KBnJlc3VsdBgDIAEoCRINCgVlcnJvchgEIAEoCRINCgVzdGF0ZRgFIAEoCSpKCgRSb2xlEhQKEFJPTEVfVU5TUEVDSUZJRUQQABINCglST0xFX1VTRVIQARIOCgpST0xFX01PREVMEAISDQoJUk9MRV9UT09MEAMy5QUKC0NoYXRTZXJ2aWNlEm0KEkNyZWF0ZUNvbnZlcnNhdGlvbhIqLnVuYmxpbmsuY2hhdC52MS5DcmVhdGVDb252ZXJzYXRpb25SZXF1ZXN0GisudW5ibGluay5jaGF0LnYxLkNyZWF0ZUNvbnZlcnNhdGlvblJlc3BvbnNlEmoKEUxpc3RDb252ZXJzYXRpb25zEikudW5ibGluay5jaGF0LnYxLkxpc3RDb252ZXJzYXRpb25zUmVxdWVzdBoqLnVuYmxpbmsuY2hhdC52MS5MaXN0Q29udmVyc2F0aW9uc1Jlc3BvbnNlEmQKD0dldENvbnZlcnNhdGlvbhInLnVuYmxpbmsuY2hhdC52MS5HZXRDb252ZXJzYXRpb25SZXF1ZXN0GigudW5ibGluay5jaGF0LnYxLkdldENvbnZlcnNhdGlvblJlc3BvbnNlEm0KElVwZGF0ZUNvbnZlcnNhdGlvbhIqLnVuYmxpbmsuY2hhdC52MS5VcGRhdGVDb252ZXJzYXRpb25SZXF1ZXN0GisudW5ibGluay5jaGF0LnYxLlVwZGF0ZUNvbnZlcnNhdGlvblJlc3BvbnNlEm0KEkRlbGV0ZUNvbnZlcnNhdGlvbhIqLnVuYmxpbmsuY2hhdC52MS5EZWxldGVDb252ZXJzYXRpb25SZXF1ZXN0GisudW5ibGluay5jaGF0LnYxLkRlbGV0ZUNvbnZlcnNhdGlvblJlc3BvbnNlElsKDExpc3RNZXNzYWdlcxIkLnVuYmxpbmsuY2hhdC52MS5MaXN0TWVzc2FnZXNSZXF1ZXN0GiUudW5ibGluay5jaGF0LnYxLkxpc3RNZXNzYWdlc1Jlc3BvbnNlEloKC1NlbmRNZXNzYWdlEiMudW5ibGluay5jaGF0LnYxLlNlbmRNZXNzYWdlUmVxdWVzdBokLnVuYmxpbmsuY2hhdC52MS5TZW5kTWVzc2FnZVJlc3BvbnNlMAFCPVo7Z2l0aHViLmNvbS91bmJsaW5rL3VuYmxpbmsvcmVsYXkvZ2VuL3VuYmxpbmsvY2hhdC92MTtjaGF0djFiBnByb3RvMw", [file_google_protobuf_timestamp]);
+  fileDesc("Chp1bmJsaW5rL2NoYXQvdjEvY2hhdC5wcm90bxIPdW5ibGluay5jaGF0LnYxIqABCgxDb252ZXJzYXRpb24SCgoCaWQYASABKAkSDQoFdGl0bGUYAiABKAkSFQoNc3lzdGVtX3Byb21wdBgDIAEoCRIuCgpjcmVhdGVkX2F0GAQgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBIuCgp1cGRhdGVkX2F0GAUgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcCJsCgdNZXNzYWdlEgoKAmlkGAEgASgJEhcKD2NvbnZlcnNhdGlvbl9pZBgCIAEoCRIMCgRib2R5GAMgASgJEi4KCmNyZWF0ZWRfYXQYBCABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wIn8KB1VJQmxvY2sSCgoCaWQYASABKAkSFwoPY29udmVyc2F0aW9uX2lkGAIgASgJEgwKBHJvbGUYAyABKAkSEQoJZGF0YV9qc29uGAQgASgJEi4KCmNyZWF0ZWRfYXQYBSABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wIkEKGUNyZWF0ZUNvbnZlcnNhdGlvblJlcXVlc3QSDQoFdGl0bGUYASABKAkSFQoNc3lzdGVtX3Byb21wdBgCIAEoCSJRChpDcmVhdGVDb252ZXJzYXRpb25SZXNwb25zZRIzCgxjb252ZXJzYXRpb24YASABKAsyHS51bmJsaW5rLmNoYXQudjEuQ29udmVyc2F0aW9uIkEKGExpc3RDb252ZXJzYXRpb25zUmVxdWVzdBIRCglwYWdlX3NpemUYASABKAUSEgoKcGFnZV90b2tlbhgCIAEoCSJqChlMaXN0Q29udmVyc2F0aW9uc1Jlc3BvbnNlEjQKDWNvbnZlcnNhdGlvbnMYASADKAsyHS51bmJsaW5rLmNoYXQudjEuQ29udmVyc2F0aW9uEhcKD25leHRfcGFnZV90b2tlbhgCIAEoCSIxChZHZXRDb252ZXJzYXRpb25SZXF1ZXN0EhcKD2NvbnZlcnNhdGlvbl9pZBgBIAEoCSJOChdHZXRDb252ZXJzYXRpb25SZXNwb25zZRIzCgxjb252ZXJzYXRpb24YASABKAsyHS51bmJsaW5rLmNoYXQudjEuQ29udmVyc2F0aW9uIoABChlVcGRhdGVDb252ZXJzYXRpb25SZXF1ZXN0EhcKD2NvbnZlcnNhdGlvbl9pZBgBIAEoCRISCgV0aXRsZRgCIAEoCUgAiAEBEhoKDXN5c3RlbV9wcm9tcHQYAyABKAlIAYgBAUIICgZfdGl0bGVCEAoOX3N5c3RlbV9wcm9tcHQiUQoaVXBkYXRlQ29udmVyc2F0aW9uUmVzcG9uc2USMwoMY29udmVyc2F0aW9uGAEgASgLMh0udW5ibGluay5jaGF0LnYxLkNvbnZlcnNhdGlvbiI0ChlEZWxldGVDb252ZXJzYXRpb25SZXF1ZXN0EhcKD2NvbnZlcnNhdGlvbl9pZBgBIAEoCSItChpEZWxldGVDb252ZXJzYXRpb25SZXNwb25zZRIPCgdzdWNjZXNzGAEgASgIIlUKE0xpc3RNZXNzYWdlc1JlcXVlc3QSFwoPY29udmVyc2F0aW9uX2lkGAEgASgJEhEKCXBhZ2Vfc2l6ZRgCIAEoBRISCgpwYWdlX3Rva2VuGAMgASgJIlsKFExpc3RNZXNzYWdlc1Jlc3BvbnNlEioKCG1lc3NhZ2VzGAEgAygLMhgudW5ibGluay5jaGF0LnYxLk1lc3NhZ2USFwoPbmV4dF9wYWdlX3Rva2VuGAIgASgJIi4KE0xpc3RVSUJsb2Nrc1JlcXVlc3QSFwoPY29udmVyc2F0aW9uX2lkGAEgASgJIkMKFExpc3RVSUJsb2Nrc1Jlc3BvbnNlEisKCXVpX2Jsb2NrcxgBIAMoCzIYLnVuYmxpbmsuY2hhdC52MS5VSUJsb2NrIlYKElNlbmRNZXNzYWdlUmVxdWVzdBIXCg9jb252ZXJzYXRpb25faWQYASABKAkSDwoHY29udGVudBgCIAEoCRIWCg51c2Vfd2ViX3NlYXJjaBgDIAEoCCKwAQoTU2VuZE1lc3NhZ2VSZXNwb25zZRIUCgp0ZXh0X2RlbHRhGAEgASgJSAASFwoNc3RhdHVzX3VwZGF0ZRgCIAEoCUgAEjMKCXRvb2xfY2FsbBgDIAEoCzIeLnVuYmxpbmsuY2hhdC52MS5Ub29sQ2FsbEV2ZW50SAASLAoIdWlfYmxvY2sYBCABKAsyGC51bmJsaW5rLmNoYXQudjEuVUlCbG9ja0gAQgcKBWV2ZW50ImMKDVRvb2xDYWxsRXZlbnQSEQoJdG9vbF9uYW1lGAEgASgJEhEKCWFyZ3VtZW50cxgCIAEoCRIOCgZyZXN1bHQYAyABKAkSDQoFZXJyb3IYBCABKAkSDQoFc3RhdGUYBSABKAkqSgoEUm9sZRIUChBST0xFX1VOU1BFQ0lGSUVEEAASDQoJUk9MRV9VU0VSEAESDgoKUk9MRV9NT0RFTBACEg0KCVJPTEVfVE9PTBADMsIGCgtDaGF0U2VydmljZRJtChJDcmVhdGVDb252ZXJzYXRpb24SKi51bmJsaW5rLmNoYXQudjEuQ3JlYXRlQ29udmVyc2F0aW9uUmVxdWVzdBorLnVuYmxpbmsuY2hhdC52MS5DcmVhdGVDb252ZXJzYXRpb25SZXNwb25zZRJqChFMaXN0Q29udmVyc2F0aW9ucxIpLnVuYmxpbmsuY2hhdC52MS5MaXN0Q29udmVyc2F0aW9uc1JlcXVlc3QaKi51bmJsaW5rLmNoYXQudjEuTGlzdENvbnZlcnNhdGlvbnNSZXNwb25zZRJkCg9HZXRDb252ZXJzYXRpb24SJy51bmJsaW5rLmNoYXQudjEuR2V0Q29udmVyc2F0aW9uUmVxdWVzdBooLnVuYmxpbmsuY2hhdC52MS5HZXRDb252ZXJzYXRpb25SZXNwb25zZRJtChJVcGRhdGVDb252ZXJzYXRpb24SKi51bmJsaW5rLmNoYXQudjEuVXBkYXRlQ29udmVyc2F0aW9uUmVxdWVzdBorLnVuYmxpbmsuY2hhdC52MS5VcGRhdGVDb252ZXJzYXRpb25SZXNwb25zZRJtChJEZWxldGVDb252ZXJzYXRpb24SKi51bmJsaW5rLmNoYXQudjEuRGVsZXRlQ29udmVyc2F0aW9uUmVxdWVzdBorLnVuYmxpbmsuY2hhdC52MS5EZWxldGVDb252ZXJzYXRpb25SZXNwb25zZRJbCgxMaXN0TWVzc2FnZXMSJC51bmJsaW5rLmNoYXQudjEuTGlzdE1lc3NhZ2VzUmVxdWVzdBolLnVuYmxpbmsuY2hhdC52MS5MaXN0TWVzc2FnZXNSZXNwb25zZRJbCgxMaXN0VUlCbG9ja3MSJC51bmJsaW5rLmNoYXQudjEuTGlzdFVJQmxvY2tzUmVxdWVzdBolLnVuYmxpbmsuY2hhdC52MS5MaXN0VUlCbG9ja3NSZXNwb25zZRJaCgtTZW5kTWVzc2FnZRIjLnVuYmxpbmsuY2hhdC52MS5TZW5kTWVzc2FnZVJlcXVlc3QaJC51bmJsaW5rLmNoYXQudjEuU2VuZE1lc3NhZ2VSZXNwb25zZTABQj1aO2dpdGh1Yi5jb20vdW5ibGluay91bmJsaW5rL3JlbGF5L2dlbi91bmJsaW5rL2NoYXQvdjE7Y2hhdHYxYgZwcm90bzM", [file_google_protobuf_timestamp]);
 
 /**
  * @generated from message unblink.chat.v1.Conversation
@@ -84,6 +84,45 @@ export const MessageSchema: GenMessage<Message> = /*@__PURE__*/
   messageDesc(file_unblink_chat_v1_chat, 1);
 
 /**
+ * @generated from message unblink.chat.v1.UIBlock
+ */
+export type UIBlock = Message$1<"unblink.chat.v1.UIBlock"> & {
+  /**
+   * @generated from field: string id = 1;
+   */
+  id: string;
+
+  /**
+   * @generated from field: string conversation_id = 2;
+   */
+  conversationId: string;
+
+  /**
+   * 'user', 'model', 'tool', 'system'
+   *
+   * @generated from field: string role = 3;
+   */
+  role: string;
+
+  /**
+   * @generated from field: string data_json = 4;
+   */
+  dataJson: string;
+
+  /**
+   * @generated from field: google.protobuf.Timestamp created_at = 5;
+   */
+  createdAt?: Timestamp;
+};
+
+/**
+ * Describes the message unblink.chat.v1.UIBlock.
+ * Use `create(UIBlockSchema)` to create a new message.
+ */
+export const UIBlockSchema: GenMessage<UIBlock> = /*@__PURE__*/
+  messageDesc(file_unblink_chat_v1_chat, 2);
+
+/**
  * @generated from message unblink.chat.v1.CreateConversationRequest
  */
 export type CreateConversationRequest = Message$1<"unblink.chat.v1.CreateConversationRequest"> & {
@@ -103,7 +142,7 @@ export type CreateConversationRequest = Message$1<"unblink.chat.v1.CreateConvers
  * Use `create(CreateConversationRequestSchema)` to create a new message.
  */
 export const CreateConversationRequestSchema: GenMessage<CreateConversationRequest> = /*@__PURE__*/
-  messageDesc(file_unblink_chat_v1_chat, 2);
+  messageDesc(file_unblink_chat_v1_chat, 3);
 
 /**
  * @generated from message unblink.chat.v1.CreateConversationResponse
@@ -120,7 +159,7 @@ export type CreateConversationResponse = Message$1<"unblink.chat.v1.CreateConver
  * Use `create(CreateConversationResponseSchema)` to create a new message.
  */
 export const CreateConversationResponseSchema: GenMessage<CreateConversationResponse> = /*@__PURE__*/
-  messageDesc(file_unblink_chat_v1_chat, 3);
+  messageDesc(file_unblink_chat_v1_chat, 4);
 
 /**
  * @generated from message unblink.chat.v1.ListConversationsRequest
@@ -142,7 +181,7 @@ export type ListConversationsRequest = Message$1<"unblink.chat.v1.ListConversati
  * Use `create(ListConversationsRequestSchema)` to create a new message.
  */
 export const ListConversationsRequestSchema: GenMessage<ListConversationsRequest> = /*@__PURE__*/
-  messageDesc(file_unblink_chat_v1_chat, 4);
+  messageDesc(file_unblink_chat_v1_chat, 5);
 
 /**
  * @generated from message unblink.chat.v1.ListConversationsResponse
@@ -164,7 +203,7 @@ export type ListConversationsResponse = Message$1<"unblink.chat.v1.ListConversat
  * Use `create(ListConversationsResponseSchema)` to create a new message.
  */
 export const ListConversationsResponseSchema: GenMessage<ListConversationsResponse> = /*@__PURE__*/
-  messageDesc(file_unblink_chat_v1_chat, 5);
+  messageDesc(file_unblink_chat_v1_chat, 6);
 
 /**
  * @generated from message unblink.chat.v1.GetConversationRequest
@@ -181,7 +220,7 @@ export type GetConversationRequest = Message$1<"unblink.chat.v1.GetConversationR
  * Use `create(GetConversationRequestSchema)` to create a new message.
  */
 export const GetConversationRequestSchema: GenMessage<GetConversationRequest> = /*@__PURE__*/
-  messageDesc(file_unblink_chat_v1_chat, 6);
+  messageDesc(file_unblink_chat_v1_chat, 7);
 
 /**
  * @generated from message unblink.chat.v1.GetConversationResponse
@@ -198,7 +237,7 @@ export type GetConversationResponse = Message$1<"unblink.chat.v1.GetConversation
  * Use `create(GetConversationResponseSchema)` to create a new message.
  */
 export const GetConversationResponseSchema: GenMessage<GetConversationResponse> = /*@__PURE__*/
-  messageDesc(file_unblink_chat_v1_chat, 7);
+  messageDesc(file_unblink_chat_v1_chat, 8);
 
 /**
  * @generated from message unblink.chat.v1.UpdateConversationRequest
@@ -225,7 +264,7 @@ export type UpdateConversationRequest = Message$1<"unblink.chat.v1.UpdateConvers
  * Use `create(UpdateConversationRequestSchema)` to create a new message.
  */
 export const UpdateConversationRequestSchema: GenMessage<UpdateConversationRequest> = /*@__PURE__*/
-  messageDesc(file_unblink_chat_v1_chat, 8);
+  messageDesc(file_unblink_chat_v1_chat, 9);
 
 /**
  * @generated from message unblink.chat.v1.UpdateConversationResponse
@@ -242,7 +281,7 @@ export type UpdateConversationResponse = Message$1<"unblink.chat.v1.UpdateConver
  * Use `create(UpdateConversationResponseSchema)` to create a new message.
  */
 export const UpdateConversationResponseSchema: GenMessage<UpdateConversationResponse> = /*@__PURE__*/
-  messageDesc(file_unblink_chat_v1_chat, 9);
+  messageDesc(file_unblink_chat_v1_chat, 10);
 
 /**
  * @generated from message unblink.chat.v1.DeleteConversationRequest
@@ -259,7 +298,7 @@ export type DeleteConversationRequest = Message$1<"unblink.chat.v1.DeleteConvers
  * Use `create(DeleteConversationRequestSchema)` to create a new message.
  */
 export const DeleteConversationRequestSchema: GenMessage<DeleteConversationRequest> = /*@__PURE__*/
-  messageDesc(file_unblink_chat_v1_chat, 10);
+  messageDesc(file_unblink_chat_v1_chat, 11);
 
 /**
  * @generated from message unblink.chat.v1.DeleteConversationResponse
@@ -276,7 +315,7 @@ export type DeleteConversationResponse = Message$1<"unblink.chat.v1.DeleteConver
  * Use `create(DeleteConversationResponseSchema)` to create a new message.
  */
 export const DeleteConversationResponseSchema: GenMessage<DeleteConversationResponse> = /*@__PURE__*/
-  messageDesc(file_unblink_chat_v1_chat, 11);
+  messageDesc(file_unblink_chat_v1_chat, 12);
 
 /**
  * @generated from message unblink.chat.v1.ListMessagesRequest
@@ -303,7 +342,7 @@ export type ListMessagesRequest = Message$1<"unblink.chat.v1.ListMessagesRequest
  * Use `create(ListMessagesRequestSchema)` to create a new message.
  */
 export const ListMessagesRequestSchema: GenMessage<ListMessagesRequest> = /*@__PURE__*/
-  messageDesc(file_unblink_chat_v1_chat, 12);
+  messageDesc(file_unblink_chat_v1_chat, 13);
 
 /**
  * @generated from message unblink.chat.v1.ListMessagesResponse
@@ -325,7 +364,41 @@ export type ListMessagesResponse = Message$1<"unblink.chat.v1.ListMessagesRespon
  * Use `create(ListMessagesResponseSchema)` to create a new message.
  */
 export const ListMessagesResponseSchema: GenMessage<ListMessagesResponse> = /*@__PURE__*/
-  messageDesc(file_unblink_chat_v1_chat, 13);
+  messageDesc(file_unblink_chat_v1_chat, 14);
+
+/**
+ * @generated from message unblink.chat.v1.ListUIBlocksRequest
+ */
+export type ListUIBlocksRequest = Message$1<"unblink.chat.v1.ListUIBlocksRequest"> & {
+  /**
+   * @generated from field: string conversation_id = 1;
+   */
+  conversationId: string;
+};
+
+/**
+ * Describes the message unblink.chat.v1.ListUIBlocksRequest.
+ * Use `create(ListUIBlocksRequestSchema)` to create a new message.
+ */
+export const ListUIBlocksRequestSchema: GenMessage<ListUIBlocksRequest> = /*@__PURE__*/
+  messageDesc(file_unblink_chat_v1_chat, 15);
+
+/**
+ * @generated from message unblink.chat.v1.ListUIBlocksResponse
+ */
+export type ListUIBlocksResponse = Message$1<"unblink.chat.v1.ListUIBlocksResponse"> & {
+  /**
+   * @generated from field: repeated unblink.chat.v1.UIBlock ui_blocks = 1;
+   */
+  uiBlocks: UIBlock[];
+};
+
+/**
+ * Describes the message unblink.chat.v1.ListUIBlocksResponse.
+ * Use `create(ListUIBlocksResponseSchema)` to create a new message.
+ */
+export const ListUIBlocksResponseSchema: GenMessage<ListUIBlocksResponse> = /*@__PURE__*/
+  messageDesc(file_unblink_chat_v1_chat, 16);
 
 /**
  * @generated from message unblink.chat.v1.SendMessageRequest
@@ -352,7 +425,7 @@ export type SendMessageRequest = Message$1<"unblink.chat.v1.SendMessageRequest">
  * Use `create(SendMessageRequestSchema)` to create a new message.
  */
 export const SendMessageRequestSchema: GenMessage<SendMessageRequest> = /*@__PURE__*/
-  messageDesc(file_unblink_chat_v1_chat, 14);
+  messageDesc(file_unblink_chat_v1_chat, 17);
 
 /**
  * @generated from message unblink.chat.v1.SendMessageResponse
@@ -379,6 +452,12 @@ export type SendMessageResponse = Message$1<"unblink.chat.v1.SendMessageResponse
      */
     value: ToolCallEvent;
     case: "toolCall";
+  } | {
+    /**
+     * @generated from field: unblink.chat.v1.UIBlock ui_block = 4;
+     */
+    value: UIBlock;
+    case: "uiBlock";
   } | { case: undefined; value?: undefined };
 };
 
@@ -387,7 +466,7 @@ export type SendMessageResponse = Message$1<"unblink.chat.v1.SendMessageResponse
  * Use `create(SendMessageResponseSchema)` to create a new message.
  */
 export const SendMessageResponseSchema: GenMessage<SendMessageResponse> = /*@__PURE__*/
-  messageDesc(file_unblink_chat_v1_chat, 15);
+  messageDesc(file_unblink_chat_v1_chat, 18);
 
 /**
  * @generated from message unblink.chat.v1.ToolCallEvent
@@ -432,7 +511,7 @@ export type ToolCallEvent = Message$1<"unblink.chat.v1.ToolCallEvent"> & {
  * Use `create(ToolCallEventSchema)` to create a new message.
  */
 export const ToolCallEventSchema: GenMessage<ToolCallEvent> = /*@__PURE__*/
-  messageDesc(file_unblink_chat_v1_chat, 16);
+  messageDesc(file_unblink_chat_v1_chat, 19);
 
 /**
  * @generated from enum unblink.chat.v1.Role
@@ -520,6 +599,16 @@ export const ChatService: GenService<{
     methodKind: "unary";
     input: typeof ListMessagesRequestSchema;
     output: typeof ListMessagesResponseSchema;
+  },
+  /**
+   * UI blocks for rendering
+   *
+   * @generated from rpc unblink.chat.v1.ChatService.ListUIBlocks
+   */
+  listUIBlocks: {
+    methodKind: "unary";
+    input: typeof ListUIBlocksRequestSchema;
+    output: typeof ListUIBlocksResponseSchema;
   },
   /**
    * Streaming chat

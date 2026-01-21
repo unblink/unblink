@@ -13,10 +13,13 @@ service ChatService {
   rpc GetConversation(GetConversationRequest) returns (GetConversationResponse);
   rpc UpdateConversation(UpdateConversationRequest) returns (UpdateConversationResponse);
   rpc DeleteConversation(DeleteConversationRequest) returns (DeleteConversationResponse);
-  
+
   // Message history
   rpc ListMessages(ListMessagesRequest) returns (ListMessagesResponse);
-  
+
+  // UI blocks for rendering
+  rpc ListUIBlocks(ListUIBlocksRequest) returns (ListUIBlocksResponse);
+
   // Streaming chat
   rpc SendMessage(SendMessageRequest) returns (stream SendMessageResponse);
 }
@@ -43,6 +46,14 @@ message Message {
   string conversation_id = 2;
   string body = 3;
   google.protobuf.Timestamp created_at = 4;
+}
+
+message UIBlock {
+  string id = 1;
+  string conversation_id = 2;
+  string role = 3;  // 'user', 'model', 'tool', 'system'
+  string data_json = 4;
+  google.protobuf.Timestamp created_at = 5;
 }
 
 // Request/Response messages
@@ -103,6 +114,14 @@ message ListMessagesResponse {
   string next_page_token = 2;
 }
 
+message ListUIBlocksRequest {
+  string conversation_id = 1;
+}
+
+message ListUIBlocksResponse {
+  repeated UIBlock ui_blocks = 1;
+}
+
 message SendMessageRequest {
   string conversation_id = 1;
   string content = 2;
@@ -114,6 +133,7 @@ message SendMessageResponse {
     string text_delta = 1;
     string status_update = 2;
     ToolCallEvent tool_call = 3;
+    UIBlock ui_block = 4;
   }
 }
 
