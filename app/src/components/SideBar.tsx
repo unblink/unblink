@@ -10,9 +10,8 @@ import {
   FiMessageCircle,
 } from "solid-icons/fi";
 import { VsBug } from "solid-icons/vs";
-import { createMemo, createSignal, For, onMount, Show } from "solid-js";
-import logoSVG from "../../public/logo.svg";
-import zapdosLogoSVG from "../../public/zapdos_logo.svg";
+import { createSignal, For, onMount, Show } from "solid-js";
+import { brandLogo, brandName } from "../lib/brand";
 import {
   fetchNodesAndServices,
   services,
@@ -29,10 +28,6 @@ import AddServiceButton from "./AddServiceButton";
 export default function SideBar() {
   onMount(fetchNodesAndServices);
   const [collapsed, setCollapsed] = createSignal(false);
-
-  const isZapdos = createMemo(() =>
-    window.location.hostname.endsWith(".zapdoslabs.com")
-  );
 
   // Get all services
   const allServices = () => {
@@ -89,10 +84,10 @@ export default function SideBar() {
           class={`mt-4 flex items-center ${collapsed() ? "justify-center" : "space-x-3 mx-4"
             } mb-8`}
         >
-          <img src={isZapdos() ? zapdosLogoSVG : logoSVG} class="w-12 h-12" />
+          <img src={brandLogo()} class="w-12 h-12" />
           <Show when={!collapsed()}>
             <div class="flex-1 font-montserrat font-semibold text-white text-3xl mt-2 leading-none">
-              {isZapdos() ? "zapdos labs" : "unblink"}
+              {brandName()}
             </div>
           </Show>
         </div>

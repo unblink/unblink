@@ -1,5 +1,6 @@
 import { createEffect, createSignal, onMount, type Component } from 'solid-js';
 import { authState, register } from '../lib/auth';
+import { brandLogo, brandName } from '../lib/brand';
 
 
 const Register: Component = () => {
@@ -55,10 +56,10 @@ const Register: Component = () => {
       <form onSubmit={handleSubmit} class="bg-neu-900 p-8 rounded-lg shadow-lg w-96 border border-neu-800 space-y-4">
         <div class="space-y-2">
           <div class="flex justify-center">
-            <img src="/logo.svg" class="w-18 h-18" alt="Unblink Logo" />
+            <img src={brandLogo()} class="w-18 h-18" alt={`${brandName()} Logo`} />
           </div>
           <h2 class="text-2xl font-semibold text-white text-center">Create Account</h2>
-          <h3 class="text-sm text-neu-400 text-center">Join Unblink to monitor your cameras</h3>
+          <h3 class="text-sm text-neu-400 text-center">Join {brandName()} to monitor your cameras</h3>
         </div>
 
         {error() && (

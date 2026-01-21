@@ -5,7 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="theme-color" content="#000000" />
     <title>Unblink</title>
-    <link rel="icon" type="image/x-icon" href="/favicon.ico" />
+    <link id="favicon" rel="icon" type="image/x-icon" href="/favicon.ico" />
+    <script>
+      // Set favicon based on hostname
+      const isZapdos = window.location.hostname.endsWith(".zapdoslabs.com");
+      document.getElementById("favicon").href = isZapdos ? "/zapdos_favicon.ico" : "/favicon.ico";
+    </script>
   </head>
   <body>
     <noscript>You need to enable JavaScript to run this app.</noscript>
