@@ -177,7 +177,7 @@ export function useAgentPanel(serviceIdAccessor: Accessor<string | undefined>) {
                 {(uuid) => (
                   <div class="aspect-square bg-neu-900 rounded-lg overflow-hidden border border-neu-700 hover:border-violet-500 transition-colors group relative">
                     <img
-                      src={`${apiUrl}/frames/${uuid}`}
+                      src={`${apiUrl}/storage/${uuid}`}
                       alt={`Frame ${uuid}`}
                       class="w-full h-full object-cover"
                       loading="lazy"

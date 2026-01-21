@@ -24,13 +24,8 @@ func (h *StorageHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	// Extract ID from path (format: /storage/{uuid})
 	path := r.URL.Path
-	if !strings.HasPrefix(path, "/storage/") {
-		http.Error(w, "Invalid path", http.StatusBadRequest)
-		return
-	}
-
 	id := strings.TrimPrefix(path, "/storage/")
-	if id == "" {
+	if id == "" || id == path {
 		http.Error(w, "ID is required", http.StatusBadRequest)
 		return
 	}

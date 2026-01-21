@@ -1,4 +1,4 @@
-.PHONY: install update-deps generate patch dev database-delete app-data-delete
+.PHONY: install update-deps generate patch dev database-delete app-data-delete storage-delete
 
 install:
 	cd app && bun install
@@ -24,3 +24,6 @@ database-delete:
 
 app-data-delete:
 	cd relay && go run ../cmd/relay/ app-data delete
+
+storage-delete:
+	cd relay && go run ../cmd/relay/ storage delete

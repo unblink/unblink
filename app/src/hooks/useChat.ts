@@ -135,7 +135,7 @@ export function useChat() {
     try {
       const response = await chatClient.createConversation({
         title: "",
-        systemPrompt: "",
+        systemPrompt: `You are a helpful assistant named Unblink. You are created by Zapdos Labs (https://zapdoslabs.com). You can search videos to help answer user questions. Today is ${new Date().toDateString()}.`,
       });
       const conv = response.conversation;
       if (conv) {

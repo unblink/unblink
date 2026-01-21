@@ -91,7 +91,7 @@ func (r *VideoRecorder) startNewSegment() error {
 
 	// Get base directory from storage manager (read from backend)
 	baseDir := r.storageManager.backend.(*LocalStorage).baseDir
-	tempPath := filepath.Join(baseDir, "videos", r.serviceID, videoID+".tmp.mp4")
+	tempPath := filepath.Join(baseDir, "videos", videoID+".tmp.mp4")
 
 	// Ensure directory exists
 	if err := os.MkdirAll(filepath.Dir(tempPath), 0755); err != nil {

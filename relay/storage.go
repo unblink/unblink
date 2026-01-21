@@ -89,7 +89,7 @@ func (s *LocalStorage) Delete(storagePath string) error {
 // StoreVideo stores a video file to the local filesystem
 func (s *LocalStorage) StoreVideo(videoID string, serviceID string, data []byte) (string, error) {
 	// Create videos directory if it doesn't exist
-	videosDir := filepath.Join(s.baseDir, "videos", serviceID)
+	videosDir := filepath.Join(s.baseDir, "videos")
 	if err := os.MkdirAll(videosDir, 0755); err != nil {
 		return "", fmt.Errorf("failed to create videos directory: %w", err)
 	}
@@ -104,7 +104,7 @@ func (s *LocalStorage) StoreVideo(videoID string, serviceID string, data []byte)
 	}
 
 	// Return storage path in local:// format
-	storagePath := fmt.Sprintf("local://videos/%s/%s", serviceID, fileName)
+	storagePath := fmt.Sprintf("local://videos/%s", fileName)
 	return storagePath, nil
 }
 

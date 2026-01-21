@@ -29,6 +29,9 @@ func main() {
 		case "app-data":
 			handleAppDataCommand()
 			return
+		case "storage":
+			handleStorageCommand()
+			return
 		case "-h", "--help", "help":
 			printUsage()
 			return
@@ -232,11 +235,64 @@ func deleteAppData() {
 	log.Printf("App data directory deleted: %s", appDir)
 }
 
+func handleStorageCommand() {
+	if len(os.Args) < 3 {
+		fmt.Println("Usage: relay storage <command>")
+		fmt.Println("Commands:")
+		fmt.Println("  delete  Delete the storage directory")
+		os.Exit(1)
+	}
+
+	switch os.Args[2] {
+	case "delete":
+		deleteStorage()
+	default:
+		fmt.Printf("Unknown storage command: %s\n", os.Args[2])
+		fmt.Println("Available commands: delete")
+		os.Exit(1)
+	}
+}
+
+func deleteStorage() {
+	// Load config to get storage path
+	config, err := relay.LoadConfig()
+	if err != nil {
+		log.Fatalf("Failed to load configuration: %v", err)
+	}
+
+	// Delete the storage directory
+	storageDir := config.StorageDir
+
+	// Check if directory exists
+	if _, err := os.Stat(storageDir); os.IsNotExist(err) {
+		log.Printf("Storage directory does not exist: %s", storageDir)
+		return
+	}
+
+	// Confirm deletion
+	fmt.Printf("Are you sure you want to delete the storage directory at %s? (yes/no): ", storageDir)
+	var response string
+	fmt.Scanln(&response)
+
+	if response != "yes" {
+		fmt.Println("Deletion cancelled")
+		return
+	}
+
+	// Delete the directory and all its contents
+	if err := os.RemoveAll(storageDir); err != nil {
+		log.Fatalf("Failed to delete storage directory: %v", err)
+	}
+
+	log.Printf("Storage directory deleted: %s", storageDir)
+}
+
 func printUsage() {
 	fmt.Println("Usage: relay [command]")
 	fmt.Println()
 	fmt.Println("Commands:")
 	fmt.Println("  database delete  Delete the database file")
 	fmt.Println("  app-data delete  Delete the entire app data directory")
+	fmt.Println("  storage delete  Delete the storage directory")
 	fmt.Println("  help, -h         Show this help message")
 }
