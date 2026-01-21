@@ -45,3 +45,4 @@ main
 relay-server
 cmd/node/node
 relay-bin
+cmd/relay/relay

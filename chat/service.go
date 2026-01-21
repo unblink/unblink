@@ -20,17 +20,20 @@ import (
 
 type Service struct {
 	db     *DB
-	openai *openai.Client
+	openai openai.Client
+	model  string
 }
 
-func NewService(unblinkDir string, openai *openai.Client) (*Service, error) {
+func NewService(unblinkDir string, openai openai.Client, model string) (*Service, error) {
 	db, err := NewDB(unblinkDir)
 	if err != nil {
 		return nil, err
 	}
+	log.Printf("[ChatService] Initializing with model: %s", model)
 	return &Service{
 		db:     db,
 		openai: openai,
+		model:  model,
 	}, nil
 }
 
@@ -237,9 +240,11 @@ func (s *Service) SendMessage(ctx context.Context, req *connect.Request[chatv1.S
 	}
 
 	// 4. Prepare OpenAI Request with tools
+	log.Printf("[ChatService] Using model: %s", s.model)
 	openAIReq := openai.ChatCompletionNewParams{
 		Messages: history,
 		Tools:    tools,
+		Model:    openai.ChatModel(s.model),
 	}
 
 	// 5. Stream from OpenAI with tool call handling loop (max 5 passes)
@@ -444,10 +449,11 @@ func (s *Service) SendMessage(ctx context.Context, req *connect.Request[chatv1.S
 		}
 
 		// Prepare next API call with tool results
-		log.Printf("[ChatService] Preparing next API call...")
+		log.Printf("[ChatService] Preparing next API call with model: %s", s.model)
 		openAIReq = openai.ChatCompletionNewParams{
 			Messages: history,
 			Tools:    tools,
+			Model:    openai.ChatModel(s.model),
 		}
 
 		log.Printf("[ChatService] Completed pass %d with %d tool calls, continuing...", pass+1, len(toolCalls))

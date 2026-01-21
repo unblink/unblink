@@ -70,12 +70,16 @@ func main() {
 
 	// Initialize Chat Service
 	// openaiClient := shared.NewClient(config.ChatOpenAIBaseURL, 60 * 1000 * 1000 * 1000, config.ChatOpenAIModel, config.ChatOpenAIAPIKey) // 60s timeout
+	log.Printf("[Chat] Initializing chat service:")
+	log.Printf("[Chat]   Base URL: %s", config.ChatOpenAIBaseURL)
+	log.Printf("[Chat]   API Key: %s", config.ChatOpenAIAPIKey)
+	log.Printf("[Chat]   Model: %s", config.ChatOpenAIModel)
 	openaiClient := openai.NewClient(
 		option.WithAPIKey(config.ChatOpenAIAPIKey),
 		option.WithBaseURL(config.ChatOpenAIBaseURL),
 	)
 
-	chatService, err := chat.NewService(config.AppDir, &openaiClient)
+	chatService, err := chat.NewService(config.AppDir, openaiClient, config.ChatOpenAIModel)
 
 	if err != nil {
 		log.Fatalf("[ERROR] Failed to initialize chat service: %v", err)
