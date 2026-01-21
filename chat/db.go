@@ -54,7 +54,7 @@ func (d *DB) initSchema() error {
 			id TEXT PRIMARY KEY,
 			conversation_id TEXT NOT NULL,
 			role TEXT NOT NULL,
-			data_json TEXT NOT NULL,
+			data TEXT NOT NULL,
 			created_at DATETIME,
 			FOREIGN KEY(conversation_id) REFERENCES conversations(id)
 		)`,

@@ -1,6 +1,7 @@
 import { FiClock } from 'solid-icons/fi';
 import { useChat } from '../../hooks/useChat';
-import { activeConversationId, conversations } from '../../signals/chatSignals';
+import { activeConversationId } from '../../signals/chatSignals';
+import type { Conversation } from '../../../gen/unblink/chat/v1/chat_pb';
 import { ArkMenu, type ArkMenuItem } from '../../ark/ArkMenu';
 
 interface HistoryMenuProps {
@@ -9,12 +10,12 @@ interface HistoryMenuProps {
 }
 
 export const HistoryMenu = (props: HistoryMenuProps) => {
-  const { handleSelectConversation } = useChat();
+  const { handleSelectConversation, conversations } = useChat();
 
   const items = () => conversations().map(conv => ({
     id: conv.id,
     title: conv.title || 'Untitled Chat',
-    subtitle: conv.lastUpdated ? new Date(conv.lastUpdated).toLocaleString() : undefined,
+    subtitle: conv.updatedAt ? new Date(Number(conv.updatedAt.seconds) * 1000).toLocaleString() : undefined,
     icon: <FiClock />
   }));
 

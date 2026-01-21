@@ -52,7 +52,7 @@ message UIBlock {
   string id = 1;
   string conversation_id = 2;
   string role = 3;  // 'user', 'model', 'tool', 'system'
-  string data_json = 4;
+  string data = 4;  // JSON string
   google.protobuf.Timestamp created_at = 5;
 }
 

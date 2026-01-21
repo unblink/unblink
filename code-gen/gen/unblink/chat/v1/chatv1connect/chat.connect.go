@@ -51,6 +51,9 @@ const (
 	// ChatServiceListMessagesProcedure is the fully-qualified name of the ChatService's ListMessages
 	// RPC.
 	ChatServiceListMessagesProcedure = "/unblink.chat.v1.ChatService/ListMessages"
+	// ChatServiceListUIBlocksProcedure is the fully-qualified name of the ChatService's ListUIBlocks
+	// RPC.
+	ChatServiceListUIBlocksProcedure = "/unblink.chat.v1.ChatService/ListUIBlocks"
 	// ChatServiceSendMessageProcedure is the fully-qualified name of the ChatService's SendMessage RPC.
 	ChatServiceSendMessageProcedure = "/unblink.chat.v1.ChatService/SendMessage"
 )
@@ -65,6 +68,8 @@ type ChatServiceClient interface {
 	DeleteConversation(context.Context, *connect.Request[v1.DeleteConversationRequest]) (*connect.Response[v1.DeleteConversationResponse], error)
 	// Message history
 	ListMessages(context.Context, *connect.Request[v1.ListMessagesRequest]) (*connect.Response[v1.ListMessagesResponse], error)
+	// UI blocks for rendering
+	ListUIBlocks(context.Context, *connect.Request[v1.ListUIBlocksRequest]) (*connect.Response[v1.ListUIBlocksResponse], error)
 	// Streaming chat
 	SendMessage(context.Context, *connect.Request[v1.SendMessageRequest]) (*connect.ServerStreamForClient[v1.SendMessageResponse], error)
 }
@@ -116,6 +121,12 @@ func NewChatServiceClient(httpClient connect.HTTPClient, baseURL string, opts ..
 			connect.WithSchema(chatServiceMethods.ByName("ListMessages")),
 			connect.WithClientOptions(opts...),
 		),
+		listUIBlocks: connect.NewClient[v1.ListUIBlocksRequest, v1.ListUIBlocksResponse](
+			httpClient,
+			baseURL+ChatServiceListUIBlocksProcedure,
+			connect.WithSchema(chatServiceMethods.ByName("ListUIBlocks")),
+			connect.WithClientOptions(opts...),
+		),
 		sendMessage: connect.NewClient[v1.SendMessageRequest, v1.SendMessageResponse](
 			httpClient,
 			baseURL+ChatServiceSendMessageProcedure,
@@ -133,6 +144,7 @@ type chatServiceClient struct {
 	updateConversation *connect.Client[v1.UpdateConversationRequest, v1.UpdateConversationResponse]
 	deleteConversation *connect.Client[v1.DeleteConversationRequest, v1.DeleteConversationResponse]
 	listMessages       *connect.Client[v1.ListMessagesRequest, v1.ListMessagesResponse]
+	listUIBlocks       *connect.Client[v1.ListUIBlocksRequest, v1.ListUIBlocksResponse]
 	sendMessage        *connect.Client[v1.SendMessageRequest, v1.SendMessageResponse]
 }
 
@@ -166,6 +178,11 @@ func (c *chatServiceClient) ListMessages(ctx context.Context, req *connect.Reque
 	return c.listMessages.CallUnary(ctx, req)
 }
 
+// ListUIBlocks calls unblink.chat.v1.ChatService.ListUIBlocks.
+func (c *chatServiceClient) ListUIBlocks(ctx context.Context, req *connect.Request[v1.ListUIBlocksRequest]) (*connect.Response[v1.ListUIBlocksResponse], error) {
+	return c.listUIBlocks.CallUnary(ctx, req)
+}
+
 // SendMessage calls unblink.chat.v1.ChatService.SendMessage.
 func (c *chatServiceClient) SendMessage(ctx context.Context, req *connect.Request[v1.SendMessageRequest]) (*connect.ServerStreamForClient[v1.SendMessageResponse], error) {
 	return c.sendMessage.CallServerStream(ctx, req)
@@ -181,6 +198,8 @@ type ChatServiceHandler interface {
 	DeleteConversation(context.Context, *connect.Request[v1.DeleteConversationRequest]) (*connect.Response[v1.DeleteConversationResponse], error)
 	// Message history
 	ListMessages(context.Context, *connect.Request[v1.ListMessagesRequest]) (*connect.Response[v1.ListMessagesResponse], error)
+	// UI blocks for rendering
+	ListUIBlocks(context.Context, *connect.Request[v1.ListUIBlocksRequest]) (*connect.Response[v1.ListUIBlocksResponse], error)
 	// Streaming chat
 	SendMessage(context.Context, *connect.Request[v1.SendMessageRequest], *connect.ServerStream[v1.SendMessageResponse]) error
 }
@@ -228,6 +247,12 @@ func NewChatServiceHandler(svc ChatServiceHandler, opts ...connect.HandlerOption
 		connect.WithSchema(chatServiceMethods.ByName("ListMessages")),
 		connect.WithHandlerOptions(opts...),
 	)
+	chatServiceListUIBlocksHandler := connect.NewUnaryHandler(
+		ChatServiceListUIBlocksProcedure,
+		svc.ListUIBlocks,
+		connect.WithSchema(chatServiceMethods.ByName("ListUIBlocks")),
+		connect.WithHandlerOptions(opts...),
+	)
 	chatServiceSendMessageHandler := connect.NewServerStreamHandler(
 		ChatServiceSendMessageProcedure,
 		svc.SendMessage,
@@ -248,6 +273,8 @@ func NewChatServiceHandler(svc ChatServiceHandler, opts ...connect.HandlerOption
 			chatServiceDeleteConversationHandler.ServeHTTP(w, r)
 		case ChatServiceListMessagesProcedure:
 			chatServiceListMessagesHandler.ServeHTTP(w, r)
+		case ChatServiceListUIBlocksProcedure:
+			chatServiceListUIBlocksHandler.ServeHTTP(w, r)
 		case ChatServiceSendMessageProcedure:
 			chatServiceSendMessageHandler.ServeHTTP(w, r)
 		default:
@@ -281,6 +308,10 @@ func (UnimplementedChatServiceHandler) DeleteConversation(context.Context, *conn
 
 func (UnimplementedChatServiceHandler) ListMessages(context.Context, *connect.Request[v1.ListMessagesRequest]) (*connect.Response[v1.ListMessagesResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("unblink.chat.v1.ChatService.ListMessages is not implemented"))
+}
+
+func (UnimplementedChatServiceHandler) ListUIBlocks(context.Context, *connect.Request[v1.ListUIBlocksRequest]) (*connect.Response[v1.ListUIBlocksResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("unblink.chat.v1.ChatService.ListUIBlocks is not implemented"))
 }
 
 func (UnimplementedChatServiceHandler) SendMessage(context.Context, *connect.Request[v1.SendMessageRequest], *connect.ServerStream[v1.SendMessageResponse]) error {

@@ -223,7 +223,7 @@ type UIBlock struct {
 	Id             string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
 	ConversationId string                 `protobuf:"bytes,2,opt,name=conversation_id,json=conversationId,proto3" json:"conversation_id,omitempty"`
 	Role           string                 `protobuf:"bytes,3,opt,name=role,proto3" json:"role,omitempty"` // 'user', 'model', 'tool', 'system'
-	DataJson       string                 `protobuf:"bytes,4,opt,name=data_json,json=dataJson,proto3" json:"data_json,omitempty"`
+	Data           string                 `protobuf:"bytes,4,opt,name=data,proto3" json:"data,omitempty"` // JSON string
 	CreatedAt      *timestamppb.Timestamp `protobuf:"bytes,5,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
 	unknownFields  protoimpl.UnknownFields
 	sizeCache      protoimpl.SizeCache
@@ -280,9 +280,9 @@ func (x *UIBlock) GetRole() string {
 	return ""
 }
 
-func (x *UIBlock) GetDataJson() string {
+func (x *UIBlock) GetData() string {
 	if x != nil {
-		return x.DataJson
+		return x.Data
 	}
 	return ""
 }
@@ -1243,12 +1243,12 @@ const file_unblink_chat_v1_chat_proto_rawDesc = "" +
 	"\x0fconversation_id\x18\x02 \x01(\tR\x0econversationId\x12\x12\n" +
 	"\x04body\x18\x03 \x01(\tR\x04body\x129\n" +
 	"\n" +
-	"created_at\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\"\xae\x01\n" +
+	"created_at\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\"\xa5\x01\n" +
 	"\aUIBlock\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12'\n" +
 	"\x0fconversation_id\x18\x02 \x01(\tR\x0econversationId\x12\x12\n" +
-	"\x04role\x18\x03 \x01(\tR\x04role\x12\x1b\n" +
-	"\tdata_json\x18\x04 \x01(\tR\bdataJson\x129\n" +
+	"\x04role\x18\x03 \x01(\tR\x04role\x12\x12\n" +
+	"\x04data\x18\x04 \x01(\tR\x04data\x129\n" +
 	"\n" +
 	"created_at\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\"V\n" +
 	"\x19CreateConversationRequest\x12\x14\n" +

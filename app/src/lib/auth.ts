@@ -134,7 +134,6 @@ export const initAuth = async () => {
       });
       console.log('[initAuth] User authenticated:', data.user);
     } else {
-      clearToken();
       setAuthState({
         user: null,
         isAuthenticated: false,
@@ -147,7 +146,6 @@ export const initAuth = async () => {
     if (!error?.message?.includes('not authenticated')) {
       console.error('[initAuth] Unexpected error:', error);
     }
-    clearToken();
     setAuthState({
       user: null,
       isAuthenticated: false,

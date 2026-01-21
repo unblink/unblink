@@ -1,8 +1,6 @@
 import { createSignal } from "solid-js";
 import { chatClient } from "../lib/rpc";
-import {
-  type Conversation,
-} from "../../gen/unblink/chat/v1/chat_pb";
+import type { Conversation, UIBlock as ProtoUIBlock } from "../../gen/unblink/chat/v1/chat_pb";
 import {
   uiBlocks,
   setUIBlocks,
@@ -12,22 +10,40 @@ import {
   setIsLoading,
   activeConversationId,
   setActiveConversationId,
-  conversations,
-  setConversations,
   setChatInputState,
   type UIBlock,
   type UIBlockData,
-  type UserData,
   type ModelData,
-  type ToolData,
   type UIRole,
 } from "../signals/chatSignals";
+
+// Conversations list
+const [conversations, setConversations] = createSignal<Conversation[]>([]);
 
 let abortController: AbortController | null = null;
 let firstChunkReceived = false;
 
 // Track UI blocks by ID for replacement (same ID = replace, different ID = new)
 const blockMap = new Map<string, UIBlock>();
+
+// Helper: Convert protobuf UIBlock to local UIBlock
+function protoToUIBlock(proto: ProtoUIBlock): UIBlock {
+  let data: UIBlockData;
+  try {
+    data = JSON.parse(proto.data);
+  } catch (e) {
+    console.error("Failed to parse UI block data:", e);
+    data = { content: "" } as ModelData;
+  }
+
+  return {
+    id: proto.id,
+    conversationId: proto.conversationId,
+    role: proto.role as UIRole,
+    data,
+    createdAt: proto.createdAt ? Number(proto.createdAt.seconds) * 1000 : Date.now(),
+  };
+}
 
 // Helper function to upsert a block (update if exists, insert if new)
 const upsertBlock = (block: UIBlock) => {
@@ -107,24 +123,7 @@ export function useChat() {
           const uiBlockEvent = response.event.value;
           console.log("UI block event:", uiBlockEvent);
 
-          // Parse the data_json from the event
-          let data: UIBlockData;
-          try {
-            const dataJson = JSON.parse(uiBlockEvent.dataJson);
-            data = dataJson;
-          } catch (e) {
-            console.error("Failed to parse UI block data:", e);
-            continue;
-          }
-
-          // Create UI block from event
-          const block: UIBlock = {
-            id: uiBlockEvent.id,
-            conversationId: uiBlockEvent.conversationId,
-            role: uiBlockEvent.role as UIRole,
-            data,
-            createdAt: uiBlockEvent.createdAt ? Number(uiBlockEvent.createdAt.seconds) * 1000 : Date.now(),
-          };
+          const block = protoToUIBlock(uiBlockEvent);
 
           // If this is a model block, it replaces the temporary accumulated block
           if (block.role === "model") {
@@ -177,13 +176,7 @@ export function useChat() {
         pageSize: 50,
         pageToken: "",
       });
-      const convs = response.conversations;
-      const summaries = convs.map((c) => ({
-        id: c.id,
-        title: c.title || "New Conversation",
-        lastUpdated: c.updatedAt ? Number(c.updatedAt.seconds) * 1000 : Date.now(),
-      }));
-      setConversations(summaries);
+      setConversations(response.conversations);
     } catch (error) {
       console.error("Error listing conversations:", error);
     }
@@ -198,25 +191,7 @@ export function useChat() {
         conversationId,
       });
 
-      const blocks: UIBlock[] = response.uiBlocks.map((b) => {
-        let data: UIBlockData;
-        try {
-          const dataJson = JSON.parse(b.dataJson);
-          data = dataJson;
-        } catch (e) {
-          console.error("Failed to parse UI block data:", e);
-          // Default to empty model data
-          data = { content: "" } as ModelData;
-        }
-
-        return {
-          id: b.id,
-          conversationId: b.conversationId,
-          role: b.role as UIRole,
-          data,
-          createdAt: b.createdAt ? Number(b.createdAt.seconds) * 1000 : Date.now(),
-        };
-      });
+      const blocks: UIBlock[] = response.uiBlocks.map(protoToUIBlock);
 
       // Populate block map and set UI blocks
       blocks.forEach((block) => blockMap.set(block.id, block));
@@ -268,6 +243,7 @@ export function useChat() {
   };
 
   return {
+    conversations,
     sendMessage,
     createConversation,
     listConversations,

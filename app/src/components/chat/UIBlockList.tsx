@@ -3,6 +3,7 @@ import { FaSolidSpinner, FaSolidCircleCheck } from "solid-icons/fa";
 import { BsX } from "solid-icons/bs";
 import type { UIBlock } from "../../signals/chatSignals";
 import { ProseText } from "./ProseText";
+import LoadingDots from "./LoadingDots";
 
 interface ToolCallItemProps {
   toolName: string;
@@ -61,6 +62,7 @@ export default function UIBlockList(props: UIBlockListProps) {
               <Match when={block.role === "model"}>
                 <div class="px-4 py-4 flex flex-col">
                   <ProseText content={(block.data as any).content} />
+                  {props.showLoading && isLastModelBlock(block) && <LoadingDots />}
                 </div>
               </Match>
 
@@ -83,14 +85,6 @@ export default function UIBlockList(props: UIBlockListProps) {
           </div>
         )}
       </For>
-
-      {props.showLoading && (
-        <div class="mt-4 flex gap-1">
-          <div class="w-2 h-2 bg-neu-500 rounded-full animate-pulse"></div>
-          <div class="w-2 h-2 bg-neu-500 rounded-full animate-pulse" style="animation-delay: 0.2s"></div>
-          <div class="w-2 h-2 bg-neu-500 rounded-full animate-pulse" style="animation-delay: 0.4s"></div>
-        </div>
-      )}
     </div>
   );
 }

@@ -9,6 +9,7 @@ package agentv1
 import (
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
+	structpb "google.golang.org/protobuf/types/known/structpb"
 	reflect "reflect"
 	sync "sync"
 	unsafe "unsafe"
@@ -677,11 +678,353 @@ func (x *Agent) GetUpdatedAt() int64 {
 	return 0
 }
 
+type AgentEvent struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	AgentId       string                 `protobuf:"bytes,2,opt,name=agent_id,json=agentId,proto3" json:"agent_id,omitempty"`
+	AgentName     string                 `protobuf:"bytes,3,opt,name=agent_name,json=agentName,proto3" json:"agent_name,omitempty"`
+	ServiceId     string                 `protobuf:"bytes,4,opt,name=service_id,json=serviceId,proto3" json:"service_id,omitempty"`
+	Data          *structpb.Struct       `protobuf:"bytes,5,opt,name=data,proto3" json:"data,omitempty"`
+	Metadata      *structpb.Struct       `protobuf:"bytes,6,opt,name=metadata,proto3" json:"metadata,omitempty"`
+	CreatedAt     int64                  `protobuf:"varint,7,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *AgentEvent) Reset() {
+	*x = AgentEvent{}
+	mi := &file_unblink_agent_v1_agent_proto_msgTypes[12]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *AgentEvent) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*AgentEvent) ProtoMessage() {}
+
+func (x *AgentEvent) ProtoReflect() protoreflect.Message {
+	mi := &file_unblink_agent_v1_agent_proto_msgTypes[12]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use AgentEvent.ProtoReflect.Descriptor instead.
+func (*AgentEvent) Descriptor() ([]byte, []int) {
+	return file_unblink_agent_v1_agent_proto_rawDescGZIP(), []int{12}
+}
+
+func (x *AgentEvent) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+func (x *AgentEvent) GetAgentId() string {
+	if x != nil {
+		return x.AgentId
+	}
+	return ""
+}
+
+func (x *AgentEvent) GetAgentName() string {
+	if x != nil {
+		return x.AgentName
+	}
+	return ""
+}
+
+func (x *AgentEvent) GetServiceId() string {
+	if x != nil {
+		return x.ServiceId
+	}
+	return ""
+}
+
+func (x *AgentEvent) GetData() *structpb.Struct {
+	if x != nil {
+		return x.Data
+	}
+	return nil
+}
+
+func (x *AgentEvent) GetMetadata() *structpb.Struct {
+	if x != nil {
+		return x.Metadata
+	}
+	return nil
+}
+
+func (x *AgentEvent) GetCreatedAt() int64 {
+	if x != nil {
+		return x.CreatedAt
+	}
+	return 0
+}
+
+type StreamClientRealtimeEventsRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *StreamClientRealtimeEventsRequest) Reset() {
+	*x = StreamClientRealtimeEventsRequest{}
+	mi := &file_unblink_agent_v1_agent_proto_msgTypes[13]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *StreamClientRealtimeEventsRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*StreamClientRealtimeEventsRequest) ProtoMessage() {}
+
+func (x *StreamClientRealtimeEventsRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_unblink_agent_v1_agent_proto_msgTypes[13]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use StreamClientRealtimeEventsRequest.ProtoReflect.Descriptor instead.
+func (*StreamClientRealtimeEventsRequest) Descriptor() ([]byte, []int) {
+	return file_unblink_agent_v1_agent_proto_rawDescGZIP(), []int{13}
+}
+
+type ClientRealtimeEvent struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Types that are valid to be assigned to Event:
+	//
+	//	*ClientRealtimeEvent_Agent
+	Event         isClientRealtimeEvent_Event `protobuf_oneof:"event"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ClientRealtimeEvent) Reset() {
+	*x = ClientRealtimeEvent{}
+	mi := &file_unblink_agent_v1_agent_proto_msgTypes[14]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ClientRealtimeEvent) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ClientRealtimeEvent) ProtoMessage() {}
+
+func (x *ClientRealtimeEvent) ProtoReflect() protoreflect.Message {
+	mi := &file_unblink_agent_v1_agent_proto_msgTypes[14]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ClientRealtimeEvent.ProtoReflect.Descriptor instead.
+func (*ClientRealtimeEvent) Descriptor() ([]byte, []int) {
+	return file_unblink_agent_v1_agent_proto_rawDescGZIP(), []int{14}
+}
+
+func (x *ClientRealtimeEvent) GetEvent() isClientRealtimeEvent_Event {
+	if x != nil {
+		return x.Event
+	}
+	return nil
+}
+
+func (x *ClientRealtimeEvent) GetAgent() *AgentEvent {
+	if x != nil {
+		if x, ok := x.Event.(*ClientRealtimeEvent_Agent); ok {
+			return x.Agent
+		}
+	}
+	return nil
+}
+
+type isClientRealtimeEvent_Event interface {
+	isClientRealtimeEvent_Event()
+}
+
+type ClientRealtimeEvent_Agent struct {
+	Agent *AgentEvent `protobuf:"bytes,1,opt,name=agent,proto3,oneof"`
+}
+
+func (*ClientRealtimeEvent_Agent) isClientRealtimeEvent_Event() {}
+
+type StreamClientRealtimeEventsResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Event         *ClientRealtimeEvent   `protobuf:"bytes,1,opt,name=event,proto3" json:"event,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *StreamClientRealtimeEventsResponse) Reset() {
+	*x = StreamClientRealtimeEventsResponse{}
+	mi := &file_unblink_agent_v1_agent_proto_msgTypes[15]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *StreamClientRealtimeEventsResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*StreamClientRealtimeEventsResponse) ProtoMessage() {}
+
+func (x *StreamClientRealtimeEventsResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_unblink_agent_v1_agent_proto_msgTypes[15]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use StreamClientRealtimeEventsResponse.ProtoReflect.Descriptor instead.
+func (*StreamClientRealtimeEventsResponse) Descriptor() ([]byte, []int) {
+	return file_unblink_agent_v1_agent_proto_rawDescGZIP(), []int{15}
+}
+
+func (x *StreamClientRealtimeEventsResponse) GetEvent() *ClientRealtimeEvent {
+	if x != nil {
+		return x.Event
+	}
+	return nil
+}
+
+type ListAgentEventsRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	AgentId       string                 `protobuf:"bytes,1,opt,name=agent_id,json=agentId,proto3" json:"agent_id,omitempty"`
+	ServiceId     string                 `protobuf:"bytes,2,opt,name=service_id,json=serviceId,proto3" json:"service_id,omitempty"`
+	Limit         int32                  `protobuf:"varint,3,opt,name=limit,proto3" json:"limit,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListAgentEventsRequest) Reset() {
+	*x = ListAgentEventsRequest{}
+	mi := &file_unblink_agent_v1_agent_proto_msgTypes[16]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListAgentEventsRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListAgentEventsRequest) ProtoMessage() {}
+
+func (x *ListAgentEventsRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_unblink_agent_v1_agent_proto_msgTypes[16]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListAgentEventsRequest.ProtoReflect.Descriptor instead.
+func (*ListAgentEventsRequest) Descriptor() ([]byte, []int) {
+	return file_unblink_agent_v1_agent_proto_rawDescGZIP(), []int{16}
+}
+
+func (x *ListAgentEventsRequest) GetAgentId() string {
+	if x != nil {
+		return x.AgentId
+	}
+	return ""
+}
+
+func (x *ListAgentEventsRequest) GetServiceId() string {
+	if x != nil {
+		return x.ServiceId
+	}
+	return ""
+}
+
+func (x *ListAgentEventsRequest) GetLimit() int32 {
+	if x != nil {
+		return x.Limit
+	}
+	return 0
+}
+
+type ListAgentEventsResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Events        []*AgentEvent          `protobuf:"bytes,1,rep,name=events,proto3" json:"events,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListAgentEventsResponse) Reset() {
+	*x = ListAgentEventsResponse{}
+	mi := &file_unblink_agent_v1_agent_proto_msgTypes[17]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListAgentEventsResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListAgentEventsResponse) ProtoMessage() {}
+
+func (x *ListAgentEventsResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_unblink_agent_v1_agent_proto_msgTypes[17]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListAgentEventsResponse.ProtoReflect.Descriptor instead.
+func (*ListAgentEventsResponse) Descriptor() ([]byte, []int) {
+	return file_unblink_agent_v1_agent_proto_rawDescGZIP(), []int{17}
+}
+
+func (x *ListAgentEventsResponse) GetEvents() []*AgentEvent {
+	if x != nil {
+		return x.Events
+	}
+	return nil
+}
+
 var File_unblink_agent_v1_agent_proto protoreflect.FileDescriptor
 
 const file_unblink_agent_v1_agent_proto_rawDesc = "" +
 	"\n" +
-	"\x1cunblink/agent/v1/agent.proto\x12\x10unblink.agent.v1\"\x13\n" +
+	"\x1cunblink/agent/v1/agent.proto\x12\x10unblink.agent.v1\x1a\x1cgoogle/protobuf/struct.proto\"\x13\n" +
 	"\x11ListAgentsRequest\"E\n" +
 	"\x12ListAgentsResponse\x12/\n" +
 	"\x06agents\x18\x01 \x03(\v2\x17.unblink.agent.v1.AgentR\x06agents\"\x94\x01\n" +
@@ -726,14 +1069,41 @@ const file_unblink_agent_v1_agent_proto_rawDesc = "" +
 	"\n" +
 	"created_at\x18\x06 \x01(\x03R\tcreatedAt\x12\x1d\n" +
 	"\n" +
-	"updated_at\x18\a \x01(\x03R\tupdatedAt2\xce\x03\n" +
+	"updated_at\x18\a \x01(\x03R\tupdatedAt\"\xf6\x01\n" +
+	"\n" +
+	"AgentEvent\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x12\x19\n" +
+	"\bagent_id\x18\x02 \x01(\tR\aagentId\x12\x1d\n" +
+	"\n" +
+	"agent_name\x18\x03 \x01(\tR\tagentName\x12\x1d\n" +
+	"\n" +
+	"service_id\x18\x04 \x01(\tR\tserviceId\x12+\n" +
+	"\x04data\x18\x05 \x01(\v2\x17.google.protobuf.StructR\x04data\x123\n" +
+	"\bmetadata\x18\x06 \x01(\v2\x17.google.protobuf.StructR\bmetadata\x12\x1d\n" +
+	"\n" +
+	"created_at\x18\a \x01(\x03R\tcreatedAt\"#\n" +
+	"!StreamClientRealtimeEventsRequest\"T\n" +
+	"\x13ClientRealtimeEvent\x124\n" +
+	"\x05agent\x18\x01 \x01(\v2\x1c.unblink.agent.v1.AgentEventH\x00R\x05agentB\a\n" +
+	"\x05event\"a\n" +
+	"\"StreamClientRealtimeEventsResponse\x12;\n" +
+	"\x05event\x18\x01 \x01(\v2%.unblink.agent.v1.ClientRealtimeEventR\x05event\"h\n" +
+	"\x16ListAgentEventsRequest\x12\x19\n" +
+	"\bagent_id\x18\x01 \x01(\tR\aagentId\x12\x1d\n" +
+	"\n" +
+	"service_id\x18\x02 \x01(\tR\tserviceId\x12\x14\n" +
+	"\x05limit\x18\x03 \x01(\x05R\x05limit\"O\n" +
+	"\x17ListAgentEventsResponse\x124\n" +
+	"\x06events\x18\x01 \x03(\v2\x1c.unblink.agent.v1.AgentEventR\x06events2\xc2\x05\n" +
 	"\fAgentService\x12W\n" +
 	"\n" +
 	"ListAgents\x12#.unblink.agent.v1.ListAgentsRequest\x1a$.unblink.agent.v1.ListAgentsResponse\x12Z\n" +
 	"\vCreateAgent\x12$.unblink.agent.v1.CreateAgentRequest\x1a%.unblink.agent.v1.CreateAgentResponse\x12Q\n" +
 	"\bGetAgent\x12!.unblink.agent.v1.GetAgentRequest\x1a\".unblink.agent.v1.GetAgentResponse\x12Z\n" +
 	"\vUpdateAgent\x12$.unblink.agent.v1.UpdateAgentRequest\x1a%.unblink.agent.v1.UpdateAgentResponse\x12Z\n" +
-	"\vDeleteAgent\x12$.unblink.agent.v1.DeleteAgentRequest\x1a%.unblink.agent.v1.DeleteAgentResponseB?Z=github.com/unblink/unblink/relay/gen/unblink/agent/v1;agentv1b\x06proto3"
+	"\vDeleteAgent\x12$.unblink.agent.v1.DeleteAgentRequest\x1a%.unblink.agent.v1.DeleteAgentResponse\x12\x89\x01\n" +
+	"\x1aStreamClientRealtimeEvents\x123.unblink.agent.v1.StreamClientRealtimeEventsRequest\x1a4.unblink.agent.v1.StreamClientRealtimeEventsResponse0\x01\x12f\n" +
+	"\x0fListAgentEvents\x12(.unblink.agent.v1.ListAgentEventsRequest\x1a).unblink.agent.v1.ListAgentEventsResponseB?Z=github.com/unblink/unblink/relay/gen/unblink/agent/v1;agentv1b\x06proto3"
 
 var (
 	file_unblink_agent_v1_agent_proto_rawDescOnce sync.Once
@@ -747,20 +1117,27 @@ func file_unblink_agent_v1_agent_proto_rawDescGZIP() []byte {
 	return file_unblink_agent_v1_agent_proto_rawDescData
 }
 
-var file_unblink_agent_v1_agent_proto_msgTypes = make([]protoimpl.MessageInfo, 12)
+var file_unblink_agent_v1_agent_proto_msgTypes = make([]protoimpl.MessageInfo, 18)
 var file_unblink_agent_v1_agent_proto_goTypes = []any{
-	(*ListAgentsRequest)(nil),   // 0: unblink.agent.v1.ListAgentsRequest
-	(*ListAgentsResponse)(nil),  // 1: unblink.agent.v1.ListAgentsResponse
-	(*CreateAgentRequest)(nil),  // 2: unblink.agent.v1.CreateAgentRequest
-	(*CreateAgentResponse)(nil), // 3: unblink.agent.v1.CreateAgentResponse
-	(*GetAgentRequest)(nil),     // 4: unblink.agent.v1.GetAgentRequest
-	(*GetAgentResponse)(nil),    // 5: unblink.agent.v1.GetAgentResponse
-	(*UpdateAgentRequest)(nil),  // 6: unblink.agent.v1.UpdateAgentRequest
-	(*UpdateAgentResponse)(nil), // 7: unblink.agent.v1.UpdateAgentResponse
-	(*DeleteAgentRequest)(nil),  // 8: unblink.agent.v1.DeleteAgentRequest
-	(*DeleteAgentResponse)(nil), // 9: unblink.agent.v1.DeleteAgentResponse
-	(*AgentConfig)(nil),         // 10: unblink.agent.v1.AgentConfig
-	(*Agent)(nil),               // 11: unblink.agent.v1.Agent
+	(*ListAgentsRequest)(nil),                  // 0: unblink.agent.v1.ListAgentsRequest
+	(*ListAgentsResponse)(nil),                 // 1: unblink.agent.v1.ListAgentsResponse
+	(*CreateAgentRequest)(nil),                 // 2: unblink.agent.v1.CreateAgentRequest
+	(*CreateAgentResponse)(nil),                // 3: unblink.agent.v1.CreateAgentResponse
+	(*GetAgentRequest)(nil),                    // 4: unblink.agent.v1.GetAgentRequest
+	(*GetAgentResponse)(nil),                   // 5: unblink.agent.v1.GetAgentResponse
+	(*UpdateAgentRequest)(nil),                 // 6: unblink.agent.v1.UpdateAgentRequest
+	(*UpdateAgentResponse)(nil),                // 7: unblink.agent.v1.UpdateAgentResponse
+	(*DeleteAgentRequest)(nil),                 // 8: unblink.agent.v1.DeleteAgentRequest
+	(*DeleteAgentResponse)(nil),                // 9: unblink.agent.v1.DeleteAgentResponse
+	(*AgentConfig)(nil),                        // 10: unblink.agent.v1.AgentConfig
+	(*Agent)(nil),                              // 11: unblink.agent.v1.Agent
+	(*AgentEvent)(nil),                         // 12: unblink.agent.v1.AgentEvent
+	(*StreamClientRealtimeEventsRequest)(nil),  // 13: unblink.agent.v1.StreamClientRealtimeEventsRequest
+	(*ClientRealtimeEvent)(nil),                // 14: unblink.agent.v1.ClientRealtimeEvent
+	(*StreamClientRealtimeEventsResponse)(nil), // 15: unblink.agent.v1.StreamClientRealtimeEventsResponse
+	(*ListAgentEventsRequest)(nil),             // 16: unblink.agent.v1.ListAgentEventsRequest
+	(*ListAgentEventsResponse)(nil),            // 17: unblink.agent.v1.ListAgentEventsResponse
+	(*structpb.Struct)(nil),                    // 18: google.protobuf.Struct
 }
 var file_unblink_agent_v1_agent_proto_depIdxs = []int32{
 	11, // 0: unblink.agent.v1.ListAgentsResponse.agents:type_name -> unblink.agent.v1.Agent
@@ -770,21 +1147,30 @@ var file_unblink_agent_v1_agent_proto_depIdxs = []int32{
 	10, // 4: unblink.agent.v1.UpdateAgentRequest.config:type_name -> unblink.agent.v1.AgentConfig
 	11, // 5: unblink.agent.v1.UpdateAgentResponse.agent:type_name -> unblink.agent.v1.Agent
 	10, // 6: unblink.agent.v1.Agent.config:type_name -> unblink.agent.v1.AgentConfig
-	0,  // 7: unblink.agent.v1.AgentService.ListAgents:input_type -> unblink.agent.v1.ListAgentsRequest
-	2,  // 8: unblink.agent.v1.AgentService.CreateAgent:input_type -> unblink.agent.v1.CreateAgentRequest
-	4,  // 9: unblink.agent.v1.AgentService.GetAgent:input_type -> unblink.agent.v1.GetAgentRequest
-	6,  // 10: unblink.agent.v1.AgentService.UpdateAgent:input_type -> unblink.agent.v1.UpdateAgentRequest
-	8,  // 11: unblink.agent.v1.AgentService.DeleteAgent:input_type -> unblink.agent.v1.DeleteAgentRequest
-	1,  // 12: unblink.agent.v1.AgentService.ListAgents:output_type -> unblink.agent.v1.ListAgentsResponse
-	3,  // 13: unblink.agent.v1.AgentService.CreateAgent:output_type -> unblink.agent.v1.CreateAgentResponse
-	5,  // 14: unblink.agent.v1.AgentService.GetAgent:output_type -> unblink.agent.v1.GetAgentResponse
-	7,  // 15: unblink.agent.v1.AgentService.UpdateAgent:output_type -> unblink.agent.v1.UpdateAgentResponse
-	9,  // 16: unblink.agent.v1.AgentService.DeleteAgent:output_type -> unblink.agent.v1.DeleteAgentResponse
-	12, // [12:17] is the sub-list for method output_type
-	7,  // [7:12] is the sub-list for method input_type
-	7,  // [7:7] is the sub-list for extension type_name
-	7,  // [7:7] is the sub-list for extension extendee
-	0,  // [0:7] is the sub-list for field type_name
+	18, // 7: unblink.agent.v1.AgentEvent.data:type_name -> google.protobuf.Struct
+	18, // 8: unblink.agent.v1.AgentEvent.metadata:type_name -> google.protobuf.Struct
+	12, // 9: unblink.agent.v1.ClientRealtimeEvent.agent:type_name -> unblink.agent.v1.AgentEvent
+	14, // 10: unblink.agent.v1.StreamClientRealtimeEventsResponse.event:type_name -> unblink.agent.v1.ClientRealtimeEvent
+	12, // 11: unblink.agent.v1.ListAgentEventsResponse.events:type_name -> unblink.agent.v1.AgentEvent
+	0,  // 12: unblink.agent.v1.AgentService.ListAgents:input_type -> unblink.agent.v1.ListAgentsRequest
+	2,  // 13: unblink.agent.v1.AgentService.CreateAgent:input_type -> unblink.agent.v1.CreateAgentRequest
+	4,  // 14: unblink.agent.v1.AgentService.GetAgent:input_type -> unblink.agent.v1.GetAgentRequest
+	6,  // 15: unblink.agent.v1.AgentService.UpdateAgent:input_type -> unblink.agent.v1.UpdateAgentRequest
+	8,  // 16: unblink.agent.v1.AgentService.DeleteAgent:input_type -> unblink.agent.v1.DeleteAgentRequest
+	13, // 17: unblink.agent.v1.AgentService.StreamClientRealtimeEvents:input_type -> unblink.agent.v1.StreamClientRealtimeEventsRequest
+	16, // 18: unblink.agent.v1.AgentService.ListAgentEvents:input_type -> unblink.agent.v1.ListAgentEventsRequest
+	1,  // 19: unblink.agent.v1.AgentService.ListAgents:output_type -> unblink.agent.v1.ListAgentsResponse
+	3,  // 20: unblink.agent.v1.AgentService.CreateAgent:output_type -> unblink.agent.v1.CreateAgentResponse
+	5,  // 21: unblink.agent.v1.AgentService.GetAgent:output_type -> unblink.agent.v1.GetAgentResponse
+	7,  // 22: unblink.agent.v1.AgentService.UpdateAgent:output_type -> unblink.agent.v1.UpdateAgentResponse
+	9,  // 23: unblink.agent.v1.AgentService.DeleteAgent:output_type -> unblink.agent.v1.DeleteAgentResponse
+	15, // 24: unblink.agent.v1.AgentService.StreamClientRealtimeEvents:output_type -> unblink.agent.v1.StreamClientRealtimeEventsResponse
+	17, // 25: unblink.agent.v1.AgentService.ListAgentEvents:output_type -> unblink.agent.v1.ListAgentEventsResponse
+	19, // [19:26] is the sub-list for method output_type
+	12, // [12:19] is the sub-list for method input_type
+	12, // [12:12] is the sub-list for extension type_name
+	12, // [12:12] is the sub-list for extension extendee
+	0,  // [0:12] is the sub-list for field type_name
 }
 
 func init() { file_unblink_agent_v1_agent_proto_init() }
@@ -792,13 +1178,16 @@ func file_unblink_agent_v1_agent_proto_init() {
 	if File_unblink_agent_v1_agent_proto != nil {
 		return
 	}
+	file_unblink_agent_v1_agent_proto_msgTypes[14].OneofWrappers = []any{
+		(*ClientRealtimeEvent_Agent)(nil),
+	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_unblink_agent_v1_agent_proto_rawDesc), len(file_unblink_agent_v1_agent_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   12,
+			NumMessages:   18,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

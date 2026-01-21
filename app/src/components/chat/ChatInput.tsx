@@ -1,6 +1,6 @@
 import { FiArrowUp, FiSquare } from "solid-icons/fi";
 import { onMount } from "solid-js";
-import { inputValue, isLoading, messages, setInputValue } from "../../signals/chatSignals";
+import { inputValue, isLoading, setInputValue } from "../../signals/chatSignals";
 import ChatControls from "./ChatControls";
 import { useChat } from "../../hooks/useChat";
 

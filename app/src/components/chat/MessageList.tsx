@@ -1,5 +1,6 @@
 import { isLoading, uiBlocks, chatInputState } from "../../signals/chatSignals";
 import UIBlockList from "./UIBlockList";
+import LoadingDots from "./LoadingDots";
 import { useScroll } from "../../hooks/useScroll";
 
 export default function MessageList() {
@@ -22,11 +23,7 @@ export default function MessageList() {
       />
       {showLoadingDots() && (
         <div class="w-full max-w-4xl mx-auto px-2 py-4">
-          <div class="flex gap-1">
-            <div class="w-2 h-2 bg-neu-500 rounded-full animate-pulse"></div>
-            <div class="w-2 h-2 bg-neu-500 rounded-full animate-pulse" style="animation-delay: 0.2s"></div>
-            <div class="w-2 h-2 bg-neu-500 rounded-full animate-pulse" style="animation-delay: 0.4s"></div>
-          </div>
+          <LoadingDots />
         </div>
       )}
     </div>

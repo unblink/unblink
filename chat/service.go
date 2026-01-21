@@ -544,7 +544,7 @@ func (s *Service) saveUIBlockWithID(id, conversationID, role string, data interf
 		// Update existing block
 		blockID = id
 		createdAt = time.Now()
-		query := `UPDATE ui_blocks SET data_json = ?, created_at = ? WHERE id = ?`
+		query := `UPDATE ui_blocks SET data = ?, created_at = ? WHERE id = ?`
 		_, err = s.db.Exec(query, dataJSON, createdAt, id)
 		if err != nil {
 			return nil, fmt.Errorf("failed to update UI block: %w", err)
@@ -553,7 +553,7 @@ func (s *Service) saveUIBlockWithID(id, conversationID, role string, data interf
 		// Create new block
 		blockID = uuid.New().String()
 		createdAt = time.Now()
-		query := `INSERT INTO ui_blocks (id, conversation_id, role, data_json, created_at) VALUES (?, ?, ?, ?, ?)`
+		query := `INSERT INTO ui_blocks (id, conversation_id, role, data, created_at) VALUES (?, ?, ?, ?, ?)`
 		_, err = s.db.Exec(query, blockID, conversationID, role, dataJSON, createdAt)
 		if err != nil {
 			return nil, fmt.Errorf("failed to save UI block: %w", err)
@@ -564,7 +564,7 @@ func (s *Service) saveUIBlockWithID(id, conversationID, role string, data interf
 		Id:           blockID,
 		ConversationId: conversationID,
 		Role:         role,
-		DataJson:     string(dataJSON),
+		Data:         string(dataJSON),
 		CreatedAt:    timestamppb.New(createdAt),
 	}, nil
 }
@@ -633,7 +633,7 @@ func (s *Service) getConversationHistory(conversationID string) ([]openai.ChatCo
 }
 
 func (s *Service) ListUIBlocks(ctx context.Context, req *connect.Request[chatv1.ListUIBlocksRequest]) (*connect.Response[chatv1.ListUIBlocksResponse], error) {
-	query := `SELECT id, conversation_id, role, data_json, created_at FROM ui_blocks WHERE conversation_id = ? ORDER BY created_at ASC`
+	query := `SELECT id, conversation_id, role, data, created_at FROM ui_blocks WHERE conversation_id = ? ORDER BY created_at ASC`
 	rows, err := s.db.Query(query, req.Msg.ConversationId)
 	if err != nil {
 		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("failed to list UI blocks: %w", err))
@@ -651,7 +651,7 @@ func (s *Service) ListUIBlocks(ctx context.Context, req *connect.Request[chatv1.
 			Id:             id,
 			ConversationId: conversationID,
 			Role:           role,
-			DataJson:       dataJSON,
+			Data:           dataJSON,
 			CreatedAt:      timestamppb.New(createdAt),
 		})
 	}

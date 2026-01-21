@@ -14,9 +14,11 @@ patch:
 generate: generate-ts generate-go
 
 generate-ts:
+	rm -rf app/gen/unblink
 	cd app && npx buf generate ../code-gen --template ../code-gen/buf.gen.ts.yaml
 
 generate-go:
+	rm -rf code-gen/gen/unblink
 	cd relay && npx buf generate ../code-gen --template ../code-gen/buf.gen.go.yaml
 
 database-delete:

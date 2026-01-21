@@ -608,7 +608,7 @@ func (m *AutoStreamManager) OnNodeDisconnected(nodeID string) {
 			streamsToClose = append(streamsToClose, serviceID)
 		}
 	}
-	m.streamsMu.Unlock()
+	m.streamsMu.RUnlock()
 
 	for _, serviceID := range streamsToClose {
 		m.removeServiceStream(serviceID)

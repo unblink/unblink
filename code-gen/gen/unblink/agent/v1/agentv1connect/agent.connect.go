@@ -46,6 +46,12 @@ const (
 	// AgentServiceDeleteAgentProcedure is the fully-qualified name of the AgentService's DeleteAgent
 	// RPC.
 	AgentServiceDeleteAgentProcedure = "/unblink.agent.v1.AgentService/DeleteAgent"
+	// AgentServiceStreamClientRealtimeEventsProcedure is the fully-qualified name of the AgentService's
+	// StreamClientRealtimeEvents RPC.
+	AgentServiceStreamClientRealtimeEventsProcedure = "/unblink.agent.v1.AgentService/StreamClientRealtimeEvents"
+	// AgentServiceListAgentEventsProcedure is the fully-qualified name of the AgentService's
+	// ListAgentEvents RPC.
+	AgentServiceListAgentEventsProcedure = "/unblink.agent.v1.AgentService/ListAgentEvents"
 )
 
 // AgentServiceClient is a client for the unblink.agent.v1.AgentService service.
@@ -55,6 +61,10 @@ type AgentServiceClient interface {
 	GetAgent(context.Context, *connect.Request[v1.GetAgentRequest]) (*connect.Response[v1.GetAgentResponse], error)
 	UpdateAgent(context.Context, *connect.Request[v1.UpdateAgentRequest]) (*connect.Response[v1.UpdateAgentResponse], error)
 	DeleteAgent(context.Context, *connect.Request[v1.DeleteAgentRequest]) (*connect.Response[v1.DeleteAgentResponse], error)
+	// Server-streaming RPC for all client realtime events
+	StreamClientRealtimeEvents(context.Context, *connect.Request[v1.StreamClientRealtimeEventsRequest]) (*connect.ServerStreamForClient[v1.StreamClientRealtimeEventsResponse], error)
+	// Unary RPC for historical agent events
+	ListAgentEvents(context.Context, *connect.Request[v1.ListAgentEventsRequest]) (*connect.Response[v1.ListAgentEventsResponse], error)
 }
 
 // NewAgentServiceClient constructs a client for the unblink.agent.v1.AgentService service. By
@@ -98,16 +108,30 @@ func NewAgentServiceClient(httpClient connect.HTTPClient, baseURL string, opts .
 			connect.WithSchema(agentServiceMethods.ByName("DeleteAgent")),
 			connect.WithClientOptions(opts...),
 		),
+		streamClientRealtimeEvents: connect.NewClient[v1.StreamClientRealtimeEventsRequest, v1.StreamClientRealtimeEventsResponse](
+			httpClient,
+			baseURL+AgentServiceStreamClientRealtimeEventsProcedure,
+			connect.WithSchema(agentServiceMethods.ByName("StreamClientRealtimeEvents")),
+			connect.WithClientOptions(opts...),
+		),
+		listAgentEvents: connect.NewClient[v1.ListAgentEventsRequest, v1.ListAgentEventsResponse](
+			httpClient,
+			baseURL+AgentServiceListAgentEventsProcedure,
+			connect.WithSchema(agentServiceMethods.ByName("ListAgentEvents")),
+			connect.WithClientOptions(opts...),
+		),
 	}
 }
 
 // agentServiceClient implements AgentServiceClient.
 type agentServiceClient struct {
-	listAgents  *connect.Client[v1.ListAgentsRequest, v1.ListAgentsResponse]
-	createAgent *connect.Client[v1.CreateAgentRequest, v1.CreateAgentResponse]
-	getAgent    *connect.Client[v1.GetAgentRequest, v1.GetAgentResponse]
-	updateAgent *connect.Client[v1.UpdateAgentRequest, v1.UpdateAgentResponse]
-	deleteAgent *connect.Client[v1.DeleteAgentRequest, v1.DeleteAgentResponse]
+	listAgents                 *connect.Client[v1.ListAgentsRequest, v1.ListAgentsResponse]
+	createAgent                *connect.Client[v1.CreateAgentRequest, v1.CreateAgentResponse]
+	getAgent                   *connect.Client[v1.GetAgentRequest, v1.GetAgentResponse]
+	updateAgent                *connect.Client[v1.UpdateAgentRequest, v1.UpdateAgentResponse]
+	deleteAgent                *connect.Client[v1.DeleteAgentRequest, v1.DeleteAgentResponse]
+	streamClientRealtimeEvents *connect.Client[v1.StreamClientRealtimeEventsRequest, v1.StreamClientRealtimeEventsResponse]
+	listAgentEvents            *connect.Client[v1.ListAgentEventsRequest, v1.ListAgentEventsResponse]
 }
 
 // ListAgents calls unblink.agent.v1.AgentService.ListAgents.
@@ -135,6 +159,16 @@ func (c *agentServiceClient) DeleteAgent(ctx context.Context, req *connect.Reque
 	return c.deleteAgent.CallUnary(ctx, req)
 }
 
+// StreamClientRealtimeEvents calls unblink.agent.v1.AgentService.StreamClientRealtimeEvents.
+func (c *agentServiceClient) StreamClientRealtimeEvents(ctx context.Context, req *connect.Request[v1.StreamClientRealtimeEventsRequest]) (*connect.ServerStreamForClient[v1.StreamClientRealtimeEventsResponse], error) {
+	return c.streamClientRealtimeEvents.CallServerStream(ctx, req)
+}
+
+// ListAgentEvents calls unblink.agent.v1.AgentService.ListAgentEvents.
+func (c *agentServiceClient) ListAgentEvents(ctx context.Context, req *connect.Request[v1.ListAgentEventsRequest]) (*connect.Response[v1.ListAgentEventsResponse], error) {
+	return c.listAgentEvents.CallUnary(ctx, req)
+}
+
 // AgentServiceHandler is an implementation of the unblink.agent.v1.AgentService service.
 type AgentServiceHandler interface {
 	ListAgents(context.Context, *connect.Request[v1.ListAgentsRequest]) (*connect.Response[v1.ListAgentsResponse], error)
@@ -142,6 +176,10 @@ type AgentServiceHandler interface {
 	GetAgent(context.Context, *connect.Request[v1.GetAgentRequest]) (*connect.Response[v1.GetAgentResponse], error)
 	UpdateAgent(context.Context, *connect.Request[v1.UpdateAgentRequest]) (*connect.Response[v1.UpdateAgentResponse], error)
 	DeleteAgent(context.Context, *connect.Request[v1.DeleteAgentRequest]) (*connect.Response[v1.DeleteAgentResponse], error)
+	// Server-streaming RPC for all client realtime events
+	StreamClientRealtimeEvents(context.Context, *connect.Request[v1.StreamClientRealtimeEventsRequest], *connect.ServerStream[v1.StreamClientRealtimeEventsResponse]) error
+	// Unary RPC for historical agent events
+	ListAgentEvents(context.Context, *connect.Request[v1.ListAgentEventsRequest]) (*connect.Response[v1.ListAgentEventsResponse], error)
 }
 
 // NewAgentServiceHandler builds an HTTP handler from the service implementation. It returns the
@@ -181,6 +219,18 @@ func NewAgentServiceHandler(svc AgentServiceHandler, opts ...connect.HandlerOpti
 		connect.WithSchema(agentServiceMethods.ByName("DeleteAgent")),
 		connect.WithHandlerOptions(opts...),
 	)
+	agentServiceStreamClientRealtimeEventsHandler := connect.NewServerStreamHandler(
+		AgentServiceStreamClientRealtimeEventsProcedure,
+		svc.StreamClientRealtimeEvents,
+		connect.WithSchema(agentServiceMethods.ByName("StreamClientRealtimeEvents")),
+		connect.WithHandlerOptions(opts...),
+	)
+	agentServiceListAgentEventsHandler := connect.NewUnaryHandler(
+		AgentServiceListAgentEventsProcedure,
+		svc.ListAgentEvents,
+		connect.WithSchema(agentServiceMethods.ByName("ListAgentEvents")),
+		connect.WithHandlerOptions(opts...),
+	)
 	return "/unblink.agent.v1.AgentService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case AgentServiceListAgentsProcedure:
@@ -193,6 +243,10 @@ func NewAgentServiceHandler(svc AgentServiceHandler, opts ...connect.HandlerOpti
 			agentServiceUpdateAgentHandler.ServeHTTP(w, r)
 		case AgentServiceDeleteAgentProcedure:
 			agentServiceDeleteAgentHandler.ServeHTTP(w, r)
+		case AgentServiceStreamClientRealtimeEventsProcedure:
+			agentServiceStreamClientRealtimeEventsHandler.ServeHTTP(w, r)
+		case AgentServiceListAgentEventsProcedure:
+			agentServiceListAgentEventsHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -220,4 +274,12 @@ func (UnimplementedAgentServiceHandler) UpdateAgent(context.Context, *connect.Re
 
 func (UnimplementedAgentServiceHandler) DeleteAgent(context.Context, *connect.Request[v1.DeleteAgentRequest]) (*connect.Response[v1.DeleteAgentResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("unblink.agent.v1.AgentService.DeleteAgent is not implemented"))
+}
+
+func (UnimplementedAgentServiceHandler) StreamClientRealtimeEvents(context.Context, *connect.Request[v1.StreamClientRealtimeEventsRequest], *connect.ServerStream[v1.StreamClientRealtimeEventsResponse]) error {
+	return connect.NewError(connect.CodeUnimplemented, errors.New("unblink.agent.v1.AgentService.StreamClientRealtimeEvents is not implemented"))
+}
+
+func (UnimplementedAgentServiceHandler) ListAgentEvents(context.Context, *connect.Request[v1.ListAgentEventsRequest]) (*connect.Response[v1.ListAgentEventsResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("unblink.agent.v1.AgentService.ListAgentEvents is not implemented"))
 }
