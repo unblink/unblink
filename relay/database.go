@@ -25,10 +25,19 @@ func NewDatabase(dbPath string) (*Database, error) {
 		return nil, err
 	}
 
-	db, err := sql.Open("turso", dbPath)
+	// Open with SQLite pragmas for better concurrency
+	// - _journal_mode=WAL: Write-Ahead Logging allows concurrent reads and writes
+	// - _busy_timeout=5000: Wait up to 5 seconds when database is locked
+	// - _synchronous=NORMAL: Faster writes while still being safe
+	db, err := sql.Open("turso", dbPath+"?_journal_mode=WAL&_busy_timeout=5000&_synchronous=NORMAL")
 	if err != nil {
 		return nil, err
 	}
+
+	// Configure connection pool for SQLite (single writer, multiple readers)
+	db.SetMaxOpenConns(1)     // SQLite: only one writer at a time
+	db.SetMaxIdleConns(1)     // Keep one connection ready
+	db.SetConnMaxLifetime(0)  // Connections never expire
 
 	// Test connection
 	if err := db.Ping(); err != nil {
