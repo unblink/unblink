@@ -18,8 +18,8 @@ type Service struct {
 	Description string    `json:"description"`
 	NodeID      string    `json:"node_id"`
 	ServiceURL  string    `json:"service_url"` // Single URL field (e.g., rtsp://user:pass@host:port/path)
-	Tags        string    `json:"tags"`   // JSON array of tags
-	Status      string    `json:"status"` // active, inactive, maintenance
+	Tags        string    `json:"tags"`        // JSON array of tags
+	Status      string    `json:"status"`      // active, inactive, maintenance
 	OwnerID     string    `json:"owner_id"`
 	CreatedAt   time.Time `json:"created_at"`
 	UpdatedAt   time.Time `json:"updated_at"`
@@ -68,6 +68,7 @@ func (s *Service) AuthPassword() string {
 
 // CreateServiceRequest is the request to create a new service
 type CreateServiceRequest struct {
+	ID          string   `json:"id,omitempty"`
 	Name        string   `json:"name"`
 	Description string   `json:"description"`
 	NodeID      string   `json:"node_id"`
@@ -102,7 +103,10 @@ func (s *table_service) CreateService(req *CreateServiceRequest, ownerID string)
 		return nil, fmt.Errorf("invalid service URL: %w", err)
 	}
 
-	serviceID := uuid.New().String()
+	serviceID := req.ID
+	if serviceID == "" {
+		serviceID = uuid.New().String()
+	}
 	now := time.Now()
 
 	// Convert tags to JSON array string

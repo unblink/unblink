@@ -12,6 +12,7 @@ import (
 	configv1connect "github.com/unblink/unblink/relay/gen/unblink/config/v1/configv1connect"
 	nodev1connect "github.com/unblink/unblink/relay/gen/unblink/node/v1/nodev1connect"
 	servicev1connect "github.com/unblink/unblink/relay/gen/unblink/service/v1/servicev1connect"
+	storagev1connect "github.com/unblink/unblink/relay/gen/unblink/storage/v1/storagev1connect"
 	webrtcv1connect "github.com/unblink/unblink/relay/gen/unblink/webrtc/v1/webrtcv1connect"
 	"golang.org/x/net/http2"
 	"golang.org/x/net/http2/h2c"
@@ -90,6 +91,14 @@ func StartHTTPAPIServer(relay *Relay, addr string, cfg *Config) (*http.Server, e
 		mux.Handle(chatPath, chatHandler)
 		log.Printf("[HTTP] Mounted ChatService at %s", chatPath)
 	}
+
+	// Mount StorageService
+	storagePath, storageServiceHandler := storagev1connect.NewStorageServiceHandler(
+		NewStorageServiceServer(relay),
+		interceptors,
+	)
+	mux.Handle(storagePath, storageServiceHandler)
+	log.Printf("[HTTP] Mounted StorageService at %s", storagePath)
 
 	// Mount StorageHandler (HTTP handler for serving frames and videos)
 	storageHandler := NewStorageHandler(relay)

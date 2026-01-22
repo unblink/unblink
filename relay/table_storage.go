@@ -81,6 +81,7 @@ func (t *table_storage) GetStorage(id string) (*StorageDB, error) {
 }
 
 // ListStorageByService retrieves storage records for a service
+// If serviceID is empty, returns all storage records (optionally filtered by type)
 func (t *table_storage) ListStorageByService(serviceID string, storageType string, limit int) ([]*StorageDB, error) {
 	if limit <= 0 {
 		limit = 100
@@ -89,25 +90,38 @@ func (t *table_storage) ListStorageByService(serviceID string, storageType strin
 	var query string
 	var args []interface{}
 
-	if storageType != "" {
-		query = `
-			SELECT id, service_id, type, storage_path, timestamp, file_size, content_type, created_at, metadata
-			FROM storage
-			WHERE service_id = ? AND type = ?
-			ORDER BY timestamp DESC
-			LIMIT ?
-		`
-		args = []interface{}{serviceID, storageType, limit}
-	} else {
-		query = `
-			SELECT id, service_id, type, storage_path, timestamp, file_size, content_type, created_at, metadata
-			FROM storage
-			WHERE service_id = ?
-			ORDER BY timestamp DESC
-			LIMIT ?
-		`
-		args = []interface{}{serviceID, limit}
+	// Build WHERE clause conditions
+	whereConditions := []string{}
+	queryArgs := []interface{}{}
+
+	if serviceID != "" {
+		whereConditions = append(whereConditions, "service_id = ?")
+		queryArgs = append(queryArgs, serviceID)
 	}
+
+	if storageType != "" {
+		whereConditions = append(whereConditions, "type = ?")
+		queryArgs = append(queryArgs, storageType)
+	}
+
+	whereClause := ""
+	if len(whereConditions) > 0 {
+		whereClause = "WHERE " + fmt.Sprintf("%s", whereConditions[0])
+		for i := 1; i < len(whereConditions); i++ {
+			whereClause += " AND " + whereConditions[i]
+		}
+	}
+
+	queryArgs = append(queryArgs, limit)
+	args = queryArgs
+
+	query = `
+		SELECT id, service_id, type, storage_path, timestamp, file_size, content_type, created_at, metadata
+		FROM storage
+		` + whereClause + `
+		ORDER BY timestamp DESC
+		LIMIT ?
+	`
 
 	rows, err := t.db.Query(query, args...)
 	if err != nil {
@@ -142,6 +156,30 @@ func (t *table_storage) ListStorageByService(serviceID string, storageType strin
 	}
 
 	return items, nil
+}
+
+// UpdateStorage updates a storage record's file_size and metadata
+func (t *table_storage) UpdateStorage(id string, fileSize int64, metadata map[string]interface{}) error {
+	var metadataJSON sql.NullString
+	if metadata != nil {
+		metadataBytes, err := json.Marshal(metadata)
+		if err != nil {
+			return fmt.Errorf("failed to marshal metadata: %w", err)
+		}
+		metadataJSON = sql.NullString{String: string(metadataBytes), Valid: true}
+	}
+
+	_, err := t.db.Exec(`
+		UPDATE storage
+		SET file_size = ?, metadata = ?
+		WHERE id = ?
+	`, fileSize, metadataJSON, id)
+
+	if err != nil {
+		return fmt.Errorf("failed to update storage: %w", err)
+	}
+
+	return nil
 }
 
 // DeleteStorage deletes a storage record by ID

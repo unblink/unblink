@@ -1,0 +1,5 @@
+{
+  "relay_address": "ws://localhost:9020",
+  "node_id": "demo-node-0000",
+  "token": "demo-token-0000"
+}

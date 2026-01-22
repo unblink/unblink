@@ -40,37 +40,51 @@ func NewAgentTable(db *Database) *table_agent {
 	return &table_agent{db: db}
 }
 
+// CreateAgentRequest is the request to create a new agent
+type CreateAgentRequest struct {
+	ID         string      `json:"id,omitempty"`
+	Name       string      `json:"name"`
+	Type       string      `json:"type"`
+	Config     AgentConfig `json:"config"`
+	ServiceIDs []string    `json:"service_ids"`
+}
+
 // CreateAgent creates a new agent
-func (t *table_agent) CreateAgent(name, agentType string, config AgentConfig, serviceIDs []string, userID string) (*Agent, error) {
+func (t *table_agent) CreateAgent(req CreateAgentRequest, userID string) (*Agent, error) {
 	// Validation
-	if name == "" {
+	if req.Name == "" {
 		return nil, fmt.Errorf("agent name is required")
 	}
-	if config.Instruction == "" {
+	if req.Config.Instruction == "" {
 		return nil, fmt.Errorf("agent instruction is required")
 	}
-	if len(name) > 255 {
+	if len(req.Name) > 255 {
 		return nil, fmt.Errorf("name too long (max 255 characters)")
 	}
-	if len(config.Instruction) > 5000 {
+	if len(req.Config.Instruction) > 5000 {
 		return nil, fmt.Errorf("instruction too long (max 5000 characters)")
 	}
 
 	// Default type if not provided
+	agentType := req.Type
 	if agentType == "" {
 		agentType = "openai_compat"
 	}
 
-	agentID := uuid.New().String()
+	agentID := req.ID
+	if agentID == "" {
+		agentID = uuid.New().String()
+	}
 	now := time.Now()
 
 	// Prepare config as JSON
-	configJSON, err := json.Marshal(config)
+	configJSON, err := json.Marshal(req.Config)
 	if err != nil {
 		return nil, fmt.Errorf("failed to marshal config: %w", err)
 	}
 
 	// Prepare service_ids as JSON
+	serviceIDs := req.ServiceIDs
 	if serviceIDs == nil {
 		serviceIDs = []string{}
 	}
@@ -83,7 +97,7 @@ func (t *table_agent) CreateAgent(name, agentType string, config AgentConfig, se
 	_, err = t.db.Exec(`
 		INSERT INTO agents (id, name, type, config, service_ids, user_id, created_at, updated_at)
 		VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-	`, agentID, name, agentType, string(configJSON), string(serviceIDsJSON), userID, now, now)
+	`, agentID, req.Name, agentType, string(configJSON), string(serviceIDsJSON), userID, now, now)
 
 	if err != nil {
 		return nil, fmt.Errorf("failed to create agent: %w", err)

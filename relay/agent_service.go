@@ -91,7 +91,12 @@ func (s *AgentService) CreateAgent(
 	}
 
 	// Create agent
-	agent, err := s.relay.AgentTable.CreateAgent(req.Msg.Name, agentType, config, req.Msg.ServiceIds, userID)
+	agent, err := s.relay.AgentTable.CreateAgent(CreateAgentRequest{
+		Name:       req.Msg.Name,
+		Type:       agentType,
+		Config:     config,
+		ServiceIDs: req.Msg.ServiceIds,
+	}, userID)
 	if err != nil {
 		log.Printf("[AgentService] Failed to create agent: %v", err)
 		return nil, connect.NewError(connect.CodeInternal, err)

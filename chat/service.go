@@ -295,14 +295,6 @@ func (s *Service) SendMessage(ctx context.Context, req *connect.Request[chatv1.S
 				iteration++
 				chunk := streamResp.Current()
 
-				// Simple logging without JSON marshaling
-				toolCallCount := 0
-				if len(chunk.Choices) > 0 && chunk.Choices[0].Delta.ToolCalls != nil {
-					toolCallCount = len(chunk.Choices[0].Delta.ToolCalls)
-				}
-				log.Printf("[ChatService] Chunk %d: choices=%d, tool_calls=%d, content_len=%d",
-					iteration, len(chunk.Choices), toolCallCount, len(chunk.Choices[0].Delta.Content))
-
 				acc.AddChunk(chunk)
 
 				// Check for content deltas
@@ -442,10 +434,20 @@ func (s *Service) SendMessage(ctx context.Context, req *connect.Request[chatv1.S
 			// Use OpenAI's tool call ID as stable ID for replacement across state changes
 			toolBlockID := toolCall.ID
 
+			// Get the tool to extract display message
+			tool, ok := s.tools.Get(toolCall.Name)
+			var displayMessage string
+			if ok {
+				displayMessage = GetDisplayMessage(tool, toolCall.Arguments)
+			} else {
+				displayMessage = fmt.Sprintf("Running %s", toolCall.Name)
+			}
+
 			// Send and save UI block for tool invoked state (creates with toolBlockID)
 			toolInvokedBlock, err := s.saveUIBlockWithID(toolBlockID, conversationID, "tool", map[string]interface{}{
-				"toolName": toolCall.Name,
-				"state":    "invoked",
+				"toolName":       toolCall.Name,
+				"state":          "invoked",
+				"displayMessage": displayMessage,
 			})
 			if err != nil {
 				log.Printf("[ChatService] Failed to save tool invoked UI block: %v", err)
@@ -464,9 +466,10 @@ func (s *Service) SendMessage(ctx context.Context, req *connect.Request[chatv1.S
 
 			// Send and save UI block for tool completed state (updates same toolBlockID)
 			toolCompletedBlock, err := s.saveUIBlockWithID(toolBlockID, conversationID, "tool", map[string]interface{}{
-				"toolName": toolCall.Name,
-				"state":    "completed",
-				"content":  result,
+				"toolName":       toolCall.Name,
+				"state":          "completed",
+				"displayMessage": displayMessage,
+				"content":        result,
 			})
 			if err != nil {
 				log.Printf("[ChatService] Failed to save tool completed UI block: %v", err)
@@ -561,11 +564,11 @@ func (s *Service) saveUIBlockWithID(id, conversationID, role string, data interf
 	}
 
 	return &chatv1.UIBlock{
-		Id:           blockID,
+		Id:             blockID,
 		ConversationId: conversationID,
-		Role:         role,
-		Data:         string(dataJSON),
-		CreatedAt:    timestamppb.New(createdAt),
+		Role:           role,
+		Data:           string(dataJSON),
+		CreatedAt:      timestamppb.New(createdAt),
 	}, nil
 }
 

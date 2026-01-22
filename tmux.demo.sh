@@ -7,8 +7,9 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/tmux.lib.sh"
 
 # Configuration
-SESSION_NAME="unblink-dev"
+SESSION_NAME="unblink-demo"
 PROJECT_DIR="$(tmux_get_project_dir)"
+NODE_CONFIG="node.demo.json"
 
 # Main script
 if ! tmux has-session -t "=$SESSION_NAME" 2>/dev/null; then
@@ -21,10 +22,10 @@ if ! tmux has-session -t "=$SESSION_NAME" 2>/dev/null; then
   tmux_configure_session "$SESSION_NAME"
 
   # Create all windows using the same function
-  tmux_create_window "$SESSION_NAME" "relay" "$PROJECT_DIR/relay" "go run ../cmd/relay/main.go"
+  tmux_create_window "$SESSION_NAME" "relay" "$PROJECT_DIR/relay" "RELAY_ENV=.env.demo go run ../cmd/relay/main.go"
   tmux_create_window "$SESSION_NAME" "app" "$PROJECT_DIR/app" "bun dev"
-  tmux_create_window "$SESSION_NAME" "node" "$PROJECT_DIR" "sleep 8 && go run ./cmd/node/main.go"
-  tmux_create_window "$SESSION_NAME" "demo" "$PROJECT_DIR" "sleep 8 && bash ./start_demo_streams.sh"
+  tmux_create_window "$SESSION_NAME" "node" "$PROJECT_DIR" "sleep 8 && go run ./cmd/node/main.go -config $NODE_CONFIG"
+  tmux_create_window "$SESSION_NAME" "demo" "$PROJECT_DIR" "sleep 10 && bash ./start_demo_streams.sh"
 
   # Attach to relay window
   tmux_session_attach "$SESSION_NAME" "relay"

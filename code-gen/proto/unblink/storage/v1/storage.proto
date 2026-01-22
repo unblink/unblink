@@ -1,0 +1,39 @@
+syntax = "proto3";
+
+package unblink.storage.v1;
+
+option go_package = "github.com/unblink/unblink/relay/gen/unblink/storage/v1;storagev1";
+
+message ListStorageRequest {
+  string service_id = 1;  // Optional: filter by service
+  string type = 2;        // Optional: filter by type ("video", "frame")
+  int32 limit = 3;        // Max results (default: 100, max: 500)
+}
+
+message ListStorageResponse {
+  repeated Storage items = 1;
+}
+
+message GetStorageRequest {
+  string id = 1;
+}
+
+message GetStorageResponse {
+  Storage storage = 1;
+}
+
+message Storage {
+  string id = 1;
+  string service_id = 2;
+  string type = 3;        // "video" or "frame"
+  string storage_path = 4;
+  int64 timestamp = 5;
+  int64 file_size = 6;
+  string content_type = 7;
+  map<string, string> metadata = 9;  // HLS-specific: format, segment_time, playlist_path, etc.
+}
+
+service StorageService {
+  rpc ListStorage(ListStorageRequest) returns (ListStorageResponse);
+  rpc GetStorage(GetStorageRequest) returns (GetStorageResponse);
+}

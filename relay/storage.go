@@ -25,6 +25,22 @@ func NewLocalStorage(baseDir string) *LocalStorage {
 	return &LocalStorage{baseDir: baseDir}
 }
 
+// normalizePath ensures the path has local:// prefix, adds it if missing (for legacy paths)
+func normalizePath(storagePath string) string {
+	if strings.Contains(storagePath, "://") {
+		return storagePath
+	}
+	return "local://" + storagePath
+}
+
+// parsePath extracts the filesystem path from a storage path (e.g., local://frames/xxx.jpg -> frames/xxx.jpg)
+func parsePath(storagePath string) (string, error) {
+	if !strings.HasPrefix(storagePath, "local://") {
+		return "", fmt.Errorf("storage path must have local:// prefix, got: %s", storagePath)
+	}
+	return strings.TrimPrefix(storagePath, "local://"), nil
+}
+
 // Store stores a frame to the local filesystem
 func (s *LocalStorage) Store(frameID string, serviceID string, data []byte) (string, error) {
 	// Create frames directory if it doesn't exist
@@ -47,40 +63,50 @@ func (s *LocalStorage) Store(frameID string, serviceID string, data []byte) (str
 	return storagePath, nil
 }
 
-// Retrieve retrieves a frame from the local filesystem
+// Retrieve retrieves a file from the local filesystem
 func (s *LocalStorage) Retrieve(storagePath string) ([]byte, error) {
-	// Parse storage path
-	if !strings.HasPrefix(storagePath, "local://") {
-		return nil, fmt.Errorf("invalid storage path format: %s", storagePath)
+	// Normalize legacy paths (add local:// prefix if missing)
+	storagePath = normalizePath(storagePath)
+
+	// Parse storage path to get filesystem path
+	filePath, err := parsePath(storagePath)
+	if err != nil {
+		return nil, err
 	}
 
-	// Extract file path from storage path
-	filePath := strings.TrimPrefix(storagePath, "local://")
+	// For HLS paths, we can't retrieve the whole thing (it's a directory with files)
+	// HLS is handled directly by StorageHandler.serveHLS()
+	if strings.HasPrefix(filePath, "hls/") {
+		return nil, fmt.Errorf("HLS storage must be served directly, not retrieved: %s", storagePath)
+	}
+
 	fullPath := filepath.Join(s.baseDir, filePath)
 
 	// Read file
 	data, err := os.ReadFile(fullPath)
 	if err != nil {
-		return nil, fmt.Errorf("failed to read frame file: %w", err)
+		return nil, fmt.Errorf("failed to read file: %w", err)
 	}
 
 	return data, nil
 }
 
-// Delete deletes a frame from the local filesystem
+// Delete deletes a file from the local filesystem
 func (s *LocalStorage) Delete(storagePath string) error {
-	// Parse storage path
-	if !strings.HasPrefix(storagePath, "local://") {
-		return fmt.Errorf("invalid storage path format: %s", storagePath)
+	// Normalize legacy paths (add local:// prefix if missing)
+	storagePath = normalizePath(storagePath)
+
+	// Parse storage path to get filesystem path
+	filePath, err := parsePath(storagePath)
+	if err != nil {
+		return err
 	}
 
-	// Extract file path from storage path
-	filePath := strings.TrimPrefix(storagePath, "local://")
 	fullPath := filepath.Join(s.baseDir, filePath)
 
-	// Delete file
+	// Delete file or directory
 	if err := os.Remove(fullPath); err != nil {
-		return fmt.Errorf("failed to delete frame file: %w", err)
+		return fmt.Errorf("failed to delete: %w", err)
 	}
 
 	return nil
@@ -123,12 +149,12 @@ func (m *StorageManager) Store(frameID string, serviceID string, data []byte) (s
 	return m.backend.Store(frameID, serviceID, data)
 }
 
-// Retrieve retrieves a frame by storage path
+// Retrieve retrieves a file by storage path
 func (m *StorageManager) Retrieve(storagePath string) ([]byte, error) {
 	return m.backend.Retrieve(storagePath)
 }
 
-// Delete deletes a frame by storage path
+// Delete deletes a file by storage path
 func (m *StorageManager) Delete(storagePath string) error {
 	return m.backend.Delete(storagePath)
 }

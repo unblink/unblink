@@ -31,6 +31,18 @@ func (t *SearchVideoTool) Description() string {
 	return "Search for video recordings based on a query. Returns information about matching video segments including timestamps and duration."
 }
 
+// DisplayMessage returns a human-friendly message describing what the tool is doing
+func (t *SearchVideoTool) DisplayMessage(argumentsJSON string) string {
+	var args searchVideoArgs
+	if err := json.Unmarshal([]byte(argumentsJSON), &args); err != nil {
+		return "Searching videos..."
+	}
+	if args.Query == "" {
+		return "Searching videos..."
+	}
+	return fmt.Sprintf("Searching for video about %q", args.Query)
+}
+
 // Parameters returns the JSON schema for the tool parameters
 func (t *SearchVideoTool) Parameters() map[string]any {
 	return map[string]any{
@@ -53,10 +65,12 @@ func (t *SearchVideoTool) Execute(ctx context.Context, argumentsJSON string) str
 	// Parse arguments
 	var args searchVideoArgs
 	if err := json.Unmarshal([]byte(argumentsJSON), &args); err != nil {
+		log.Printf("[SearchVideoTool] Error parsing arguments: %v", err)
 		return fmt.Sprintf("Error parsing arguments: %v", err)
 	}
 
 	if args.Query == "" {
+		log.Printf("[SearchVideoTool] Empty query parameter")
 		return "Error: query parameter is required"
 	}
 
@@ -75,8 +89,11 @@ func (t *SearchVideoTool) Execute(ctx context.Context, argumentsJSON string) str
 	`
 
 	searchPattern := "%" + args.Query + "%"
+	log.Printf("[SearchVideoTool] Searching with pattern: %q", searchPattern)
+
 	rows, err := t.agentEventTable.db.Query(query, searchPattern, limit)
 	if err != nil {
+		log.Printf("[SearchVideoTool] Error querying database: %v", err)
 		return fmt.Sprintf("Error searching videos: %v", err)
 	}
 	defer rows.Close()
@@ -108,12 +125,16 @@ func (t *SearchVideoTool) Execute(ctx context.Context, argumentsJSON string) str
 			json.Unmarshal([]byte(dataJSON.String), &e.Data)
 		}
 
+		log.Printf("[SearchVideoTool] Found event: ID=%s, ServiceID=%s, Data=%+v", e.ID, e.ServiceID, e.Data)
 		events = append(events, e)
 	}
 
 	if err := rows.Err(); err != nil {
+		log.Printf("[SearchVideoTool] Error iterating results: %v", err)
 		return fmt.Sprintf("Error iterating results: %v", err)
 	}
+
+	log.Printf("[SearchVideoTool] Total events found: %d", len(events))
 
 	// Format results
 	if len(events) == 0 {
@@ -138,6 +159,7 @@ func (t *SearchVideoTool) Execute(ctx context.Context, argumentsJSON string) str
 		result += "\n"
 	}
 
+	log.Printf("[SearchVideoTool] Result: %q", result)
 	return result
 }
 

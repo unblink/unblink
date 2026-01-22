@@ -45,6 +45,13 @@ type Config struct {
 	ChatOpenAIModel   string // Model to use for Chat RPC
 	ChatOpenAIAPIKey  string // OpenAI API key for chat completions
 	ChatOpenAIBaseURL string // OpenAI-compatible API base URL (e.g., https://api.openai.com/v1 or https://openrouter.ai/api/v1)
+
+	// Admin configuration
+	AdminEmail    string
+	AdminPassword string
+	AdminNodes    string
+	AdminServices string
+	AdminAgents   string
 }
 
 // LoadConfig loads and validates all configuration from environment
@@ -138,6 +145,13 @@ func LoadConfig() (*Config, error) {
 	chatOpenAIBaseURL := os.Getenv("CHAT_OPENAI_BASE_URL") // Default: https://api.openai.com/v1
 	chatOpenAIModel := os.Getenv("CHAT_OPENAI_MODEL")
 
+	// Admin configuration
+	adminEmail := os.Getenv("ADMIN_EMAIL")
+	adminPassword := os.Getenv("ADMIN_PASSWORD")
+	adminNodes := os.Getenv("ADMIN_NODES")
+	adminServices := os.Getenv("ADMIN_SERVICES")
+	adminAgents := os.Getenv("ADMIN_AGENTS")
+
 	// Validate port number
 	if _, err := strconv.Atoi(relayPort); err != nil {
 		errors = append(errors, fmt.Sprintf("RELAY_PORT must be a number, got: %s", relayPort))
@@ -156,26 +170,31 @@ func LoadConfig() (*Config, error) {
 	databasePath := filepath.Join(appDir, "database", "relay.db")
 
 	config := &Config{
-		AppDir:                     appDir,
-		StorageDir:                 storageDir,
-		DatabasePath:               databasePath,
-		RelayPort:                  relayPort,
-		APIPort:                    apiPort,
-		DashboardURL:               dashboardURL,
-		JWTSecret:                  jwtSecret,
-		DevImpersonate:             devImpersonate,
-		AutostreamEnable:           autostreamEnable,
-		FrameIntervalSeconds:       frameIntervalSeconds,
-		FrameBatchSize:             frameBatchSize,
-		AutoStreamTimeout:          autoStreamTimeout,
-		AutoStreamModel:            autoStreamModel,
-		AutoStreamAPIKey:           autoStreamAPIKey,
-		AutoStreamBaseURL:          autoStreamBaseURL,
-		VideoRecordingEnabled:      videoRecordingEnabled,
+		AppDir:                      appDir,
+		StorageDir:                  storageDir,
+		DatabasePath:                databasePath,
+		RelayPort:                   relayPort,
+		APIPort:                     apiPort,
+		DashboardURL:                dashboardURL,
+		JWTSecret:                   jwtSecret,
+		DevImpersonate:              devImpersonate,
+		AutostreamEnable:            autostreamEnable,
+		FrameIntervalSeconds:        frameIntervalSeconds,
+		FrameBatchSize:              frameBatchSize,
+		AutoStreamTimeout:           autoStreamTimeout,
+		AutoStreamModel:             autoStreamModel,
+		AutoStreamAPIKey:            autoStreamAPIKey,
+		AutoStreamBaseURL:           autoStreamBaseURL,
+		VideoRecordingEnabled:       videoRecordingEnabled,
 		VideoSegmentDurationMinutes: videoSegmentDurationMinutes,
-		ChatOpenAIModel:            chatOpenAIModel,
-		ChatOpenAIAPIKey:           chatOpenAIAPIKey,
-		ChatOpenAIBaseURL:          chatOpenAIBaseURL,
+		ChatOpenAIModel:             chatOpenAIModel,
+		ChatOpenAIAPIKey:            chatOpenAIAPIKey,
+		ChatOpenAIBaseURL:           chatOpenAIBaseURL,
+		AdminEmail:                  adminEmail,
+		AdminPassword:               adminPassword,
+		AdminNodes:                  adminNodes,
+		AdminServices:               adminServices,
+		AdminAgents:                 adminAgents,
 	}
 
 	// Log loaded configuration
@@ -188,6 +207,15 @@ func LoadConfig() (*Config, error) {
 	log.Printf("[Config]   DASHBOARD_URL: %s", config.DashboardURL)
 	if config.DevImpersonate != "" {
 		log.Printf("[Config]   DEV_IMPERSONATE_EMAIL: %s", config.DevImpersonate)
+	}
+	if config.AdminEmail != "" {
+		log.Printf("[Config]   ADMIN_EMAIL: %s", config.AdminEmail)
+	}
+	if config.AdminServices != "" {
+		log.Printf("[Config]   ADMIN_SERVICES: (set, length=%d)", len(config.AdminServices))
+	}
+	if config.AdminAgents != "" {
+		log.Printf("[Config]   ADMIN_AGENTS: (set, length=%d)", len(config.AdminAgents))
 	}
 	log.Printf("[Config]   AUTOSTREAM_ENABLED: %v", config.AutostreamEnable)
 	log.Printf("[Config]   FRAME_INTERVAL_SECONDS: %.1f", config.FrameIntervalSeconds)

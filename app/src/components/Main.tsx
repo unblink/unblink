@@ -6,16 +6,11 @@ import TabSettings from './tabs/TabSettings';
 import TabHome from './tabs/TabHome';
 import TabAgents from './tabs/TabAgents';
 import TabChat from './tabs/TabChat';
+import TabRecordings from './tabs/TabRecordings';
 import ChatHeaderAction from './chat/ChatHeaderAction';
 import ArkToast from '../ark/ArkToast';
 import { tab, type Tab, connectClientRealtimeStream, disconnectClientRealtimeStream, fetchNodes, fetchAgents, fetchNodesAndServices } from '../shared';
 import { useAgentPanel } from './AgentPanel';
-
-const ComingSoon = () => (
-  <div class="flex justify-center items-center h-full">
-    <p class="text-neu-500">Coming soon</p>
-  </div>
-);
 
 const Main: Component = () => {
   const [isSavingSettings, setIsSavingSettings] = createSignal(false);
@@ -93,9 +88,9 @@ const Main: Component = () => {
             </TabLayout>
           </Match>
 
-          <Match when={tab().type === 'moments'}>
-            <TabLayout title="Moments">
-              <ComingSoon />
+          <Match when={tab().type === 'recordings'}>
+            <TabLayout title="Recordings">
+              <TabRecordings />
             </TabLayout>
           </Match>
 

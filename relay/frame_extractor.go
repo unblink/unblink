@@ -11,7 +11,6 @@ import (
 	"time"
 
 	"github.com/AlexxIT/go2rtc/pkg/core"
-	"github.com/AlexxIT/go2rtc/pkg/mpegts"
 )
 
 // Frame represents a single extracted JPEG frame
@@ -121,60 +120,18 @@ func (e *FrameExtractor) startFFmpeg() error {
 func (e *FrameExtractor) consumeH264ToFFmpeg(producer core.Producer) {
 	defer log.Printf("[FrameExtractor] Stopped H.264 consumer for service %s", e.serviceID)
 
-	// Create MPEG-TS consumer from go2rtc
-	consumer := mpegts.NewConsumer()
-	defer consumer.Stop()
-
-	// Find and add H.264 track
-	var videoMedia *core.Media
-	for _, media := range producer.GetMedias() {
-		if media.Kind == core.KindVideo {
-			videoMedia = media
-			break
-		}
-	}
-
-	if videoMedia == nil {
-		log.Printf("[FrameExtractor] No video media found for service %s", e.serviceID)
-		return
-	}
-
-	// Get H.264 codec
-	var videoCodec *core.Codec
-	for _, codec := range videoMedia.Codecs {
-		if codec.Name == core.CodecH264 {
-			videoCodec = codec
-			break
-		}
-	}
-
-	if videoCodec == nil {
-		log.Printf("[FrameExtractor] No H.264 codec found for service %s", e.serviceID)
-		return
-	}
-
-	// Get track
-	receiver, err := producer.GetTrack(videoMedia, videoCodec)
+	// Create MPEG-TS consumer using shared helper
+	tsConsumer, err := NewMPEGTSConsumer(producer, e.serviceID)
 	if err != nil {
-		log.Printf("[FrameExtractor] Failed to get track for service %s: %v", e.serviceID, err)
+		log.Printf("[FrameExtractor] Failed to create MPEG-TS consumer: %v", err)
 		return
 	}
-
-	// Add track to consumer
-	if err := consumer.AddTrack(videoMedia, videoCodec, receiver); err != nil {
-		log.Printf("[FrameExtractor] Failed to add track to consumer: %v", err)
-		return
-	}
-
-	log.Printf("[FrameExtractor] Starting MPEG-TS consumer for service %s", e.serviceID)
+	defer tsConsumer.Stop()
 
 	// consumer.WriteTo blocks until error
-	if _, err := consumer.WriteTo(e.ffmpegStdin); err != nil {
+	if _, err := tsConsumer.WriteTo(e.ffmpegStdin); err != nil {
 		log.Printf("[FrameExtractor] MPEG-TS writer finished: %v", err)
 	}
-
-	// Wait for close signal (though WriteTo usually blocks until closed)
-	// <-e.closeChan
 }
 
 // processH264Packet is removed as we use go2rtc mpegts consumer

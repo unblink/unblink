@@ -7,6 +7,7 @@ import { AgentService } from "../../gen/unblink/agent/v1/agent_pb";
 import { WebRTCService } from "../../gen/unblink/webrtc/v1/webrtc_pb";
 import { ConfigService } from "../../gen/unblink/config/v1/config_pb";
 import { ChatService } from "../../gen/unblink/chat/v1/chat_pb";
+import { StorageService } from "../../gen/unblink/storage/v1/storage_pb";
 
 
 const BASE_URL = import.meta.env.VITE_RELAY_API_URL;
@@ -44,3 +45,4 @@ export const agentClient = createClient(AgentService, transport);
 export const webrtcClient = createClient(WebRTCService, transport);
 export const configClient = createClient(ConfigService, publicTransport);
 export const chatClient = createClient(ChatService, transport);
+export const storageClient = createClient(StorageService, transport);

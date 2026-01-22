@@ -29,7 +29,7 @@ export const fetchFlags = async () => {
   }
 };
 
-export type SimpleTabType = 'home' | 'chat' | 'moments' | 'agents' | 'settings';
+export type SimpleTabType = 'home' | 'chat' | 'recordings' | 'agents' | 'settings';
 
 export type Tab =
   | { type: SimpleTabType }

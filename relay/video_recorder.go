@@ -11,104 +11,118 @@ import (
 	"time"
 
 	"github.com/AlexxIT/go2rtc/pkg/core"
-	"github.com/AlexxIT/go2rtc/pkg/mpegts"
 	"github.com/google/uuid"
 )
 
-// VideoRecorder records continuous video segments from H.264 streams
+// VideoRecorder records continuous video using HLS format
+// HLS creates .m3u8 playlist + .ts segments, handling rotation automatically
 type VideoRecorder struct {
-	serviceID       string
-	segmentDuration time.Duration
-	storageManager  *StorageManager
-	storageTable    *table_storage
-	closeChan       chan struct{}
-	closeOnce       sync.Once
-	mu              sync.Mutex
+	serviceID      string
+	segmentTime    int // in seconds
+	storageManager *StorageManager
+	storageTable   *table_storage
+	closeChan      chan struct{}
+	closeOnce      sync.Once
+	mu             sync.Mutex
 
 	// FFmpeg pipeline
-	ffmpegCmd        *exec.Cmd
-	ffmpegStdin      io.WriteCloser
-	currentSegment   *segmentWriter
-	segmentStartTime time.Time
-}
+	ffmpegCmd   *exec.Cmd
+	ffmpegStdin io.WriteCloser
+	producer    core.Producer
 
-// segmentWriter manages a single video segment
-type segmentWriter struct {
-	videoID   string
-	filePath  string
-	cmd       *exec.Cmd
-	startTime time.Time
+	// HLS stream info
+	playlistID    string
+	playlistPath  string
+	storagePath   string
+	startTime     time.Time
 }
 
 // NewVideoRecorder creates a new video recorder
 func NewVideoRecorder(serviceID string, segmentDuration time.Duration,
 	storageManager *StorageManager, storageTable *table_storage) *VideoRecorder {
 	return &VideoRecorder{
-		serviceID:       serviceID,
-		segmentDuration: segmentDuration,
-		storageManager:  storageManager,
-		storageTable:    storageTable,
-		closeChan:       make(chan struct{}),
+		serviceID:      serviceID,
+		segmentTime:    int(segmentDuration.Seconds()),
+		storageManager: storageManager,
+		storageTable:   storageTable,
+		closeChan:      make(chan struct{}),
 	}
 }
 
 // Start begins recording from the media source
 func (r *VideoRecorder) Start(mediaSource MediaSource) error {
-	log.Printf("[VideoRecorder] Starting video recording for service %s (segment_duration=%v)",
-		r.serviceID, r.segmentDuration)
+	log.Printf("[VideoRecorder] Starting HLS recording for service %s (segment_time=%ds)",
+		r.serviceID, r.segmentTime)
 
 	// Get producer from media source
 	producer := mediaSource.GetProducer()
 	if producer == nil {
 		return fmt.Errorf("media source has no producer")
 	}
+	r.producer = producer
 
-	// Start first segment
-	if err := r.startNewSegment(); err != nil {
-		return fmt.Errorf("failed to start first segment: %w", err)
+	// Create HLS playlist
+	if err := r.startHLSStream(); err != nil {
+		return fmt.Errorf("failed to start HLS stream: %w", err)
 	}
 
-	// Start segment rotation goroutine
-	go r.rotateSegments()
-
-	// Start H.264 consumer that pipes to current FFmpeg
-	go r.consumeH264ToFFmpeg(producer)
+	// Start consumer goroutine to pump H.264 to FFmpeg
+	go r.consumeH264ToFFmpeg()
 
 	return nil
 }
 
-// startNewSegment starts a new video segment
-func (r *VideoRecorder) startNewSegment() error {
+// startHLSStream creates the HLS playlist and starts FFmpeg
+func (r *VideoRecorder) startHLSStream() error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
-	// Close previous segment if exists
-	if r.currentSegment != nil {
-		r.finalizeSegment()
-	}
+	playlistID := uuid.New().String()
+	startTime := time.Now()
 
-	videoID := uuid.New().String()
-
-	// Get base directory from storage manager (read from backend)
+	// Get base directory from storage manager
 	baseDir := r.storageManager.backend.(*LocalStorage).baseDir
-	tempPath := filepath.Join(baseDir, "videos", videoID+".tmp.mp4")
+	// Use playlistID (unique UUID) instead of serviceID to avoid overwriting old recordings
+	playlistDir := filepath.Join(baseDir, "hls", playlistID)
 
 	// Ensure directory exists
-	if err := os.MkdirAll(filepath.Dir(tempPath), 0755); err != nil {
-		return fmt.Errorf("failed to create video directory: %w", err)
+	if err := os.MkdirAll(playlistDir, 0755); err != nil {
+		return fmt.Errorf("failed to create HLS directory: %w", err)
 	}
 
-	// FFmpeg command for MP4 segment recording (remux only, no re-encoding)
+	// HLS playlist path (stream.m3u8)
+	playlistPath := filepath.Join(playlistDir, "stream.m3u8")
+	storagePath := "local://hls/" + playlistID + "/stream.m3u8"
+
+	// Create database record upfront with "recording" status
+	metadata := map[string]interface{}{
+		"status":          "recording",
+		"start_time":      startTime.Format(time.RFC3339),
+		"format":          "hls",
+		"segment_time":    r.segmentTime,
+		"playlist_path":   storagePath,
+		"segments_dir":    "local://hls/" + playlistID,
+	}
+	if err := r.storageTable.CreateStorage(playlistID, r.serviceID, "video", storagePath,
+		startTime, 0, "application/vnd.apple.mpegurl", metadata); err != nil {
+		return fmt.Errorf("failed to create video record: %w", err)
+	}
+
+	// FFmpeg command for HLS recording
+	// -hls_time: segment duration in seconds
+	// -hls_list_size: number of segments to keep in playlist (0 = all)
 	cmd := exec.Command("ffmpeg",
 		"-loglevel", "error",
-		"-f", "mpegts", // Input format
-		"-i", "pipe:0", // Read from stdin
-		"-c:v", "copy", // Copy video codec (no re-encoding)
-		"-c:a", "aac",  // Convert audio to AAC (if present)
-		"-b:a", "128k", // Audio bitrate
-		"-movflags", "frag_keyframe+empty_moov+default_base_moof", // Streaming-friendly MP4
-		"-f", "mp4",   // Output format
-		tempPath,      // Output file
+		"-f", "mpegts",
+		"-i", "pipe:0",
+		"-c:v", "copy",   // NO transcoding video, just remux
+		"-c:a", "copy",   // NO transcoding audio, just remux
+		"-f", "hls",
+		"-hls_time", fmt.Sprintf("%d", r.segmentTime),
+		"-hls_list_size", "0", // Keep all segments in playlist
+		"-hls_flags", "independent_segments",
+		"-hls_segment_filename", filepath.Join(playlistDir, "segment_%03d.ts"),
+		playlistPath,
 	)
 
 	stdin, err := cmd.StdinPipe()
@@ -125,86 +139,30 @@ func (r *VideoRecorder) startNewSegment() error {
 
 	r.ffmpegCmd = cmd
 	r.ffmpegStdin = stdin
-	r.segmentStartTime = time.Now()
+	r.playlistID = playlistID
+	r.playlistPath = playlistPath
+	r.storagePath = storagePath
+	r.startTime = startTime
 
-	r.currentSegment = &segmentWriter{
-		videoID:   videoID,
-		filePath:  tempPath,
-		cmd:       cmd,
-		startTime: time.Now(),
-	}
+	log.Printf("[VideoRecorder] Started HLS stream %s for service %s (playlist: %s)",
+		playlistID, r.serviceID, playlistPath)
 
-	log.Printf("[VideoRecorder] Started new segment %s for service %s", videoID, r.serviceID)
 	return nil
 }
 
-// rotateSegments handles segment rotation
-func (r *VideoRecorder) rotateSegments() {
-	ticker := time.NewTicker(r.segmentDuration)
-	defer ticker.Stop()
-
-	for {
-		select {
-		case <-r.closeChan:
-			return
-		case <-ticker.C:
-			log.Printf("[VideoRecorder] Rotating segment for service %s", r.serviceID)
-			if err := r.startNewSegment(); err != nil {
-				log.Printf("[VideoRecorder] Failed to rotate segment: %v", err)
-			}
-		}
-	}
-}
-
 // consumeH264ToFFmpeg reads H.264 packets and pipes to FFmpeg
-func (r *VideoRecorder) consumeH264ToFFmpeg(producer core.Producer) {
+func (r *VideoRecorder) consumeH264ToFFmpeg() {
+	producer := r.producer
 	defer log.Printf("[VideoRecorder] Stopped H.264 consumer for service %s", r.serviceID)
 
-	// Create MPEG-TS consumer from go2rtc
-	consumer := mpegts.NewConsumer()
-	defer consumer.Stop()
-
-	// Find H.264 track (same as FrameExtractor)
-	var videoMedia *core.Media
-	for _, media := range producer.GetMedias() {
-		if media.Kind == core.KindVideo {
-			videoMedia = media
-			break
-		}
-	}
-
-	if videoMedia == nil {
-		log.Printf("[VideoRecorder] No video media found for service %s", r.serviceID)
-		return
-	}
-
-	var videoCodec *core.Codec
-	for _, codec := range videoMedia.Codecs {
-		if codec.Name == core.CodecH264 {
-			videoCodec = codec
-			break
-		}
-	}
-
-	if videoCodec == nil {
-		log.Printf("[VideoRecorder] No H.264 codec found for service %s", r.serviceID)
-		return
-	}
-
-	receiver, err := producer.GetTrack(videoMedia, videoCodec)
+	// Create MPEG-TS consumer using shared helper
+	tsConsumer, err := NewMPEGTSConsumer(producer, r.serviceID)
 	if err != nil {
-		log.Printf("[VideoRecorder] Failed to get track: %v", err)
+		log.Printf("[VideoRecorder] Failed to create MPEG-TS consumer: %v", err)
 		return
 	}
+	defer tsConsumer.Stop()
 
-	if err := consumer.AddTrack(videoMedia, videoCodec, receiver); err != nil {
-		log.Printf("[VideoRecorder] Failed to add track: %v", err)
-		return
-	}
-
-	log.Printf("[VideoRecorder] Starting MPEG-TS consumer for service %s", r.serviceID)
-
-	// Pipe to current FFmpeg stdin, switching when segment rotates
 	for {
 		select {
 		case <-r.closeChan:
@@ -221,13 +179,19 @@ func (r *VideoRecorder) consumeH264ToFFmpeg(producer core.Producer) {
 			continue
 		}
 
-		// Write to current stdin
-		// Note: We need to handle the case where stdin changes during WriteTo
-		// For now, we'll use a simpler approach: read a chunk and write
-		n, err := consumer.WriteTo(stdin)
+		// Write to FFmpeg stdin
+		// HLS handles segment rotation automatically
+		n, err := tsConsumer.WriteTo(stdin)
 		if err != nil {
-			log.Printf("[VideoRecorder] MPEG-TS writer finished: %v", err)
-			return
+			select {
+			case <-r.closeChan:
+				// Recorder is closing
+				return
+			default:
+				// Unexpected error
+				log.Printf("[VideoRecorder] WriteTo error: %v", err)
+				return
+			}
 		}
 		if n == 0 {
 			time.Sleep(100 * time.Millisecond)
@@ -235,72 +199,59 @@ func (r *VideoRecorder) consumeH264ToFFmpeg(producer core.Producer) {
 	}
 }
 
-// finalizeSegment finalizes the current segment
-func (r *VideoRecorder) finalizeSegment() {
-	if r.currentSegment == nil {
-		return
-	}
-
-	segment := r.currentSegment
-
-	// Close FFmpeg stdin to signal EOF
-	if r.ffmpegStdin != nil {
-		r.ffmpegStdin.Close()
-		r.ffmpegStdin = nil
-	}
-
-	// Wait for FFmpeg to finish
-	if r.ffmpegCmd != nil {
-		if err := r.ffmpegCmd.Wait(); err != nil {
-			log.Printf("[VideoRecorder] FFmpeg error: %v", err)
-		}
-	}
-
-	// Read file data
-	data, err := os.ReadFile(segment.filePath)
-	if err != nil {
-		log.Printf("[VideoRecorder] Failed to read segment file: %v", err)
-		r.currentSegment = nil
-		return
-	}
-
-	fileSize := int64(len(data))
-	duration := time.Since(segment.startTime).Seconds()
-
-	// Store via storage manager
-	storagePath, err := r.storageManager.StoreVideo(segment.videoID, r.serviceID, data)
-	if err != nil {
-		log.Printf("[VideoRecorder] Failed to store segment: %v", err)
-		r.currentSegment = nil
-		return
-	}
-
-	// Create database record with metadata
-	metadata := map[string]interface{}{
-		"duration_seconds": duration,
-		"start_time":       segment.startTime.Format(time.RFC3339),
-		"end_time":         time.Now().Format(time.RFC3339),
-	}
-
-	if err := r.storageTable.CreateStorage(segment.videoID, r.serviceID, "video", storagePath,
-		segment.startTime, fileSize, "video/mp4", metadata); err != nil {
-		log.Printf("[VideoRecorder] Failed to create video record: %v", err)
-	}
-
-	log.Printf("[VideoRecorder] Finalized segment %s (%.2fs, %d bytes)",
-		segment.videoID, duration, fileSize)
-
-	r.currentSegment = nil
-}
-
-// Close stops the recorder
+// Close stops the recorder and finalizes the recording
 func (r *VideoRecorder) Close() {
 	r.closeOnce.Do(func() {
-		log.Printf("[VideoRecorder] Closing video recorder for service %s", r.serviceID)
+		log.Printf("[VideoRecorder] Closing HLS recorder for service %s", r.serviceID)
 		close(r.closeChan)
 
 		r.mu.Lock()
-		r.finalizeSegment()
-		r.mu.Unlock()
+		defer r.mu.Unlock()
+
+		// Close FFmpeg stdin to signal EOF
+		if r.ffmpegStdin != nil {
+			r.ffmpegStdin.Close()
+			r.ffmpegStdin = nil
+		}
+
+		// Wait for FFmpeg to finish and finalize playlist
+		if r.ffmpegCmd != nil {
+			if err := r.ffmpegCmd.Wait(); err != nil {
+				log.Printf("[VideoRecorder] FFmpeg error: %v", err)
+			}
+		}
+
+		// Update database record with final metadata
+		if r.playlistID != "" {
+			duration := time.Since(r.startTime).Seconds()
+			metadata := map[string]interface{}{
+				"status":          "completed",
+				"duration_seconds": duration,
+				"start_time":      r.startTime.Format(time.RFC3339),
+				"end_time":        time.Now().Format(time.RFC3339),
+			}
+
+			// Count segments and get total size
+			playlistDir := filepath.Join(r.storageManager.backend.(*LocalStorage).baseDir,
+				"hls", r.playlistID)
+			if segments, err := filepath.Glob(filepath.Join(playlistDir, "segment_*.ts")); err == nil {
+				metadata["segment_count"] = len(segments)
+
+				// Calculate total size
+				var totalSize int64
+				for _, seg := range segments {
+					if info, err := os.Stat(seg); err == nil {
+						totalSize += info.Size()
+					}
+				}
+				metadata["total_bytes"] = totalSize
+
+				if err := r.storageTable.UpdateStorage(r.playlistID, totalSize, metadata); err != nil {
+					log.Printf("[VideoRecorder] Failed to update video record: %v", err)
+				}
+			}
+		}
+
+		log.Printf("[VideoRecorder] Closed HLS recorder for service %s", r.serviceID)
 	})
 }

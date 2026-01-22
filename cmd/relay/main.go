@@ -14,11 +14,20 @@ import (
 )
 
 func main() {
-	// Load .env file (required)
-	if err := godotenv.Load(); err != nil {
-		log.Fatalf("[Main] Failed to load .env file: %v", err)
+	// Load environment file
+	envFile := os.Getenv("RELAY_ENV")
+	if envFile == "" {
+		envFile = ".env"
 	}
-	log.Println("[Main] Loaded .env file")
+
+	if _, err := os.Stat(envFile); err == nil {
+		if err := godotenv.Load(envFile); err != nil {
+			log.Fatalf("[Main] Failed to load %s file: %v", envFile, err)
+		}
+		log.Printf("[Main] Loaded %s file", envFile)
+	} else {
+		log.Printf("[Main] Warning: %s file not found", envFile)
+	}
 
 	// Parse subcommands
 	if len(os.Args) > 1 {
@@ -62,6 +71,9 @@ func main() {
 
 	// Create relay instance
 	r := relay.NewRelay(config, nodeTable, serviceTable, userTable, agentTable, agentEventTable, storageTable, jwtManager)
+
+	// Ensure admin user exists if configured
+	r.EnsureAdminUser()
 
 	// Initialize storage manager for frame persistence (always needed for serving frames)
 	storageBackend := relay.NewLocalStorage(config.StorageDir)
@@ -300,6 +312,6 @@ func printUsage() {
 	fmt.Println("Commands:")
 	fmt.Println("  database delete  Delete the database file")
 	fmt.Println("  app-data delete  Delete the entire app data directory")
-	fmt.Println("  storage delete  Delete the storage directory")
+	fmt.Println("  storage delete   Delete the storage directory")
 	fmt.Println("  help, -h         Show this help message")
 }

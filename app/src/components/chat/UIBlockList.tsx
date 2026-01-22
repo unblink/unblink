@@ -8,10 +8,17 @@ import LoadingDots from "./LoadingDots";
 interface ToolCallItemProps {
   toolName: string;
   state: "invoked" | "completed" | "error";
+  displayMessage?: string;
   error?: string;
 }
 
 function ToolCallItem(props: ToolCallItemProps) {
+  const displayText = () =>
+    props.displayMessage ?? props.toolName.replace(/_/g, " ");
+
+  console.log("[ToolCallItem] props:", props);
+  console.log("[ToolCallItem] displayText:", displayText());
+
   return (
     <div class="flex items-center gap-2 text-sm text-white">
       <Switch>
@@ -25,9 +32,9 @@ function ToolCallItem(props: ToolCallItemProps) {
           <BsX size={16} />
         </Match>
       </Switch>
-      <span class="capitalize">{props.toolName}</span>
+      <span>{displayText()}</span>
       {props.error && (
-        <span class="text-xs ml-1">{props.error}</span>
+        <span class="text-xs text-red-400 ml-1">{props.error}</span>
       )}
     </div>
   );
@@ -60,24 +67,25 @@ export default function UIBlockList(props: UIBlockListProps) {
               </Match>
 
               <Match when={block.role === "model"}>
-                <div class="px-4 py-4 flex flex-col">
+                <div class="py-4 flex flex-col">
                   <ProseText content={(block.data as any).content} />
                   {props.showLoading && isLastModelBlock(block) && <LoadingDots />}
                 </div>
               </Match>
 
               <Match when={block.role === "tool"}>
-                <div class="px-4 py-2">
+                <div class="py-2">
                   <ToolCallItem
                     toolName={(block.data as any).toolName}
                     state={(block.data as any).state}
+                    displayMessage={(block.data as any).displayMessage}
                     error={(block.data as any).error}
                   />
                 </div>
               </Match>
 
               <Match when={block.role === "system"}>
-                <div class="px-4 py-2 text-neu-500 text-sm">
+                <div class="py-2 text-neu-500 text-sm">
                   {(block.data as any).content}
                 </div>
               </Match>

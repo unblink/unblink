@@ -67,8 +67,8 @@ export default function SideBar() {
         icon: FiMessageCircle,
       },
       {
-        type: "moments",
-        name: "Moments",
+        type: "recordings",
+        name: "Recordings",
         icon: FiFilm,
       },
     ];
