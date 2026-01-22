@@ -102,7 +102,7 @@ func (s *ServiceStream) Start() error {
 			s.serviceID,
 			segmentDuration,
 			s.manager.storageManager,
-			s.manager.StorageTable,
+			s.manager.writeMgr,
 		)
 		if err := s.videoRecorder.Start(s.mediaSource); err != nil {
 			log.Printf("[ServiceStream] Warning: failed to start video recorder: %v", err)

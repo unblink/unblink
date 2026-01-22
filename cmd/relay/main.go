@@ -69,8 +69,12 @@ func main() {
 	storageTable := relay.NewStorageTable(db)
 	jwtManager := relay.NewJWTManager(config.JWTSecret)
 
+	// Create write manager to serialize database writes
+	writeMgr := relay.NewWriteManager(db)
+	defer writeMgr.Close()
+
 	// Create relay instance
-	r := relay.NewRelay(config, nodeTable, serviceTable, userTable, agentTable, agentEventTable, storageTable, jwtManager)
+	r := relay.NewRelay(config, nodeTable, serviceTable, userTable, agentTable, agentEventTable, storageTable, jwtManager, writeMgr)
 
 	// Ensure admin user exists if configured
 	r.EnsureAdminUser()
@@ -106,7 +110,7 @@ func main() {
 		log.Printf("[INFO] Initializing AutoStreamManager (frame_interval=%.1fs, batch_size=%d)",
 			config.FrameIntervalSeconds, config.FrameBatchSize)
 
-		autoStreamMgr := relay.NewAutoStreamManager(r, config, storageManager, storageTable)
+		autoStreamMgr := relay.NewAutoStreamManager(r, config, storageManager, writeMgr)
 		r.AutoStreamMgr = autoStreamMgr
 		log.Printf("[INFO] AutoStreamManager initialized")
 	} else {

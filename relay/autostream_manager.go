@@ -33,11 +33,11 @@ type AutoStreamManager struct {
 
 	// Storage manager for frame/video persistence
 	storageManager *StorageManager
-	StorageTable   *table_storage
+	writeMgr       *WriteManager
 }
 
 // NewAutoStreamManager creates a new auto-stream manager
-func NewAutoStreamManager(relay *Relay, config *Config, storageManager *StorageManager, storageTable *table_storage) *AutoStreamManager {
+func NewAutoStreamManager(relay *Relay, config *Config, storageManager *StorageManager, writeMgr *WriteManager) *AutoStreamManager {
 	manager := &AutoStreamManager{
 		relay:          relay,
 		config:         config,
@@ -46,7 +46,7 @@ func NewAutoStreamManager(relay *Relay, config *Config, storageManager *StorageM
 		frameBatches:   make(map[string][]*Frame),
 		openaiClients:  make(map[string]*OpenAIClient),
 		storageManager: storageManager,
-		StorageTable:   storageTable,
+		writeMgr:       writeMgr,
 	}
 
 	// Load agents from database
@@ -244,11 +244,9 @@ func (m *AutoStreamManager) batchAndSend(agent *Agent, frame *Frame) {
 				log.Printf("[AutoStreamManager] Failed to store frame %s: %v", frameUUIDs[i], err)
 				continue
 			}
-			// Store to DB (fast, naturally serialized in loop)
+			// Store to DB (async via WriteManager to prevent lock errors)
 			metadata := map[string]interface{}{"captured_at": f.Timestamp.Format(time.RFC3339)}
-			if err := m.relay.StorageTable.CreateStorage(frameUUIDs[i], f.ServiceID, "frame", storagePath, f.Timestamp, int64(len(f.Data)), "image/jpeg", metadata); err != nil {
-				log.Printf("[AutoStreamManager] Failed to store frame metadata %s: %v", frameUUIDs[i], err)
-			}
+			m.writeMgr.CreateStorage(frameUUIDs[i], f.ServiceID, "frame", storagePath, f.Timestamp, int64(len(f.Data)), "image/jpeg", metadata)
 		}
 
 		// Send asynchronously (don't block frame processing)
@@ -302,12 +300,8 @@ func (m *AutoStreamManager) sendToOpenAI(agent *Agent, serviceID string, frames 
 		"duration_ms": duration.Milliseconds(),
 	}
 
-	// Persist to database
-	if m.relay.AgentEventTable != nil {
-		if _, err := m.relay.AgentEventTable.CreateEvent(agent.ID, serviceID, eventData, metadata, time.Now()); err != nil {
-			log.Printf("[AutoStreamManager] Failed to store agent event: %v", err)
-		}
-	}
+	// Persist to database via WriteManager (async to prevent lock errors)
+	m.writeMgr.CreateAgentEvent(agent.ID, serviceID, eventData, metadata, time.Now())
 
 	// Broadcast to connected clients via realtime manager
 	if m.relay.ClientRealtimeMgr != nil {

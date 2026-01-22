@@ -20,7 +20,7 @@ type VideoRecorder struct {
 	serviceID      string
 	segmentTime    int // in seconds
 	storageManager *StorageManager
-	storageTable   *table_storage
+	writeMgr       *WriteManager
 	closeChan      chan struct{}
 	closeOnce      sync.Once
 	mu             sync.Mutex
@@ -39,12 +39,12 @@ type VideoRecorder struct {
 
 // NewVideoRecorder creates a new video recorder
 func NewVideoRecorder(serviceID string, segmentDuration time.Duration,
-	storageManager *StorageManager, storageTable *table_storage) *VideoRecorder {
+	storageManager *StorageManager, writeMgr *WriteManager) *VideoRecorder {
 	return &VideoRecorder{
 		serviceID:      serviceID,
 		segmentTime:    int(segmentDuration.Seconds()),
 		storageManager: storageManager,
-		storageTable:   storageTable,
+		writeMgr:       writeMgr,
 		closeChan:      make(chan struct{}),
 	}
 }
@@ -103,10 +103,8 @@ func (r *VideoRecorder) startHLSStream() error {
 		"playlist_path": storagePath,
 		"segments_dir":  "local://hls/" + playlistID,
 	}
-	if err := r.storageTable.CreateStorage(playlistID, r.serviceID, "video", storagePath,
-		startTime, 0, "application/vnd.apple.mpegurl", metadata); err != nil {
-		return fmt.Errorf("failed to create video record: %w", err)
-	}
+	r.writeMgr.CreateStorage(playlistID, r.serviceID, "video", storagePath,
+		startTime, 0, "application/vnd.apple.mpegurl", metadata)
 
 	// FFmpeg command for HLS recording
 	// -hls_time: segment duration in seconds
@@ -256,9 +254,7 @@ func (r *VideoRecorder) Close() {
 				}
 				metadata["total_bytes"] = totalSize
 
-				if err := r.storageTable.UpdateStorage(r.playlistID, totalSize, metadata); err != nil {
-					log.Printf("[VideoRecorder] Failed to update video record: %v", err)
-				}
+				r.writeMgr.UpdateStorage(r.playlistID, totalSize, metadata)
 			}
 		}
 

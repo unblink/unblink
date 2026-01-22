@@ -22,6 +22,7 @@ type Relay struct {
 	StorageTable      *table_storage     // Unified storage for frames and videos
 	JWTManager        *JWTManager
 	StorageManager    *StorageManager // NEW for frame storage backend
+	WriteMgr          *WriteManager   // Serializes DB writes to prevent lock errors
 	WebRTCSessionMgr  *WebRTCSessionManager
 	AutoStreamMgr     *AutoStreamManager
 	ClientRealtimeMgr *ClientRealtimeStreamManager // NEW - general client realtime streams
@@ -31,7 +32,7 @@ type Relay struct {
 }
 
 // NewRelay creates a new Relay instance
-func NewRelay(cfg *Config, nodeTable *table_node, serviceTable *table_service, userTable *table_user, agentTable *table_agent, agentEventTable *table_agent_event, storageTable *table_storage, jwtManager *JWTManager) *Relay {
+func NewRelay(cfg *Config, nodeTable *table_node, serviceTable *table_service, userTable *table_user, agentTable *table_agent, agentEventTable *table_agent_event, storageTable *table_storage, jwtManager *JWTManager, writeMgr *WriteManager) *Relay {
 	r := &Relay{
 		Config:          cfg,
 		NodeTable:       nodeTable,
@@ -41,6 +42,7 @@ func NewRelay(cfg *Config, nodeTable *table_node, serviceTable *table_service, u
 		AgentEventTable: agentEventTable,
 		StorageTable:    storageTable,
 		JWTManager:      jwtManager,
+		WriteMgr:        writeMgr,
 		nodes:           make(map[string]*NodeConn),
 	}
 	// Initialize client realtime manager
