@@ -25,7 +25,7 @@ if ! tmux has-session -t "=$SESSION_NAME" 2>/dev/null; then
   tmux_create_window "$SESSION_NAME" "relay" "$PROJECT_DIR/relay" "RELAY_ENV=.env.demo go run ../cmd/relay/main.go"
   tmux_create_window "$SESSION_NAME" "app" "$PROJECT_DIR/app" "bun dev"
   tmux_create_window "$SESSION_NAME" "node" "$PROJECT_DIR" "sleep 8 && go run ./cmd/node/main.go -config $NODE_CONFIG"
-  tmux_create_window "$SESSION_NAME" "demo" "$PROJECT_DIR" "sleep 10 && bash ./start_demo_streams.sh"
+  tmux_create_window "$SESSION_NAME" "demo" "$PROJECT_DIR" "bash ./start_demo_streams.sh"
 
   # Attach to relay window
   tmux_session_attach "$SESSION_NAME" "relay"
