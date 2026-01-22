@@ -133,7 +133,7 @@ func LoadConfig() (*Config, error) {
 		videoRecordingEnabled = val == "true" || val == "1"
 	}
 
-	videoSegmentDurationMinutes := 5.0
+	videoSegmentDurationMinutes := 0.166 // 10 seconds default
 	if val := os.Getenv("VIDEO_SEGMENT_DURATION_MINUTES"); val != "" {
 		if parsed, err := strconv.ParseFloat(val, 64); err == nil {
 			videoSegmentDurationMinutes = parsed

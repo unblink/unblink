@@ -282,9 +282,20 @@ func (s *AgentService) ListAgentEvents(
 		return nil, connect.NewError(connect.CodeInternal, err)
 	}
 
+	// Build a map of agentID -> agentName for efficient lookup
+	agentNames := make(map[string]string)
+	for _, e := range events {
+		if _, exists := agentNames[e.AgentID]; !exists {
+			if agent, err := s.relay.AgentTable.GetAgentByID(e.AgentID); err == nil {
+				agentNames[e.AgentID] = agent.Name
+			}
+		}
+	}
+
 	protoEvents := make([]*agentv1.AgentEvent, len(events))
 	for i, e := range events {
-		protoEvents[i] = toProtoAgentEvent(e)
+		agentName := agentNames[e.AgentID]
+		protoEvents[i] = toProtoAgentEvent(e, agentName)
 	}
 
 	return connect.NewResponse(&agentv1.ListAgentEventsResponse{
@@ -309,9 +320,7 @@ func toProtoAgent(agent *Agent) *agentv1.Agent {
 	}
 }
 
-func toProtoAgentEvent(event *AgentEventDB) *agentv1.AgentEvent {
-	// Get agent info to include agent name
-	// Note: We need access to relay.AgentTable for this, but for now we'll return partial info
+func toProtoAgentEvent(event *AgentEventDB, agentName string) *agentv1.AgentEvent {
 	// Convert data and metadata to structpb.Struct
 	dataStruct, _ := mapToStruct(event.Data)
 	metadataStruct, _ := mapToStruct(event.Metadata)
@@ -319,7 +328,7 @@ func toProtoAgentEvent(event *AgentEventDB) *agentv1.AgentEvent {
 	return &agentv1.AgentEvent{
 		Id:        event.ID,
 		AgentId:   event.AgentID,
-		AgentName: "", // Will be filled by caller if needed
+		AgentName: agentName,
 		ServiceId: event.ServiceID,
 		Data:      dataStruct,
 		Metadata:  metadataStruct,

@@ -31,10 +31,10 @@ type VideoRecorder struct {
 	producer    core.Producer
 
 	// HLS stream info
-	playlistID    string
-	playlistPath  string
-	storagePath   string
-	startTime     time.Time
+	playlistID   string
+	playlistPath string
+	storagePath  string
+	startTime    time.Time
 }
 
 // NewVideoRecorder creates a new video recorder
@@ -96,12 +96,12 @@ func (r *VideoRecorder) startHLSStream() error {
 
 	// Create database record upfront with "recording" status
 	metadata := map[string]interface{}{
-		"status":          "recording",
-		"start_time":      startTime.Format(time.RFC3339),
-		"format":          "hls",
-		"segment_time":    r.segmentTime,
-		"playlist_path":   storagePath,
-		"segments_dir":    "local://hls/" + playlistID,
+		"status":        "recording",
+		"start_time":    startTime.Format(time.RFC3339),
+		"format":        "hls",
+		"segment_time":  r.segmentTime,
+		"playlist_path": storagePath,
+		"segments_dir":  "local://hls/" + playlistID,
 	}
 	if err := r.storageTable.CreateStorage(playlistID, r.serviceID, "video", storagePath,
 		startTime, 0, "application/vnd.apple.mpegurl", metadata); err != nil {
@@ -115,12 +115,12 @@ func (r *VideoRecorder) startHLSStream() error {
 		"-loglevel", "error",
 		"-f", "mpegts",
 		"-i", "pipe:0",
-		"-c:v", "copy",   // NO transcoding video, just remux
-		"-c:a", "copy",   // NO transcoding audio, just remux
+		"-map", "0", // Map all input streams (video + optional audio)
+		"-c", "copy", // Copy both video and audio streams
 		"-f", "hls",
 		"-hls_time", fmt.Sprintf("%d", r.segmentTime),
 		"-hls_list_size", "0", // Keep all segments in playlist
-		"-hls_flags", "independent_segments",
+		"-hls_flags", "independent_segments+omit_endlist", // omit_endlist is better for live
 		"-hls_segment_filename", filepath.Join(playlistDir, "segment_%03d.ts"),
 		playlistPath,
 	)
@@ -130,7 +130,8 @@ func (r *VideoRecorder) startHLSStream() error {
 		return fmt.Errorf("stdin pipe: %w", err)
 	}
 
-	cmd.Stderr = os.Stderr
+	// Capture stderr to see ffmpeg errors in relay logs
+	cmd.Stderr = &ffmpegErrorWriter{prefix: r.serviceID}
 
 	if err := cmd.Start(); err != nil {
 		stdin.Close()
@@ -148,6 +149,15 @@ func (r *VideoRecorder) startHLSStream() error {
 		playlistID, r.serviceID, playlistPath)
 
 	return nil
+}
+
+type ffmpegErrorWriter struct {
+	prefix string
+}
+
+func (w *ffmpegErrorWriter) Write(p []byte) (n int, err error) {
+	log.Printf("[FFmpeg-%s] %s", w.prefix, string(p))
+	return len(p), nil
 }
 
 // consumeH264ToFFmpeg reads H.264 packets and pipes to FFmpeg
@@ -225,10 +235,10 @@ func (r *VideoRecorder) Close() {
 		if r.playlistID != "" {
 			duration := time.Since(r.startTime).Seconds()
 			metadata := map[string]interface{}{
-				"status":          "completed",
+				"status":           "completed",
 				"duration_seconds": duration,
-				"start_time":      r.startTime.Format(time.RFC3339),
-				"end_time":        time.Now().Format(time.RFC3339),
+				"start_time":       r.startTime.Format(time.RFC3339),
+				"end_time":         time.Now().Format(time.RFC3339),
 			}
 
 			// Count segments and get total size

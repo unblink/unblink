@@ -53,6 +53,11 @@ func (h *StorageHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// Check if this is an HLS recording
 	if storage.Metadata != nil {
 		if format, ok := storage.Metadata["format"].(string); ok && format == "hls" {
+			// Ensure trailing slash for HLS playlists to handle relative segment paths correctly
+			if segmentPath == "" && !strings.HasSuffix(r.URL.Path, "/") {
+				http.Redirect(w, r, r.URL.Path+"/", http.StatusMovedPermanently)
+				return
+			}
 			h.serveHLS(w, r, storage, segmentPath)
 			return
 		}
@@ -124,6 +129,18 @@ func (h *StorageHandler) serveHLS(w http.ResponseWriter, r *http.Request, storag
 	// Check if file exists
 	if _, err := os.Stat(serveFilePath); err != nil {
 		log.Printf("[StorageHandler] HLS file not found: %s, error: %v", serveFilePath, err)
+
+		// Debug: list directory contents to see what's actually there
+		if entries, readErr := os.ReadDir(hlsDir); readErr == nil {
+			var names []string
+			for _, entry := range entries {
+				names = append(names, entry.Name())
+			}
+			log.Printf("[StorageHandler] Directory %s contains: %v", hlsDir, names)
+		} else {
+			log.Printf("[StorageHandler] Failed to read directory %s: %v", hlsDir, readErr)
+		}
+
 		http.Error(w, "HLS file not found", http.StatusNotFound)
 		return
 	}
