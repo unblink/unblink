@@ -1,0 +1,13 @@
+{
+  "listen_addr": ":8080",
+  "dashboard_url": "http://localhost:3000",
+  "database_url": "postgresql://",
+  "jwt_secret": "",
+  "chat_openai_model": "Qwen/Qwen3-8B",
+  "chat_openai_base_url": "https://chat.unblink.net/v1",
+  "chat_openai_api_key": "sk-",
+  "fast_openai_model": "Qwen/Qwen3-VL-4B-Instruct",
+  "fast_openai_base_url": "https://vllm.unblink.net/v1",
+  "fast_openai_api_key": "sk-",
+  "content_trim_safety_margin": 10
+}
