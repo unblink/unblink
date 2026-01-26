@@ -50,3 +50,4 @@ Thumbs.db
 # server/gen/
 # app/gen/
 server/webrtc/rtsp_client.go
+main
