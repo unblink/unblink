@@ -27,15 +27,7 @@ go run cmd/server/main.go
 
 ## Configuration
 
-Edit `server.config.json`:
-
-```json
-{
-  "database_url": "postgresql://user:password@localhost:5432/unb?sslmode=disable",
-  "port": 8080,
-  "openai_api_key": "sk-..." // optional, for models
-}
-```
+You must edit `server.config.json` to with your own keys & infra for it to work.
 
 ## Build & Run
 
