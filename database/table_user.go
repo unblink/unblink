@@ -44,7 +44,7 @@ type Account struct {
 	ID        string
 	UserID    string
 	Type      string
-	Payload   map[string]interface{}
+	Payload   map[string]any
 	CreatedAt time.Time
 }
 
@@ -163,7 +163,7 @@ func (c *Client) GetAccountByUserID(userID string) (*Account, error) {
 			return nil, fmt.Errorf("failed to unmarshal payload: %w", err)
 		}
 	} else {
-		account.Payload = make(map[string]interface{})
+		account.Payload = make(map[string]any)
 	}
 
 	return &account, nil
@@ -203,14 +203,14 @@ func (c *Client) GetAccountByEmail(email string) (*Account, error) {
 			return nil, fmt.Errorf("failed to unmarshal payload: %w", err)
 		}
 	} else {
-		account.Payload = make(map[string]interface{})
+		account.Payload = make(map[string]any)
 	}
 
 	return &account, nil
 }
 
 // CreateAccount creates a new account for a user
-func (c *Client) CreateAccount(id, userID, accountType string, payload map[string]interface{}) error {
+func (c *Client) CreateAccount(id, userID, accountType string, payload map[string]any) error {
 	payloadJSON, err := json.Marshal(payload)
 	if err != nil {
 		return fmt.Errorf("failed to marshal payload: %w", err)

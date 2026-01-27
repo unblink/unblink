@@ -2,6 +2,7 @@ package webrtc
 
 import (
 	"bytes"
+	"crypto/md5"
 	"encoding/json"
 	"fmt"
 	"image"
@@ -20,25 +21,23 @@ import (
 
 // VLMResponse represents the JSON response from VLM with structured output
 type VLMResponse struct {
-	Objects      []VLMObject `json:"objects" jsonschema_description:"All detected objects with bounding boxes and IDs"`
+	Objects     []VLMObject `json:"objects" jsonschema_description:"All detected objects with bounding boxes and IDs"`
 	Description string      `json:"description" jsonschema_description:"Detailed analysis of motion, action, emotion, expressions, and subtle changes. Reference objects by their IDs in brackets, e.g., 'The person [3] is driving a red car [4]'."`
 }
 
 type VLMObject struct {
 	ID    int       `json:"id" jsonschema_description:"Unique identifier for this object (used for tracking across frames)"`
 	Label string    `json:"label" jsonschema_description:"Label/name of the object"`
-	BBox  []float64 `json:"bbox" jsonschema_description:"Bounding box as [x1, y1, x2, y2] in pixel coordinates relative to the model's effective image resolution"`
+	BBox  []float64 `json:"bbox" jsonschema_description:"Bounding box as [x1, y1, x2, y2] in normalized 1000 coordinates. 0=top/left, 1000=bottom/right. For example, [250, 300, 750, 800] means the object spans from 25% to 75% horizontally and 30% to 80% vertically."`
 }
 
 // BBox represents a scaled bounding box in pixel coordinates
 type BBox struct {
 	X1, Y1, X2, Y2 int
-	ID             int
-	Label          string
 }
 
 // GenerateVLMResponseSchema generates the JSON schema for VLMResponse
-func GenerateVLMResponseSchema() interface{} {
+func GenerateVLMResponseSchema() any {
 	reflector := jsonschema.Reflector{
 		AllowAdditionalProperties: false,
 		DoNotReference:            true,
@@ -48,32 +47,18 @@ func GenerateVLMResponseSchema() interface{} {
 	return schema
 }
 
-// ScaleBBox scales bbox coordinates from effective resolution to actual image resolution
-// VLM returns bboxes in pixel coordinates relative to its effective resolution
-// We need to scale them to actual image dimensions
-func ScaleBBox(rawBBox []float64, effectiveWidth, effectiveHeight, actualWidth, actualHeight int) BBox {
-	// VLM bbox is in effective resolution pixel space
-	// Scale to actual image dimensions
-	x1 := int(rawBBox[0] * float64(actualWidth) / float64(effectiveWidth))
-	y1 := int(rawBBox[1] * float64(actualHeight) / float64(effectiveHeight))
-	x2 := int(rawBBox[2] * float64(actualWidth) / float64(effectiveWidth))
-	y2 := int(rawBBox[3] * float64(actualHeight) / float64(effectiveHeight))
+// ScaleBBox scales bbox coordinates from normalized 1000 space to actual image resolution
+// Qwen3-VL (and similar models) return bboxes in normalized 1000 coordinates
+// where 0-1000 represents 0-100% of the image dimension
+func ScaleBBox(rawBBox []float64, actualWidth, actualHeight int) BBox {
+	// VLM bbox is in normalized 1000 space (0-1000)
+	// Scale to actual image dimensions: normalized * actual / 1000
+	x1 := int(rawBBox[0] * float64(actualWidth) / 1000.0)
+	y1 := int(rawBBox[1] * float64(actualHeight) / 1000.0)
+	x2 := int(rawBBox[2] * float64(actualWidth) / 1000.0)
+	y2 := int(rawBBox[3] * float64(actualHeight) / 1000.0)
 
-	return BBox{X1: x1, Y1: y1, X2: x2, Y2: y2, ID: 0, Label: ""}
-}
-
-// DrawRect draws a rectangle on the image
-func DrawRect(dst *image.RGBA, x1, y1, x2, y2 int, c color.Color) {
-	// Draw horizontal lines
-	for x := x1; x <= x2; x++ {
-		dst.Set(x, y1, c)
-		dst.Set(x, y2, c)
-	}
-	// Draw vertical lines
-	for y := y1; y <= y2; y++ {
-		dst.Set(x1, y, c)
-		dst.Set(x2, y, c)
-	}
+	return BBox{X1: x1, Y1: y1, X2: x2, Y2: y2}
 }
 
 // DrawLabel draws text with background for visibility
@@ -102,19 +87,25 @@ func DrawLabel(dst *image.RGBA, x, y int, text string, textColor, bgColor color.
 	d.DrawString(text)
 }
 
-// Colors for different objects (cycle through)
-var boxColors = []color.Color{
-	color.RGBA{255, 0, 0, 255},    // Red
-	color.RGBA{0, 255, 0, 255},    // Green
-	color.RGBA{0, 0, 255, 255},    // Blue
-	color.RGBA{255, 255, 0, 255},  // Yellow
-	color.RGBA{255, 0, 255, 255},  // Magenta
-	color.RGBA{0, 255, 255, 255},  // Cyan
+// hashToBrightColor generates a consistent bright color from a string hash
+func hashToBrightColor(s string) color.Color {
+	h := md5.New()
+	h.Write([]byte(s))
+	hash := h.Sum(nil)
+
+	// Use first 3 bytes of hash for RGB
+	// Ensure brightness by keeping values high (128-255 range)
+	r := uint8(128) + (hash[0] % 127)
+	g := uint8(128) + (hash[1] % 127)
+	b := uint8(128) + (hash[2] % 127)
+
+	return color.RGBA{r, g, b, 255}
 }
 
-// AnnotateFrame draws bounding boxes and IDs onto a JPEG frame
+// AnnotateFrame draws tags (label and id) at the center of each bounding box
+// Expects VLM to return normalized 1000 coordinates (0-1000)
 // Returns annotated JPEG bytes
-func AnnotateFrame(jpegData []byte, vlmResponse string, effectiveWidth, effectiveHeight int) ([]byte, error) {
+func AnnotateFrame(jpegData []byte, vlmResponse string) ([]byte, error) {
 	// Parse VLM JSON response
 	var resp VLMResponse
 	if err := json.Unmarshal([]byte(vlmResponse), &resp); err != nil {
@@ -134,26 +125,26 @@ func AnnotateFrame(jpegData []byte, vlmResponse string, effectiveWidth, effectiv
 	rgba := image.NewRGBA(bounds)
 	draw.Draw(rgba, bounds, img, image.Point{}, draw.Src)
 
-	// Draw each bounding box
-	for i, obj := range resp.Objects {
+	// Draw each tag at center of bounding box
+	for _, obj := range resp.Objects {
 		if len(obj.BBox) < 4 {
 			continue
 		}
 
-		// Scale bbox from effective dimensions to actual dimensions
-		bbox := ScaleBBox(obj.BBox, effectiveWidth, effectiveHeight, actualWidth, actualHeight)
-		bbox.ID = obj.ID
-		bbox.Label = obj.Label
+		// Scale bbox from normalized 1000 to actual dimensions
+		bbox := ScaleBBox(obj.BBox, actualWidth, actualHeight)
 
-		// Pick color
-		boxColor := boxColors[i%len(boxColors)]
+		// Calculate center of bounding box
+		centerX := (bbox.X1 + bbox.X2) / 2
+		centerY := (bbox.Y1 + bbox.Y2) / 2
 
-		// Draw bounding box
-		DrawRect(rgba, bbox.X1, bbox.Y1, bbox.X2, bbox.Y2, boxColor)
+		// Generate color from hash of (label+id)
+		tagKey := fmt.Sprintf("%s%d", obj.Label, obj.ID)
+		textColor := hashToBrightColor(tagKey)
 
-		// Draw label: "ID: label"
-		label := fmt.Sprintf("%d: %s", obj.ID, obj.Label)
-		DrawLabel(rgba, bbox.X1, bbox.Y1-15, label, color.White, boxColor)
+		// Draw tag: "label: id" at center with black background
+		tag := fmt.Sprintf("%s: %d", obj.Label, obj.ID)
+		DrawLabel(rgba, centerX, centerY, tag, textColor, color.Black)
 	}
 
 	// Re-encode as JPEG
@@ -162,8 +153,8 @@ func AnnotateFrame(jpegData []byte, vlmResponse string, effectiveWidth, effectiv
 		return nil, fmt.Errorf("failed to encode JPEG: %w", err)
 	}
 
-	log.Printf("[Annotate] Drew %d bounding boxes on %dx%d frame (effective: %dx%d)",
-		len(resp.Objects), actualWidth, actualHeight, effectiveWidth, effectiveHeight)
+	log.Printf("[Annotate] Drew %d tags on %dx%d frame (normalized 1000 scaling)",
+		len(resp.Objects), actualWidth, actualHeight)
 	return buf.Bytes(), nil
 }
 

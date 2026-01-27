@@ -77,7 +77,7 @@ func (m *UserJWTManager) ValidateToken(tokenString string) (*UserJWTClaims, erro
 	}
 	log.Printf("[jwt] Validating token: %q...", tokenString[:previewLen])
 
-	token, err := jwt.ParseWithClaims(tokenString, &UserJWTClaims{}, func(token *jwt.Token) (interface{}, error) {
+	token, err := jwt.ParseWithClaims(tokenString, &UserJWTClaims{}, func(token *jwt.Token) (any, error) {
 		// Validate signing method
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			log.Printf("[jwt] Unexpected signing method: %v", token.Header["alg"])

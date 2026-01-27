@@ -11,8 +11,6 @@ import (
 type rollingContext struct {
 	lastFrame        *Frame // Last frame from previous batch
 	previousResponse string  // Last VLM raw response (JSON)
-	effectiveWidth   int     // Model's effective image width (from models.Cache)
-	effectiveHeight  int     // Model's effective image height
 }
 
 // BatchManager accumulates frames and sends them in batches to vLLM
@@ -34,7 +32,7 @@ func NewBatchManager(client *FrameClient, batchSize int, storageBaseDir string) 
 		batchSize:        batchSize,
 		frameBatches:     make(map[string][]*Frame),
 		rollingContexts:  make(map[string]*rollingContext),
-		baseInstruction:  "Analyze these video frames for motion, action, emotion, facial expressions, and subtle details. Describe what you observe and judge the significance of changes.",
+		baseInstruction:  "Analyze these video frames for motion, action, emotion, facial expressions, and subtle details. Detect ALL objects and return bounding boxes in NORMALIZED 1000 COORDINATES (0=top/left, 1000=bottom/right).",
 		storageBaseDir:   storageBaseDir,
 	}
 }
@@ -95,9 +93,13 @@ func (m *BatchManager) sendBatch(serviceID string, frames []*Frame, rollCtx *rol
 			"PREVIOUS ANALYSIS (use for object tracking):",
 			rollCtx.previousResponse,
 			"",
+			"IMPORTANT: Use NORMALIZED 1000 COORDINATES for all bounding boxes.",
+			"- Coordinates range from 0 to 1000",
+			"- 0 = top/left edge, 1000 = bottom/right edge",
+			"- For example: [250, 300, 750, 800] means 25%-75% horizontal and 30%-80% vertical",
+			"",
 			"Detect ALL objects in the current frame. For objects that match previous objects (same type, similar location), use their existing ID.",
 			"For new objects, assign new IDs (continue numbering from previous).",
-			"Provide complete descriptions with accurate positions.",
 			"Focus on motion, action, emotion, facial expressions, and subtle details.",
 			"In the description, reference objects by their IDs in brackets, e.g., 'The person [3] is driving a red car [4]'.",
 		}, "\n")
@@ -122,19 +124,9 @@ func (m *BatchManager) sendBatch(serviceID string, frames []*Frame, rollCtx *rol
 	if len(response.Choices) > 0 {
 		newResponse := response.Choices[0].Message.Content
 
-		// Get effective dimensions from model cache
-		effectiveWidth, effectiveHeight := 1280, 720 // fallback defaults
-		if m.client.ModelCache != nil {
-			if info, err := m.client.ModelCache.GetModelInfo(m.client.Model); err == nil {
-				if info.EffectiveWidth != nil && info.EffectiveHeight != nil {
-					effectiveWidth, effectiveHeight = *info.EffectiveWidth, *info.EffectiveHeight
-				}
-			}
-		}
-
 		// Annotate the last frame with bounding boxes
 		lastFrame := framesToSend[len(framesToSend)-1]
-		annotatedData, err := AnnotateFrame(lastFrame.Data, newResponse, effectiveWidth, effectiveHeight)
+		annotatedData, err := AnnotateFrame(lastFrame.Data, newResponse)
 		if err != nil {
 			log.Printf("[BatchManager] Failed to annotate frame: %v", err)
 			annotatedData = lastFrame.Data // fall back to original
@@ -144,22 +136,20 @@ func (m *BatchManager) sendBatch(serviceID string, frames []*Frame, rollCtx *rol
 		go SaveAnnotatedFrame(annotatedData, serviceID, lastFrame.Sequence, m.storageBaseDir)
 
 		// Update context with annotated frame for next batch's continuity
+		// This is a "set of marks" approach - the model sees previous detections as visual markers
 		m.mu.Lock()
 		if existingCtx := m.rollingContexts[serviceID]; existingCtx != nil {
 			existingCtx.previousResponse = newResponse
 			existingCtx.lastFrame = &Frame{
-				Data:      annotatedData,
+				Data:      annotatedData, // Annotated frame with bounding boxes as visual markers
 				Timestamp: lastFrame.Timestamp,
 				ServiceID: serviceID,
 				Sequence:  lastFrame.Sequence,
 			}
-			existingCtx.effectiveWidth = effectiveWidth
-			existingCtx.effectiveHeight = effectiveHeight
 		}
 		m.mu.Unlock()
 
-		log.Printf("[BatchManager] Service %s: annotated frame (effective: %dx%d)",
-			serviceID, effectiveWidth, effectiveHeight)
+		log.Printf("[BatchManager] Service %s: annotated frame", serviceID)
 	}
 }
 

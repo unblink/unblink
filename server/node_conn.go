@@ -40,7 +40,7 @@ type NodeConn struct {
 	bridgeMu    sync.RWMutex
 
 	// Request/response correlation
-	pendingRequests   map[uint64]chan interface{}
+	pendingRequests   map[uint64]chan any
 	pendingRequestsMu sync.Mutex
 	nextMessageID     uint64
 	messageIDMu       sync.Mutex
@@ -55,7 +55,7 @@ func NewNodeConn(wsConn *websocket.Conn, server *Server) *NodeConn {
 		shutdown:        make(chan struct{}),
 		bridges:         make(map[string]*Bridge),
 		bridgeChans:     make(map[string]chan []byte),
-		pendingRequests: make(map[uint64]chan interface{}),
+		pendingRequests: make(map[uint64]chan any),
 	}
 }
 
@@ -366,7 +366,7 @@ func (nc *NodeConn) OpenBridge(ctx context.Context, serviceID, serviceURL string
 
 	// Create response channel for correlation
 	msgID := nc.getNextMessageID()
-	respChan := make(chan interface{}, 1)
+	respChan := make(chan any, 1)
 
 	nc.pendingRequestsMu.Lock()
 	nc.pendingRequests[msgID] = respChan
@@ -478,7 +478,7 @@ func (nc *NodeConn) CloseBridge(ctx context.Context, bridgeID string) error {
 
 	// Send CloseBridgeRequest to node
 	msgID := nc.getNextMessageID()
-	respChan := make(chan interface{}, 1)
+	respChan := make(chan any, 1)
 
 	nc.pendingRequestsMu.Lock()
 	nc.pendingRequests[msgID] = respChan
@@ -585,7 +585,7 @@ func (nc *NodeConn) Close() {
 		close(ch)
 		log.Printf("[NodeConn %s] Closed pending request: %d", nc.nodeID, msgID)
 	}
-	nc.pendingRequests = make(map[uint64]chan interface{})
+	nc.pendingRequests = make(map[uint64]chan any)
 	nc.pendingRequestsMu.Unlock()
 
 	if nc.server != nil && nc.nodeID != "" {

@@ -80,15 +80,6 @@ func (c *FrameClient) SendFrameBatchWithStructuredOutput(ctx context.Context, fr
 		}))
 	}
 
-	// Determine max tokens from cache
-	maxTokens := 2000
-	if c.ModelCache != nil {
-		if cachedTokens, err := c.ModelCache.GetMaxTokens(c.Model); err == nil {
-			// Use 25% of max context for response
-			maxTokens = min(cachedTokens/4, 2000)
-		}
-	}
-
 	// Build JSON schema for structured output
 	schema := GenerateVLMResponseSchema()
 	schemaParam := openai.ResponseFormatJSONSchemaJSONSchemaParam{
@@ -104,7 +95,6 @@ func (c *FrameClient) SendFrameBatchWithStructuredOutput(ctx context.Context, fr
 		Messages: []openai.ChatCompletionMessageParamUnion{
 			openai.UserMessage(content),
 		},
-		MaxTokens: openai.Int(int64(maxTokens)),
 		ResponseFormat: openai.ChatCompletionNewParamsResponseFormatUnion{
 			OfJSONSchema: &openai.ResponseFormatJSONSchemaParam{JSONSchema: schemaParam},
 		},

@@ -13,16 +13,16 @@ import (
 type StorageType string
 
 const (
-	StorageTypeFrame  StorageType = "frame"  // JPEG video frame
-	StorageTypeClip   StorageType = "clip"   // Video clip
+	StorageTypeFrame    StorageType = "frame"    // JPEG video frame
+	StorageTypeClip     StorageType = "clip"     // Video clip
 	StorageTypeSnapshot StorageType = "snapshot" // Snapshot image
 )
 
 // FrameMetadata holds additional metadata for frames
 type FrameMetadata struct {
-	Sequence int64  `json:"sequence"`
-	Width    int    `json:"width,omitempty"`
-	Height   int    `json:"height,omitempty"`
+	Sequence int64 `json:"sequence"`
+	Width    int   `json:"width,omitempty"`
+	Height   int   `json:"height,omitempty"`
 }
 
 // StorageEntry represents a row in the storage table
@@ -86,7 +86,7 @@ func (c *Client) ListStorageByService(serviceID string, storageType StorageType,
 		FROM storage
 		WHERE service_id = $1
 	`
-	args := []interface{}{serviceID}
+	args := []any{serviceID}
 
 	argOffset := 2
 	if storageType != "" {
