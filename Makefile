@@ -23,13 +23,12 @@ generate-ts:
 	rm -rf app/gen
 	cd proto && npx buf generate --template buf.gen.ts.yaml
 
-# Run the Go server
-run-server:
-	go run cmd/server/main.go
-
-# Development: run server
-dev: run-server
-
 # Drop database schema
 drop-schema:
 	go run cmd/server/main.go -drop
+
+
+# Typecheck (ts and go)
+typecheck:
+	cd app && npx tsc --noEmit
+	go vet ./...

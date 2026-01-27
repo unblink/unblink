@@ -12,6 +12,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"time"
 
 	"github.com/invopop/jsonschema"
 	"golang.org/x/image/font"
@@ -159,7 +160,7 @@ func AnnotateFrame(jpegData []byte, vlmResponse string) ([]byte, error) {
 }
 
 // SaveAnnotatedFrame writes annotated frame to disk for debugging
-func SaveAnnotatedFrame(data []byte, serviceID string, sequence int64, baseDir string) error {
+func SaveAnnotatedFrame(data []byte, serviceID string, timestamp time.Time, baseDir string) error {
 	if baseDir == "" {
 		return nil // No storage configured
 	}
@@ -170,8 +171,8 @@ func SaveAnnotatedFrame(data []byte, serviceID string, sequence int64, baseDir s
 		return fmt.Errorf("failed to create annotated directory: %w", err)
 	}
 
-	// Write file
-	filename := filepath.Join(annotatedDir, fmt.Sprintf("%019d.jpg", sequence))
+	// Write file with timestamp as filename (Unix nanos)
+	filename := filepath.Join(annotatedDir, fmt.Sprintf("%019d.jpg", timestamp.UnixNano()))
 	if err := os.WriteFile(filename, data, 0644); err != nil {
 		return fmt.Errorf("failed to write annotated frame: %w", err)
 	}

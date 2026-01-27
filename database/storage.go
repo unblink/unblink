@@ -13,16 +13,13 @@ import (
 type StorageType string
 
 const (
-	StorageTypeFrame    StorageType = "frame"    // JPEG video frame
-	StorageTypeClip     StorageType = "clip"     // Video clip
-	StorageTypeSnapshot StorageType = "snapshot" // Snapshot image
+	StorageTypeFrame StorageType = "frame" // JPEG video frame
 )
 
 // FrameMetadata holds additional metadata for frames
 type FrameMetadata struct {
-	Sequence int64 `json:"sequence"`
-	Width    int   `json:"width,omitempty"`
-	Height   int   `json:"height,omitempty"`
+	Width  int `json:"width,omitempty"`
+	Height int `json:"height,omitempty"`
 }
 
 // StorageEntry represents a row in the storage table
@@ -38,15 +35,15 @@ type StorageEntry struct {
 	Metadata    string // JSON-encoded metadata
 }
 
-// SaveFrame saves frame metadata to the database
-func (c *Client) SaveFrame(serviceID, storagePath string, timestamp time.Time, fileSize int64, metadata *FrameMetadata) error {
+// SaveStorageItem saves storage item metadata to the database
+func (c *Client) SaveStorageItem(serviceID, storagePath string, timestamp time.Time, fileSize int64, storageType StorageType, contentType string, metadata *FrameMetadata) error {
 	id := uuid.New().String()
 
 	var metadataJSON sql.NullString
 	if metadata != nil {
 		metadataBytes, err := json.Marshal(metadata)
 		if err != nil {
-			return fmt.Errorf("failed to marshal frame metadata: %w", err)
+			return fmt.Errorf("failed to marshal storage metadata: %w", err)
 		}
 		metadataJSON = sql.NullString{String: string(metadataBytes), Valid: true}
 	}
@@ -57,17 +54,17 @@ func (c *Client) SaveFrame(serviceID, storagePath string, timestamp time.Time, f
 	`
 
 	_, err := c.db.Exec(insertSQL,
-		id, serviceID, StorageTypeFrame, storagePath, timestamp, fileSize, "image/jpeg", metadataJSON,
+		id, serviceID, storageType, storagePath, timestamp, fileSize, contentType, metadataJSON,
 	)
 	if err != nil {
-		return fmt.Errorf("failed to save frame metadata: %w", err)
+		return fmt.Errorf("failed to save storage item: %w", err)
 	}
 
 	return nil
 }
 
-// ListStorageByService lists storage entries for a service from the database
-func (c *Client) ListStorageByService(serviceID string, storageType StorageType, limit, offset int64) ([]*StorageEntry, int64, error) {
+// ListStorageItemsForService lists storage entries for a service from the database
+func (c *Client) ListStorageItemsForService(serviceID string, storageType string, limit, offset int64) ([]*StorageEntry, int64, error) {
 	// Get total count
 	var total int64
 	countSQL := `SELECT COUNT(*) FROM storage WHERE service_id = $1`
@@ -138,8 +135,45 @@ func (c *Client) ListStorageByService(serviceID string, storageType StorageType,
 	return entries, total, nil
 }
 
-// DeleteOldStorage deletes storage entries older than the specified duration
-func (c *Client) DeleteOldStorage(serviceID string, storageType StorageType, olderThanSeconds int64) (int64, error) {
+// GetStorageItemInfo gets metadata for a specific storage item by ID
+func (c *Client) GetStorageItemInfo(itemID string) (*StorageEntry, error) {
+	querySQL := `
+		SELECT id, service_id, type, storage_path, timestamp, file_size, content_type, created_at, metadata
+		FROM storage
+		WHERE id = $1
+	`
+
+	var entry StorageEntry
+	var metadata sql.NullString
+
+	err := c.db.QueryRow(querySQL, itemID).Scan(
+		&entry.ID,
+		&entry.ServiceID,
+		&entry.Type,
+		&entry.StoragePath,
+		&entry.Timestamp,
+		&entry.FileSize,
+		&entry.ContentType,
+		&entry.CreatedAt,
+		&metadata,
+	)
+
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, fmt.Errorf("storage item not found")
+		}
+		return nil, fmt.Errorf("failed to get storage item info: %w", err)
+	}
+
+	if metadata.Valid {
+		entry.Metadata = metadata.String
+	}
+
+	return &entry, nil
+}
+
+// DeleteOldStorageItems deletes storage entries older than the specified duration
+func (c *Client) DeleteOldStorageItems(serviceID string, storageType string, olderThanSeconds int64) (int64, error) {
 	deleteSQL := `
 		DELETE FROM storage
 		WHERE service_id = $1

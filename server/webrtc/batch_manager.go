@@ -133,7 +133,7 @@ func (m *BatchManager) sendBatch(serviceID string, frames []*Frame, rollCtx *rol
 		}
 
 		// Save annotated frame to disk for debugging
-		go SaveAnnotatedFrame(annotatedData, serviceID, lastFrame.Sequence, m.storageBaseDir)
+		go SaveAnnotatedFrame(annotatedData, serviceID, lastFrame.Timestamp, m.storageBaseDir)
 
 		// Update context with annotated frame for next batch's continuity
 		// This is a "set of marks" approach - the model sees previous detections as visual markers
@@ -144,7 +144,6 @@ func (m *BatchManager) sendBatch(serviceID string, frames []*Frame, rollCtx *rol
 				Data:      annotatedData, // Annotated frame with bounding boxes as visual markers
 				Timestamp: lastFrame.Timestamp,
 				ServiceID: serviceID,
-				Sequence:  lastFrame.Sequence,
 			}
 		}
 		m.mu.Unlock()

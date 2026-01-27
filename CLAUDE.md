@@ -5,8 +5,7 @@ Refer to Makefile if you have any doubt.
 For catching syntax errors:
 
 ```
-cd full_path_to_app && npx tsc --skipLibCheck
-cd full_path_to_server && go vet ./...
+make typecheck
 ```
 
 # Important

@@ -138,7 +138,7 @@ func main() {
 
 	// Create storage service
 	storageService := service.NewStorageService(dbClient, &service.StorageConfig{
-		FramesBaseDir: config.FramesBaseDir(),
+		StorageBaseDir: config.FramesBaseDir(),
 	})
 
 	// Create HTTP handler with Connect RPC
@@ -223,7 +223,7 @@ func main() {
 	log.Printf("  - Storage RPC: /service.v1.StorageService/*")
 	log.Printf("  - WebRTC RPC: /webrtc.v1.WebRTCService/*")
 	log.Printf("  - Node WebSocket: /node/connect")
-	log.Printf("  - Frames HTTP: /frames/{serviceID}/{frameID}.jpg")
+	log.Printf("  - Storage HTTP: /storage/{itemID}")
 
 	// Use h2c for HTTP/2 without TLS
 	h2s := &http2.Server{}

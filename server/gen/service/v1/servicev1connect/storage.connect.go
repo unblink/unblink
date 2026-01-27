@@ -33,29 +33,25 @@ const (
 // reflection-formatted method names, remove the leading slash and convert the remaining slash to a
 // period.
 const (
-	// StorageServiceListFramesProcedure is the fully-qualified name of the StorageService's ListFrames
-	// RPC.
-	StorageServiceListFramesProcedure = "/service.v1.StorageService/ListFrames"
-	// StorageServiceGetFrameProcedure is the fully-qualified name of the StorageService's GetFrame RPC.
-	StorageServiceGetFrameProcedure = "/service.v1.StorageService/GetFrame"
-	// StorageServiceListServicesWithFramesProcedure is the fully-qualified name of the StorageService's
-	// ListServicesWithFrames RPC.
-	StorageServiceListServicesWithFramesProcedure = "/service.v1.StorageService/ListServicesWithFrames"
-	// StorageServiceDeleteOldFramesProcedure is the fully-qualified name of the StorageService's
-	// DeleteOldFrames RPC.
-	StorageServiceDeleteOldFramesProcedure = "/service.v1.StorageService/DeleteOldFrames"
+	// StorageServiceListStorageItemsProcedure is the fully-qualified name of the StorageService's
+	// ListStorageItems RPC.
+	StorageServiceListStorageItemsProcedure = "/service.v1.StorageService/ListStorageItems"
+	// StorageServiceGetStorageItemProcedure is the fully-qualified name of the StorageService's
+	// GetStorageItem RPC.
+	StorageServiceGetStorageItemProcedure = "/service.v1.StorageService/GetStorageItem"
+	// StorageServiceDeleteOldStorageItemsProcedure is the fully-qualified name of the StorageService's
+	// DeleteOldStorageItems RPC.
+	StorageServiceDeleteOldStorageItemsProcedure = "/service.v1.StorageService/DeleteOldStorageItems"
 )
 
 // StorageServiceClient is a client for the service.v1.StorageService service.
 type StorageServiceClient interface {
-	// List frames for a service
-	ListFrames(context.Context, *connect.Request[v1.ListFramesRequest]) (*connect.Response[v1.ListFramesResponse], error)
-	// Get frame metadata
-	GetFrame(context.Context, *connect.Request[v1.GetFrameRequest]) (*connect.Response[v1.GetFrameResponse], error)
-	// List services with frames for a node
-	ListServicesWithFrames(context.Context, *connect.Request[v1.ListServicesWithFramesRequest]) (*connect.Response[v1.ListServicesWithFramesResponse], error)
-	// Delete old frames (by time)
-	DeleteOldFrames(context.Context, *connect.Request[v1.DeleteOldFramesRequest]) (*connect.Response[v1.DeleteOldFramesResponse], error)
+	// List storage items for a service
+	ListStorageItems(context.Context, *connect.Request[v1.ListStorageItemsRequest]) (*connect.Response[v1.ListStorageItemsResponse], error)
+	// Get storage item metadata
+	GetStorageItem(context.Context, *connect.Request[v1.GetStorageItemRequest]) (*connect.Response[v1.GetStorageItemResponse], error)
+	// Delete old storage items (by time)
+	DeleteOldStorageItems(context.Context, *connect.Request[v1.DeleteOldStorageItemsRequest]) (*connect.Response[v1.DeleteOldStorageItemsResponse], error)
 }
 
 // NewStorageServiceClient constructs a client for the service.v1.StorageService service. By
@@ -69,28 +65,22 @@ func NewStorageServiceClient(httpClient connect.HTTPClient, baseURL string, opts
 	baseURL = strings.TrimRight(baseURL, "/")
 	storageServiceMethods := v1.File_service_v1_storage_proto.Services().ByName("StorageService").Methods()
 	return &storageServiceClient{
-		listFrames: connect.NewClient[v1.ListFramesRequest, v1.ListFramesResponse](
+		listStorageItems: connect.NewClient[v1.ListStorageItemsRequest, v1.ListStorageItemsResponse](
 			httpClient,
-			baseURL+StorageServiceListFramesProcedure,
-			connect.WithSchema(storageServiceMethods.ByName("ListFrames")),
+			baseURL+StorageServiceListStorageItemsProcedure,
+			connect.WithSchema(storageServiceMethods.ByName("ListStorageItems")),
 			connect.WithClientOptions(opts...),
 		),
-		getFrame: connect.NewClient[v1.GetFrameRequest, v1.GetFrameResponse](
+		getStorageItem: connect.NewClient[v1.GetStorageItemRequest, v1.GetStorageItemResponse](
 			httpClient,
-			baseURL+StorageServiceGetFrameProcedure,
-			connect.WithSchema(storageServiceMethods.ByName("GetFrame")),
+			baseURL+StorageServiceGetStorageItemProcedure,
+			connect.WithSchema(storageServiceMethods.ByName("GetStorageItem")),
 			connect.WithClientOptions(opts...),
 		),
-		listServicesWithFrames: connect.NewClient[v1.ListServicesWithFramesRequest, v1.ListServicesWithFramesResponse](
+		deleteOldStorageItems: connect.NewClient[v1.DeleteOldStorageItemsRequest, v1.DeleteOldStorageItemsResponse](
 			httpClient,
-			baseURL+StorageServiceListServicesWithFramesProcedure,
-			connect.WithSchema(storageServiceMethods.ByName("ListServicesWithFrames")),
-			connect.WithClientOptions(opts...),
-		),
-		deleteOldFrames: connect.NewClient[v1.DeleteOldFramesRequest, v1.DeleteOldFramesResponse](
-			httpClient,
-			baseURL+StorageServiceDeleteOldFramesProcedure,
-			connect.WithSchema(storageServiceMethods.ByName("DeleteOldFrames")),
+			baseURL+StorageServiceDeleteOldStorageItemsProcedure,
+			connect.WithSchema(storageServiceMethods.ByName("DeleteOldStorageItems")),
 			connect.WithClientOptions(opts...),
 		),
 	}
@@ -98,42 +88,34 @@ func NewStorageServiceClient(httpClient connect.HTTPClient, baseURL string, opts
 
 // storageServiceClient implements StorageServiceClient.
 type storageServiceClient struct {
-	listFrames             *connect.Client[v1.ListFramesRequest, v1.ListFramesResponse]
-	getFrame               *connect.Client[v1.GetFrameRequest, v1.GetFrameResponse]
-	listServicesWithFrames *connect.Client[v1.ListServicesWithFramesRequest, v1.ListServicesWithFramesResponse]
-	deleteOldFrames        *connect.Client[v1.DeleteOldFramesRequest, v1.DeleteOldFramesResponse]
+	listStorageItems      *connect.Client[v1.ListStorageItemsRequest, v1.ListStorageItemsResponse]
+	getStorageItem        *connect.Client[v1.GetStorageItemRequest, v1.GetStorageItemResponse]
+	deleteOldStorageItems *connect.Client[v1.DeleteOldStorageItemsRequest, v1.DeleteOldStorageItemsResponse]
 }
 
-// ListFrames calls service.v1.StorageService.ListFrames.
-func (c *storageServiceClient) ListFrames(ctx context.Context, req *connect.Request[v1.ListFramesRequest]) (*connect.Response[v1.ListFramesResponse], error) {
-	return c.listFrames.CallUnary(ctx, req)
+// ListStorageItems calls service.v1.StorageService.ListStorageItems.
+func (c *storageServiceClient) ListStorageItems(ctx context.Context, req *connect.Request[v1.ListStorageItemsRequest]) (*connect.Response[v1.ListStorageItemsResponse], error) {
+	return c.listStorageItems.CallUnary(ctx, req)
 }
 
-// GetFrame calls service.v1.StorageService.GetFrame.
-func (c *storageServiceClient) GetFrame(ctx context.Context, req *connect.Request[v1.GetFrameRequest]) (*connect.Response[v1.GetFrameResponse], error) {
-	return c.getFrame.CallUnary(ctx, req)
+// GetStorageItem calls service.v1.StorageService.GetStorageItem.
+func (c *storageServiceClient) GetStorageItem(ctx context.Context, req *connect.Request[v1.GetStorageItemRequest]) (*connect.Response[v1.GetStorageItemResponse], error) {
+	return c.getStorageItem.CallUnary(ctx, req)
 }
 
-// ListServicesWithFrames calls service.v1.StorageService.ListServicesWithFrames.
-func (c *storageServiceClient) ListServicesWithFrames(ctx context.Context, req *connect.Request[v1.ListServicesWithFramesRequest]) (*connect.Response[v1.ListServicesWithFramesResponse], error) {
-	return c.listServicesWithFrames.CallUnary(ctx, req)
-}
-
-// DeleteOldFrames calls service.v1.StorageService.DeleteOldFrames.
-func (c *storageServiceClient) DeleteOldFrames(ctx context.Context, req *connect.Request[v1.DeleteOldFramesRequest]) (*connect.Response[v1.DeleteOldFramesResponse], error) {
-	return c.deleteOldFrames.CallUnary(ctx, req)
+// DeleteOldStorageItems calls service.v1.StorageService.DeleteOldStorageItems.
+func (c *storageServiceClient) DeleteOldStorageItems(ctx context.Context, req *connect.Request[v1.DeleteOldStorageItemsRequest]) (*connect.Response[v1.DeleteOldStorageItemsResponse], error) {
+	return c.deleteOldStorageItems.CallUnary(ctx, req)
 }
 
 // StorageServiceHandler is an implementation of the service.v1.StorageService service.
 type StorageServiceHandler interface {
-	// List frames for a service
-	ListFrames(context.Context, *connect.Request[v1.ListFramesRequest]) (*connect.Response[v1.ListFramesResponse], error)
-	// Get frame metadata
-	GetFrame(context.Context, *connect.Request[v1.GetFrameRequest]) (*connect.Response[v1.GetFrameResponse], error)
-	// List services with frames for a node
-	ListServicesWithFrames(context.Context, *connect.Request[v1.ListServicesWithFramesRequest]) (*connect.Response[v1.ListServicesWithFramesResponse], error)
-	// Delete old frames (by time)
-	DeleteOldFrames(context.Context, *connect.Request[v1.DeleteOldFramesRequest]) (*connect.Response[v1.DeleteOldFramesResponse], error)
+	// List storage items for a service
+	ListStorageItems(context.Context, *connect.Request[v1.ListStorageItemsRequest]) (*connect.Response[v1.ListStorageItemsResponse], error)
+	// Get storage item metadata
+	GetStorageItem(context.Context, *connect.Request[v1.GetStorageItemRequest]) (*connect.Response[v1.GetStorageItemResponse], error)
+	// Delete old storage items (by time)
+	DeleteOldStorageItems(context.Context, *connect.Request[v1.DeleteOldStorageItemsRequest]) (*connect.Response[v1.DeleteOldStorageItemsResponse], error)
 }
 
 // NewStorageServiceHandler builds an HTTP handler from the service implementation. It returns the
@@ -143,40 +125,32 @@ type StorageServiceHandler interface {
 // and JSON codecs. They also support gzip compression.
 func NewStorageServiceHandler(svc StorageServiceHandler, opts ...connect.HandlerOption) (string, http.Handler) {
 	storageServiceMethods := v1.File_service_v1_storage_proto.Services().ByName("StorageService").Methods()
-	storageServiceListFramesHandler := connect.NewUnaryHandler(
-		StorageServiceListFramesProcedure,
-		svc.ListFrames,
-		connect.WithSchema(storageServiceMethods.ByName("ListFrames")),
+	storageServiceListStorageItemsHandler := connect.NewUnaryHandler(
+		StorageServiceListStorageItemsProcedure,
+		svc.ListStorageItems,
+		connect.WithSchema(storageServiceMethods.ByName("ListStorageItems")),
 		connect.WithHandlerOptions(opts...),
 	)
-	storageServiceGetFrameHandler := connect.NewUnaryHandler(
-		StorageServiceGetFrameProcedure,
-		svc.GetFrame,
-		connect.WithSchema(storageServiceMethods.ByName("GetFrame")),
+	storageServiceGetStorageItemHandler := connect.NewUnaryHandler(
+		StorageServiceGetStorageItemProcedure,
+		svc.GetStorageItem,
+		connect.WithSchema(storageServiceMethods.ByName("GetStorageItem")),
 		connect.WithHandlerOptions(opts...),
 	)
-	storageServiceListServicesWithFramesHandler := connect.NewUnaryHandler(
-		StorageServiceListServicesWithFramesProcedure,
-		svc.ListServicesWithFrames,
-		connect.WithSchema(storageServiceMethods.ByName("ListServicesWithFrames")),
-		connect.WithHandlerOptions(opts...),
-	)
-	storageServiceDeleteOldFramesHandler := connect.NewUnaryHandler(
-		StorageServiceDeleteOldFramesProcedure,
-		svc.DeleteOldFrames,
-		connect.WithSchema(storageServiceMethods.ByName("DeleteOldFrames")),
+	storageServiceDeleteOldStorageItemsHandler := connect.NewUnaryHandler(
+		StorageServiceDeleteOldStorageItemsProcedure,
+		svc.DeleteOldStorageItems,
+		connect.WithSchema(storageServiceMethods.ByName("DeleteOldStorageItems")),
 		connect.WithHandlerOptions(opts...),
 	)
 	return "/service.v1.StorageService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
-		case StorageServiceListFramesProcedure:
-			storageServiceListFramesHandler.ServeHTTP(w, r)
-		case StorageServiceGetFrameProcedure:
-			storageServiceGetFrameHandler.ServeHTTP(w, r)
-		case StorageServiceListServicesWithFramesProcedure:
-			storageServiceListServicesWithFramesHandler.ServeHTTP(w, r)
-		case StorageServiceDeleteOldFramesProcedure:
-			storageServiceDeleteOldFramesHandler.ServeHTTP(w, r)
+		case StorageServiceListStorageItemsProcedure:
+			storageServiceListStorageItemsHandler.ServeHTTP(w, r)
+		case StorageServiceGetStorageItemProcedure:
+			storageServiceGetStorageItemHandler.ServeHTTP(w, r)
+		case StorageServiceDeleteOldStorageItemsProcedure:
+			storageServiceDeleteOldStorageItemsHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -186,18 +160,14 @@ func NewStorageServiceHandler(svc StorageServiceHandler, opts ...connect.Handler
 // UnimplementedStorageServiceHandler returns CodeUnimplemented from all methods.
 type UnimplementedStorageServiceHandler struct{}
 
-func (UnimplementedStorageServiceHandler) ListFrames(context.Context, *connect.Request[v1.ListFramesRequest]) (*connect.Response[v1.ListFramesResponse], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("service.v1.StorageService.ListFrames is not implemented"))
+func (UnimplementedStorageServiceHandler) ListStorageItems(context.Context, *connect.Request[v1.ListStorageItemsRequest]) (*connect.Response[v1.ListStorageItemsResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("service.v1.StorageService.ListStorageItems is not implemented"))
 }
 
-func (UnimplementedStorageServiceHandler) GetFrame(context.Context, *connect.Request[v1.GetFrameRequest]) (*connect.Response[v1.GetFrameResponse], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("service.v1.StorageService.GetFrame is not implemented"))
+func (UnimplementedStorageServiceHandler) GetStorageItem(context.Context, *connect.Request[v1.GetStorageItemRequest]) (*connect.Response[v1.GetStorageItemResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("service.v1.StorageService.GetStorageItem is not implemented"))
 }
 
-func (UnimplementedStorageServiceHandler) ListServicesWithFrames(context.Context, *connect.Request[v1.ListServicesWithFramesRequest]) (*connect.Response[v1.ListServicesWithFramesResponse], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("service.v1.StorageService.ListServicesWithFrames is not implemented"))
-}
-
-func (UnimplementedStorageServiceHandler) DeleteOldFrames(context.Context, *connect.Request[v1.DeleteOldFramesRequest]) (*connect.Response[v1.DeleteOldFramesResponse], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("service.v1.StorageService.DeleteOldFrames is not implemented"))
+func (UnimplementedStorageServiceHandler) DeleteOldStorageItems(context.Context, *connect.Request[v1.DeleteOldStorageItemsRequest]) (*connect.Response[v1.DeleteOldStorageItemsResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("service.v1.StorageService.DeleteOldStorageItems is not implemented"))
 }

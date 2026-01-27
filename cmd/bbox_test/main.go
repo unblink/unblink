@@ -165,7 +165,7 @@ Also provide a description of the scene.`
 	}
 
 	log.Printf("\n========== RAW VLM RESPONSE ==========")
-	log.Printf(vlmResp.Choices[0].Message.Content)
+	log.Printf("%s", vlmResp.Choices[0].Message.Content)
 	log.Printf("====================================\n")
 
 	// Parse JSON response

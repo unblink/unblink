@@ -12,7 +12,7 @@ import (
 // Storage handles saving frames to disk
 type Storage struct {
 	baseDir string // Base directory for frame storage (empty = no storage)
-	onSaved func(serviceID, frameID string, framePath string, timestamp time.Time, fileSize int64, sequence int64) // Callback after frame is saved
+	onSaved func(serviceID, frameID string, framePath string, timestamp time.Time, fileSize int64) // Callback after frame is saved
 }
 
 // NewStorage creates a new storage handler
@@ -23,7 +23,7 @@ func NewStorage(baseDir string) *Storage {
 }
 
 // SetOnSaved sets the callback to be called after a frame is saved
-func (fs *Storage) SetOnSaved(onSaved func(serviceID, frameID string, framePath string, timestamp time.Time, fileSize int64, sequence int64)) {
+func (fs *Storage) SetOnSaved(onSaved func(serviceID, frameID string, framePath string, timestamp time.Time, fileSize int64)) {
 	fs.onSaved = onSaved
 }
 
@@ -45,13 +45,13 @@ func (fs *Storage) Save(serviceID string, frame *Frame) {
 	if err := os.WriteFile(framePath, frame.Data, 0644); err != nil {
 		log.Printf("[Storage] Failed to save frame %s: %v", frameID, err)
 	} else {
-		log.Printf("[Storage] Saved frame seq=%d service=%s size=%d path=%s", frame.Sequence, serviceID, len(frame.Data), framePath)
+		log.Printf("[Storage] Saved frame service=%s size=%d path=%s", serviceID, len(frame.Data), framePath)
 
 		// Call callback if registered (e.g., to save metadata to database)
 		if fs.onSaved != nil {
 			// Note: We're passing frame.Timestamp which is when the frame was captured
 			// The database should use created_at as the DB insertion time
-			fs.onSaved(serviceID, frameID, framePath, frame.Timestamp, int64(len(frame.Data)), frame.Sequence)
+			fs.onSaved(serviceID, frameID, framePath, frame.Timestamp, int64(len(frame.Data)))
 		}
 	}
 }

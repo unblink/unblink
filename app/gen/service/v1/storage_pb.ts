@@ -6,22 +6,20 @@ import type { GenFile, GenMessage, GenService } from "@bufbuild/protobuf/codegen
 import { fileDesc, messageDesc, serviceDesc } from "@bufbuild/protobuf/codegenv2";
 import type { Timestamp } from "@bufbuild/protobuf/wkt";
 import { file_google_protobuf_timestamp } from "@bufbuild/protobuf/wkt";
-import type { Service } from "./service_pb";
-import { file_service_v1_service } from "./service_pb";
 import type { Message } from "@bufbuild/protobuf";
 
 /**
  * Describes the file service/v1/storage.proto.
  */
 export const file_service_v1_storage: GenFile = /*@__PURE__*/
-  fileDesc("ChhzZXJ2aWNlL3YxL3N0b3JhZ2UucHJvdG8SCnNlcnZpY2UudjEihAEKBUZyYW1lEgoKAmlkGAEgASgJEhIKCnNlcnZpY2VfaWQYAiABKAkSEAoIc2VxdWVuY2UYAyABKAMSDAoEc2l6ZRgEIAEoAxItCgl0aW1lc3RhbXAYBSABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEgwKBHBhdGgYBiABKAkiRgoRTGlzdEZyYW1lc1JlcXVlc3QSEgoKc2VydmljZV9pZBgBIAEoCRINCgVsaW1pdBgCIAEoAxIOCgZvZmZzZXQYAyABKAMiRgoSTGlzdEZyYW1lc1Jlc3BvbnNlEiEKBmZyYW1lcxgBIAMoCzIRLnNlcnZpY2UudjEuRnJhbWUSDQoFdG90YWwYAiABKAMiIwoPR2V0RnJhbWVSZXF1ZXN0EhAKCGZyYW1lX2lkGAEgASgJIjQKEEdldEZyYW1lUmVzcG9uc2USIAoFZnJhbWUYASABKAsyES5zZXJ2aWNlLnYxLkZyYW1lIjAKHUxpc3RTZXJ2aWNlc1dpdGhGcmFtZXNSZXF1ZXN0Eg8KB25vZGVfaWQYASABKAkiTQoeTGlzdFNlcnZpY2VzV2l0aEZyYW1lc1Jlc3BvbnNlEisKCHNlcnZpY2VzGAEgAygLMhkuc2VydmljZS52MS5TZXJ2aWNlRnJhbWVzIm4KDVNlcnZpY2VGcmFtZXMSJAoHc2VydmljZRgBIAEoCzITLnNlcnZpY2UudjEuU2VydmljZRIhCgZmcmFtZXMYAiADKAsyES5zZXJ2aWNlLnYxLkZyYW1lEhQKDHRvdGFsX2ZyYW1lcxgDIAEoAyJIChZEZWxldGVPbGRGcmFtZXNSZXF1ZXN0EhIKCnNlcnZpY2VfaWQYASABKAkSGgoSb2xkZXJfdGhhbl9zZWNvbmRzGAIgASgDIjAKF0RlbGV0ZU9sZEZyYW1lc1Jlc3BvbnNlEhUKDWRlbGV0ZWRfY291bnQYASABKAMy8QIKDlN0b3JhZ2VTZXJ2aWNlEksKCkxpc3RGcmFtZXMSHS5zZXJ2aWNlLnYxLkxpc3RGcmFtZXNSZXF1ZXN0Gh4uc2VydmljZS52MS5MaXN0RnJhbWVzUmVzcG9uc2USRQoIR2V0RnJhbWUSGy5zZXJ2aWNlLnYxLkdldEZyYW1lUmVxdWVzdBocLnNlcnZpY2UudjEuR2V0RnJhbWVSZXNwb25zZRJvChZMaXN0U2VydmljZXNXaXRoRnJhbWVzEikuc2VydmljZS52MS5MaXN0U2VydmljZXNXaXRoRnJhbWVzUmVxdWVzdBoqLnNlcnZpY2UudjEuTGlzdFNlcnZpY2VzV2l0aEZyYW1lc1Jlc3BvbnNlEloKD0RlbGV0ZU9sZEZyYW1lcxIiLnNlcnZpY2UudjEuRGVsZXRlT2xkRnJhbWVzUmVxdWVzdBojLnNlcnZpY2UudjEuRGVsZXRlT2xkRnJhbWVzUmVzcG9uc2VCJVojdW5iL3NlcnZlci9nZW4vc2VydmljZS92MTtzZXJ2aWNldjFiBnByb3RvMw", [file_google_protobuf_timestamp, file_service_v1_service]);
+  fileDesc("ChhzZXJ2aWNlL3YxL3N0b3JhZ2UucHJvdG8SCnNlcnZpY2UudjEieAoLU3RvcmFnZUl0ZW0SCgoCaWQYASABKAkSEgoKc2VydmljZV9pZBgCIAEoCRIMCgR0eXBlGAMgASgJEgwKBHNpemUYBCABKAMSLQoJdGltZXN0YW1wGAUgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcCJaChdMaXN0U3RvcmFnZUl0ZW1zUmVxdWVzdBISCgpzZXJ2aWNlX2lkGAEgASgJEgwKBHR5cGUYAiABKAkSDQoFbGltaXQYAyABKAMSDgoGb2Zmc2V0GAQgASgDIlEKGExpc3RTdG9yYWdlSXRlbXNSZXNwb25zZRImCgVpdGVtcxgBIAMoCzIXLnNlcnZpY2UudjEuU3RvcmFnZUl0ZW0SDQoFdG90YWwYAiABKAMiKAoVR2V0U3RvcmFnZUl0ZW1SZXF1ZXN0Eg8KB2l0ZW1faWQYASABKAkiPwoWR2V0U3RvcmFnZUl0ZW1SZXNwb25zZRIlCgRpdGVtGAEgASgLMhcuc2VydmljZS52MS5TdG9yYWdlSXRlbSJcChxEZWxldGVPbGRTdG9yYWdlSXRlbXNSZXF1ZXN0EhIKCnNlcnZpY2VfaWQYASABKAkSGgoSb2xkZXJfdGhhbl9zZWNvbmRzGAIgASgDEgwKBHR5cGUYAyABKAkiNgodRGVsZXRlT2xkU3RvcmFnZUl0ZW1zUmVzcG9uc2USFQoNZGVsZXRlZF9jb3VudBgBIAEoAzK2AgoOU3RvcmFnZVNlcnZpY2USXQoQTGlzdFN0b3JhZ2VJdGVtcxIjLnNlcnZpY2UudjEuTGlzdFN0b3JhZ2VJdGVtc1JlcXVlc3QaJC5zZXJ2aWNlLnYxLkxpc3RTdG9yYWdlSXRlbXNSZXNwb25zZRJXCg5HZXRTdG9yYWdlSXRlbRIhLnNlcnZpY2UudjEuR2V0U3RvcmFnZUl0ZW1SZXF1ZXN0GiIuc2VydmljZS52MS5HZXRTdG9yYWdlSXRlbVJlc3BvbnNlEmwKFURlbGV0ZU9sZFN0b3JhZ2VJdGVtcxIoLnNlcnZpY2UudjEuRGVsZXRlT2xkU3RvcmFnZUl0ZW1zUmVxdWVzdBopLnNlcnZpY2UudjEuRGVsZXRlT2xkU3RvcmFnZUl0ZW1zUmVzcG9uc2VCJVojdW5iL3NlcnZlci9nZW4vc2VydmljZS92MTtzZXJ2aWNldjFiBnByb3RvMw", [file_google_protobuf_timestamp]);
 
 /**
- * Frame metadata
+ * StorageItem metadata
  *
- * @generated from message service.v1.Frame
+ * @generated from message service.v1.StorageItem
  */
-export type Frame = Message<"service.v1.Frame"> & {
+export type StorageItem = Message<"service.v1.StorageItem"> & {
   /**
    * @generated from field: string id = 1;
    */
@@ -33,9 +31,11 @@ export type Frame = Message<"service.v1.Frame"> & {
   serviceId: string;
 
   /**
-   * @generated from field: int64 sequence = 3;
+   * Type of storage item (e.g., "frame", "clip")
+   *
+   * @generated from field: string type = 3;
    */
-  sequence: bigint;
+  type: string;
 
   /**
    * @generated from field: int64 size = 4;
@@ -46,63 +46,63 @@ export type Frame = Message<"service.v1.Frame"> & {
    * @generated from field: google.protobuf.Timestamp timestamp = 5;
    */
   timestamp?: Timestamp;
-
-  /**
-   * Relative path for HTTP access
-   *
-   * @generated from field: string path = 6;
-   */
-  path: string;
 };
 
 /**
- * Describes the message service.v1.Frame.
- * Use `create(FrameSchema)` to create a new message.
+ * Describes the message service.v1.StorageItem.
+ * Use `create(StorageItemSchema)` to create a new message.
  */
-export const FrameSchema: GenMessage<Frame> = /*@__PURE__*/
+export const StorageItemSchema: GenMessage<StorageItem> = /*@__PURE__*/
   messageDesc(file_service_v1_storage, 0);
 
 /**
- * List frames for a service
+ * List storage items for a service
  *
- * @generated from message service.v1.ListFramesRequest
+ * @generated from message service.v1.ListStorageItemsRequest
  */
-export type ListFramesRequest = Message<"service.v1.ListFramesRequest"> & {
+export type ListStorageItemsRequest = Message<"service.v1.ListStorageItemsRequest"> & {
   /**
    * @generated from field: string service_id = 1;
    */
   serviceId: string;
 
   /**
-   * Max frames to return (default 100)
+   * Optional filter by type (empty = all types)
    *
-   * @generated from field: int64 limit = 2;
+   * @generated from field: string type = 2;
+   */
+  type: string;
+
+  /**
+   * Max items to return (default 100)
+   *
+   * @generated from field: int64 limit = 3;
    */
   limit: bigint;
 
   /**
    * For pagination
    *
-   * @generated from field: int64 offset = 3;
+   * @generated from field: int64 offset = 4;
    */
   offset: bigint;
 };
 
 /**
- * Describes the message service.v1.ListFramesRequest.
- * Use `create(ListFramesRequestSchema)` to create a new message.
+ * Describes the message service.v1.ListStorageItemsRequest.
+ * Use `create(ListStorageItemsRequestSchema)` to create a new message.
  */
-export const ListFramesRequestSchema: GenMessage<ListFramesRequest> = /*@__PURE__*/
+export const ListStorageItemsRequestSchema: GenMessage<ListStorageItemsRequest> = /*@__PURE__*/
   messageDesc(file_service_v1_storage, 1);
 
 /**
- * @generated from message service.v1.ListFramesResponse
+ * @generated from message service.v1.ListStorageItemsResponse
  */
-export type ListFramesResponse = Message<"service.v1.ListFramesResponse"> & {
+export type ListStorageItemsResponse = Message<"service.v1.ListStorageItemsResponse"> & {
   /**
-   * @generated from field: repeated service.v1.Frame frames = 1;
+   * @generated from field: repeated service.v1.StorageItem items = 1;
    */
-  frames: Frame[];
+  items: StorageItem[];
 
   /**
    * @generated from field: int64 total = 2;
@@ -111,141 +111,85 @@ export type ListFramesResponse = Message<"service.v1.ListFramesResponse"> & {
 };
 
 /**
- * Describes the message service.v1.ListFramesResponse.
- * Use `create(ListFramesResponseSchema)` to create a new message.
+ * Describes the message service.v1.ListStorageItemsResponse.
+ * Use `create(ListStorageItemsResponseSchema)` to create a new message.
  */
-export const ListFramesResponseSchema: GenMessage<ListFramesResponse> = /*@__PURE__*/
+export const ListStorageItemsResponseSchema: GenMessage<ListStorageItemsResponse> = /*@__PURE__*/
   messageDesc(file_service_v1_storage, 2);
 
 /**
- * Get frame metadata
+ * Get storage item metadata
  *
- * @generated from message service.v1.GetFrameRequest
+ * @generated from message service.v1.GetStorageItemRequest
  */
-export type GetFrameRequest = Message<"service.v1.GetFrameRequest"> & {
+export type GetStorageItemRequest = Message<"service.v1.GetStorageItemRequest"> & {
   /**
-   * @generated from field: string frame_id = 1;
+   * @generated from field: string item_id = 1;
    */
-  frameId: string;
+  itemId: string;
 };
 
 /**
- * Describes the message service.v1.GetFrameRequest.
- * Use `create(GetFrameRequestSchema)` to create a new message.
+ * Describes the message service.v1.GetStorageItemRequest.
+ * Use `create(GetStorageItemRequestSchema)` to create a new message.
  */
-export const GetFrameRequestSchema: GenMessage<GetFrameRequest> = /*@__PURE__*/
+export const GetStorageItemRequestSchema: GenMessage<GetStorageItemRequest> = /*@__PURE__*/
   messageDesc(file_service_v1_storage, 3);
 
 /**
- * @generated from message service.v1.GetFrameResponse
+ * @generated from message service.v1.GetStorageItemResponse
  */
-export type GetFrameResponse = Message<"service.v1.GetFrameResponse"> & {
+export type GetStorageItemResponse = Message<"service.v1.GetStorageItemResponse"> & {
   /**
-   * @generated from field: service.v1.Frame frame = 1;
+   * @generated from field: service.v1.StorageItem item = 1;
    */
-  frame?: Frame;
+  item?: StorageItem;
 };
 
 /**
- * Describes the message service.v1.GetFrameResponse.
- * Use `create(GetFrameResponseSchema)` to create a new message.
+ * Describes the message service.v1.GetStorageItemResponse.
+ * Use `create(GetStorageItemResponseSchema)` to create a new message.
  */
-export const GetFrameResponseSchema: GenMessage<GetFrameResponse> = /*@__PURE__*/
+export const GetStorageItemResponseSchema: GenMessage<GetStorageItemResponse> = /*@__PURE__*/
   messageDesc(file_service_v1_storage, 4);
 
 /**
- * List services with frames for a node
+ * Delete old storage items
  *
- * @generated from message service.v1.ListServicesWithFramesRequest
+ * @generated from message service.v1.DeleteOldStorageItemsRequest
  */
-export type ListServicesWithFramesRequest = Message<"service.v1.ListServicesWithFramesRequest"> & {
-  /**
-   * @generated from field: string node_id = 1;
-   */
-  nodeId: string;
-};
-
-/**
- * Describes the message service.v1.ListServicesWithFramesRequest.
- * Use `create(ListServicesWithFramesRequestSchema)` to create a new message.
- */
-export const ListServicesWithFramesRequestSchema: GenMessage<ListServicesWithFramesRequest> = /*@__PURE__*/
-  messageDesc(file_service_v1_storage, 5);
-
-/**
- * @generated from message service.v1.ListServicesWithFramesResponse
- */
-export type ListServicesWithFramesResponse = Message<"service.v1.ListServicesWithFramesResponse"> & {
-  /**
-   * @generated from field: repeated service.v1.ServiceFrames services = 1;
-   */
-  services: ServiceFrames[];
-};
-
-/**
- * Describes the message service.v1.ListServicesWithFramesResponse.
- * Use `create(ListServicesWithFramesResponseSchema)` to create a new message.
- */
-export const ListServicesWithFramesResponseSchema: GenMessage<ListServicesWithFramesResponse> = /*@__PURE__*/
-  messageDesc(file_service_v1_storage, 6);
-
-/**
- * @generated from message service.v1.ServiceFrames
- */
-export type ServiceFrames = Message<"service.v1.ServiceFrames"> & {
-  /**
-   * @generated from field: service.v1.Service service = 1;
-   */
-  service?: Service;
-
-  /**
-   * @generated from field: repeated service.v1.Frame frames = 2;
-   */
-  frames: Frame[];
-
-  /**
-   * @generated from field: int64 total_frames = 3;
-   */
-  totalFrames: bigint;
-};
-
-/**
- * Describes the message service.v1.ServiceFrames.
- * Use `create(ServiceFramesSchema)` to create a new message.
- */
-export const ServiceFramesSchema: GenMessage<ServiceFrames> = /*@__PURE__*/
-  messageDesc(file_service_v1_storage, 7);
-
-/**
- * Delete old frames
- *
- * @generated from message service.v1.DeleteOldFramesRequest
- */
-export type DeleteOldFramesRequest = Message<"service.v1.DeleteOldFramesRequest"> & {
+export type DeleteOldStorageItemsRequest = Message<"service.v1.DeleteOldStorageItemsRequest"> & {
   /**
    * @generated from field: string service_id = 1;
    */
   serviceId: string;
 
   /**
-   * Delete frames older than this many seconds
+   * Delete items older than this many seconds
    *
    * @generated from field: int64 older_than_seconds = 2;
    */
   olderThanSeconds: bigint;
+
+  /**
+   * Optional filter by type (empty = all types)
+   *
+   * @generated from field: string type = 3;
+   */
+  type: string;
 };
 
 /**
- * Describes the message service.v1.DeleteOldFramesRequest.
- * Use `create(DeleteOldFramesRequestSchema)` to create a new message.
+ * Describes the message service.v1.DeleteOldStorageItemsRequest.
+ * Use `create(DeleteOldStorageItemsRequestSchema)` to create a new message.
  */
-export const DeleteOldFramesRequestSchema: GenMessage<DeleteOldFramesRequest> = /*@__PURE__*/
-  messageDesc(file_service_v1_storage, 8);
+export const DeleteOldStorageItemsRequestSchema: GenMessage<DeleteOldStorageItemsRequest> = /*@__PURE__*/
+  messageDesc(file_service_v1_storage, 5);
 
 /**
- * @generated from message service.v1.DeleteOldFramesResponse
+ * @generated from message service.v1.DeleteOldStorageItemsResponse
  */
-export type DeleteOldFramesResponse = Message<"service.v1.DeleteOldFramesResponse"> & {
+export type DeleteOldStorageItemsResponse = Message<"service.v1.DeleteOldStorageItemsResponse"> & {
   /**
    * @generated from field: int64 deleted_count = 1;
    */
@@ -253,57 +197,47 @@ export type DeleteOldFramesResponse = Message<"service.v1.DeleteOldFramesRespons
 };
 
 /**
- * Describes the message service.v1.DeleteOldFramesResponse.
- * Use `create(DeleteOldFramesResponseSchema)` to create a new message.
+ * Describes the message service.v1.DeleteOldStorageItemsResponse.
+ * Use `create(DeleteOldStorageItemsResponseSchema)` to create a new message.
  */
-export const DeleteOldFramesResponseSchema: GenMessage<DeleteOldFramesResponse> = /*@__PURE__*/
-  messageDesc(file_service_v1_storage, 9);
+export const DeleteOldStorageItemsResponseSchema: GenMessage<DeleteOldStorageItemsResponse> = /*@__PURE__*/
+  messageDesc(file_service_v1_storage, 6);
 
 /**
- * StorageService provides access to stored video frames
+ * StorageService provides access to stored items (frames, clips, etc.)
  *
  * @generated from service service.v1.StorageService
  */
 export const StorageService: GenService<{
   /**
-   * List frames for a service
+   * List storage items for a service
    *
-   * @generated from rpc service.v1.StorageService.ListFrames
+   * @generated from rpc service.v1.StorageService.ListStorageItems
    */
-  listFrames: {
+  listStorageItems: {
     methodKind: "unary";
-    input: typeof ListFramesRequestSchema;
-    output: typeof ListFramesResponseSchema;
+    input: typeof ListStorageItemsRequestSchema;
+    output: typeof ListStorageItemsResponseSchema;
   },
   /**
-   * Get frame metadata
+   * Get storage item metadata
    *
-   * @generated from rpc service.v1.StorageService.GetFrame
+   * @generated from rpc service.v1.StorageService.GetStorageItem
    */
-  getFrame: {
+  getStorageItem: {
     methodKind: "unary";
-    input: typeof GetFrameRequestSchema;
-    output: typeof GetFrameResponseSchema;
+    input: typeof GetStorageItemRequestSchema;
+    output: typeof GetStorageItemResponseSchema;
   },
   /**
-   * List services with frames for a node
+   * Delete old storage items (by time)
    *
-   * @generated from rpc service.v1.StorageService.ListServicesWithFrames
+   * @generated from rpc service.v1.StorageService.DeleteOldStorageItems
    */
-  listServicesWithFrames: {
+  deleteOldStorageItems: {
     methodKind: "unary";
-    input: typeof ListServicesWithFramesRequestSchema;
-    output: typeof ListServicesWithFramesResponseSchema;
-  },
-  /**
-   * Delete old frames (by time)
-   *
-   * @generated from rpc service.v1.StorageService.DeleteOldFrames
-   */
-  deleteOldFrames: {
-    methodKind: "unary";
-    input: typeof DeleteOldFramesRequestSchema;
-    output: typeof DeleteOldFramesResponseSchema;
+    input: typeof DeleteOldStorageItemsRequestSchema;
+    output: typeof DeleteOldStorageItemsResponseSchema;
   },
 }> = /*@__PURE__*/
   serviceDesc(file_service_v1_storage, 0);

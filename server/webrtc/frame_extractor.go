@@ -18,7 +18,6 @@ type Frame struct {
 	Data      []byte    // JPEG bytes
 	Timestamp time.Time // When the frame was extracted
 	ServiceID string    // Service identifier (e.g., camera name)
-	Sequence  int64     // Monotonically increasing sequence number
 }
 
 // FrameExtractor extracts JPEG frames from H.264 streams using FFmpeg
@@ -33,10 +32,6 @@ type FrameExtractor struct {
 	ffmpegCmd    *exec.Cmd
 	ffmpegStdin  io.WriteCloser
 	ffmpegStdout io.ReadCloser
-
-	// Frame sequencing
-	sequence int64
-	mu       sync.Mutex
 }
 
 // NewFrameExtractor creates a new frame extractor
@@ -75,9 +70,6 @@ func (e *FrameExtractor) Start(mediaSource MediaSource) error {
 
 // startFFmpeg starts the FFmpeg process for H.264 to JPEG conversion
 func (e *FrameExtractor) startFFmpeg() error {
-	e.mu.Lock()
-	defer e.mu.Unlock()
-
 	// Calculate fps from interval (e.g., 5s interval = 1/5 fps = 0.2 fps)
 	fps := 1.0 / e.interval.Seconds()
 
@@ -229,21 +221,14 @@ func (e *FrameExtractor) readFramesFromFFmpeg() {
 					frameData := make([]byte, frameBuffer.Len())
 					copy(frameData, frameBuffer.Bytes())
 
-					// Increment sequence
-					e.mu.Lock()
-					e.sequence++
-					seq := e.sequence
-					e.mu.Unlock()
-
 					// Create frame
 					frame := &Frame{
 						Data:      frameData,
 						Timestamp: time.Now(),
 						ServiceID: e.serviceID,
-						Sequence:  seq,
 					}
 
-					log.Printf("[FrameExtractor] Extracted JPEG frame %d (%d bytes)", seq, len(frameData))
+					log.Printf("[FrameExtractor] Extracted JPEG frame (%d bytes)", len(frameData))
 
 					// Call callback
 					if e.onFrame != nil {

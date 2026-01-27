@@ -43,11 +43,9 @@ func NewServiceRegistry(db *database.Client, frameInterval time.Duration, frames
 	storage := webrtc.NewStorage(framesDir)
 
 	// Wire up callback to save frame metadata to database when frames are saved to disk
-	storage.SetOnSaved(func(serviceID, frameID, framePath string, timestamp time.Time, fileSize int64, sequence int64) {
-		metadata := &database.FrameMetadata{
-			Sequence: sequence,
-		}
-		if err := db.SaveFrame(serviceID, framePath, timestamp, fileSize, metadata); err != nil {
+	storage.SetOnSaved(func(serviceID, frameID, framePath string, timestamp time.Time, fileSize int64) {
+		metadata := &database.FrameMetadata{}
+		if err := db.SaveStorageItem(serviceID, framePath, timestamp, fileSize, database.StorageTypeFrame, "image/jpeg", metadata); err != nil {
 			log.Printf("[ServiceRegistry] Failed to save frame metadata: %v", err)
 		}
 	})

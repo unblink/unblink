@@ -8,21 +8,22 @@ import (
 	"os"
 
 	"connectrpc.com/connect"
+	"google.golang.org/protobuf/types/known/timestamppb"
+	"unb/database"
 	servicev1 "unb/server/gen/service/v1"
 	"unb/server/gen/service/v1/servicev1connect"
 )
 
 // StorageDatabase defines the interface for storage database operations
 type StorageDatabase interface {
-	ListFramesForService(serviceID string, limit, offset int64) ([]*servicev1.Frame, int64, error)
-	GetFrameInfo(frameID string) (*servicev1.Frame, error)
-	ListServicesWithFrames(nodeID string) ([]*servicev1.ServiceFrames, error)
-	DeleteOldFrames(serviceID string, olderThanSeconds int64) (int64, error)
+	ListStorageItemsForService(serviceID string, storageType string, limit, offset int64) ([]*database.StorageEntry, int64, error)
+	GetStorageItemInfo(itemID string) (*database.StorageEntry, error)
+	DeleteOldStorageItems(serviceID string, storageType string, olderThanSeconds int64) (int64, error)
 }
 
 // StorageConfig holds configuration for storage
 type StorageConfig struct {
-	FramesBaseDir string // Base directory where frames are stored
+	StorageBaseDir string // Base directory where storage items are stored
 }
 
 // StorageService handles storage operations
@@ -38,8 +39,8 @@ func NewStorageService(db StorageDatabase, config *StorageConfig) *StorageServic
 	}
 }
 
-// ListFrames lists frames for a service
-func (s *StorageService) ListFrames(ctx context.Context, req *connect.Request[servicev1.ListFramesRequest]) (*connect.Response[servicev1.ListFramesResponse], error) {
+// ListStorageItems lists storage items for a service
+func (s *StorageService) ListStorageItems(ctx context.Context, req *connect.Request[servicev1.ListStorageItemsRequest]) (*connect.Response[servicev1.ListStorageItemsResponse], error) {
 	if req.Msg.ServiceId == "" {
 		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("service_id is required"))
 	}
@@ -52,57 +53,67 @@ func (s *StorageService) ListFrames(ctx context.Context, req *connect.Request[se
 		limit = 1000 // Max limit
 	}
 
-	frames, total, err := s.db.ListFramesForService(req.Msg.ServiceId, limit, req.Msg.Offset)
+	// Use type from request (empty string = all types)
+	storageType := req.Msg.Type
+
+	entries, total, err := s.db.ListStorageItemsForService(req.Msg.ServiceId, storageType, limit, req.Msg.Offset)
 	if err != nil {
-		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("failed to list frames: %w", err))
+		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("failed to list storage items: %w", err))
 	}
 
-	log.Printf("[Storage] Listed %d frames for service %s (total: %d)", len(frames), req.Msg.ServiceId, total)
+	// Convert to proto format
+	items := make([]*servicev1.StorageItem, 0, len(entries))
+	for _, entry := range entries {
+		items = append(items, &servicev1.StorageItem{
+			Id:        entry.ID,
+			ServiceId: entry.ServiceID,
+			Type:      string(entry.Type),
+			Size:      entry.FileSize,
+			Timestamp: timestamppb.New(entry.Timestamp),
+		})
+	}
 
-	return connect.NewResponse(&servicev1.ListFramesResponse{
-		Frames: frames,
-		Total:  total,
+	log.Printf("[Storage] Listed %d storage items for service %s (total: %d)", len(items), req.Msg.ServiceId, total)
+
+	return connect.NewResponse(&servicev1.ListStorageItemsResponse{
+		Items: items,
+		Total: total,
 	}), nil
 }
 
-// GetFrame gets metadata for a specific frame
-func (s *StorageService) GetFrame(ctx context.Context, req *connect.Request[servicev1.GetFrameRequest]) (*connect.Response[servicev1.GetFrameResponse], error) {
-	if req.Msg.FrameId == "" {
-		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("frame_id is required"))
+// GetStorageItem gets metadata for a specific storage item
+func (s *StorageService) GetStorageItem(ctx context.Context, req *connect.Request[servicev1.GetStorageItemRequest]) (*connect.Response[servicev1.GetStorageItemResponse], error) {
+	if req.Msg.ItemId == "" {
+		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("item_id is required"))
 	}
 
-	frame, err := s.db.GetFrameInfo(req.Msg.FrameId)
+	entry, err := s.db.GetStorageItemInfo(req.Msg.ItemId)
 	if err != nil {
-		return nil, connect.NewError(connect.CodeNotFound, fmt.Errorf("frame not found: %w", err))
+		return nil, connect.NewError(connect.CodeNotFound, fmt.Errorf("storage item not found: %w", err))
 	}
 
-	log.Printf("[Storage] Got frame %s for service %s", frame.Id, frame.ServiceId)
+	// Verify file exists on disk
+	if _, err := os.Stat(entry.StoragePath); os.IsNotExist(err) {
+		return nil, connect.NewError(connect.CodeNotFound, fmt.Errorf("storage item file not found on disk"))
+	}
 
-	return connect.NewResponse(&servicev1.GetFrameResponse{
-		Frame: frame,
+	item := &servicev1.StorageItem{
+		Id:        entry.ID,
+		ServiceId: entry.ServiceID,
+		Type:      string(entry.Type),
+		Size:      entry.FileSize,
+		Timestamp: timestamppb.New(entry.Timestamp),
+	}
+
+	log.Printf("[Storage] Got storage item %s for service %s", item.Id, item.ServiceId)
+
+	return connect.NewResponse(&servicev1.GetStorageItemResponse{
+		Item: item,
 	}), nil
 }
 
-// ListServicesWithFrames lists services with their frames for a node
-func (s *StorageService) ListServicesWithFrames(ctx context.Context, req *connect.Request[servicev1.ListServicesWithFramesRequest]) (*connect.Response[servicev1.ListServicesWithFramesResponse], error) {
-	if req.Msg.NodeId == "" {
-		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("node_id is required"))
-	}
-
-	services, err := s.db.ListServicesWithFrames(req.Msg.NodeId)
-	if err != nil {
-		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("failed to list services with frames: %w", err))
-	}
-
-	log.Printf("[Storage] Listed %d services with frames for node %s", len(services), req.Msg.NodeId)
-
-	return connect.NewResponse(&servicev1.ListServicesWithFramesResponse{
-		Services: services,
-	}), nil
-}
-
-// DeleteOldFrames deletes frames older than the specified duration
-func (s *StorageService) DeleteOldFrames(ctx context.Context, req *connect.Request[servicev1.DeleteOldFramesRequest]) (*connect.Response[servicev1.DeleteOldFramesResponse], error) {
+// DeleteOldStorageItems deletes storage items older than the specified duration
+func (s *StorageService) DeleteOldStorageItems(ctx context.Context, req *connect.Request[servicev1.DeleteOldStorageItemsRequest]) (*connect.Response[servicev1.DeleteOldStorageItemsResponse], error) {
 	if req.Msg.ServiceId == "" {
 		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("service_id is required"))
 	}
@@ -111,14 +122,17 @@ func (s *StorageService) DeleteOldFrames(ctx context.Context, req *connect.Reque
 		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("older_than_seconds must be positive"))
 	}
 
-	deletedCount, err := s.db.DeleteOldFrames(req.Msg.ServiceId, req.Msg.OlderThanSeconds)
+	// Use type from request (empty string = all types)
+	storageType := req.Msg.Type
+
+	deletedCount, err := s.db.DeleteOldStorageItems(req.Msg.ServiceId, storageType, req.Msg.OlderThanSeconds)
 	if err != nil {
-		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("failed to delete old frames: %w", err))
+		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("failed to delete old storage items: %w", err))
 	}
 
-	log.Printf("[Storage] Deleted %d frames for service %s (older than %d seconds)", deletedCount, req.Msg.ServiceId, req.Msg.OlderThanSeconds)
+	log.Printf("[Storage] Deleted %d storage items for service %s (older than %d seconds)", deletedCount, req.Msg.ServiceId, req.Msg.OlderThanSeconds)
 
-	return connect.NewResponse(&servicev1.DeleteOldFramesResponse{
+	return connect.NewResponse(&servicev1.DeleteOldStorageItemsResponse{
 		DeletedCount: deletedCount,
 	}), nil
 }
@@ -128,46 +142,41 @@ var _ servicev1connect.StorageServiceHandler = (*StorageService)(nil)
 
 // RegisterHTTPHandlers registers HTTP handlers for serving JPEG files
 func (s *StorageService) RegisterHTTPHandlers(mux *http.ServeMux) {
-	mux.HandleFunc("/frames/", s.serveFrame)
-	log.Printf("[Storage] Registered HTTP handler for /frames/")
+	mux.HandleFunc("/storage/", s.serveStorage)
+	log.Printf("[Storage] Registered HTTP handler for /storage/")
 }
 
-// serveFrame serves JPEG files via HTTP
-func (s *StorageService) serveFrame(w http.ResponseWriter, r *http.Request) {
-	// Extract path components: /frames/{serviceID}/{frameID}.jpg
+// serveStorage serves JPEG files via HTTP
+// URL format: /storage/{itemID}
+func (s *StorageService) serveStorage(w http.ResponseWriter, r *http.Request) {
+	// Extract itemID from path: /storage/{itemID}
 	path := r.URL.Path
-	if len(path) < 9 || path[:9] != "/frames/" {
+	if len(path) < 10 || path[:10] != "/storage/" {
 		http.NotFound(w, r)
 		return
 	}
 
-	rest := path[9:] // Remove "/frames/"
-	// Find the second slash
-	for i, c := range rest {
-		if c == '/' {
-			serviceID := rest[:i]
-			frameName := rest[i+1:]
-			if frameName == "" {
-				http.NotFound(w, r)
-				return
-			}
-
-			// Build file path
-			framePath := s.config.FramesBaseDir + "/" + serviceID + "/" + frameName
-
-			// Check if file exists
-			if _, err := os.Stat(framePath); os.IsNotExist(err) {
-				http.NotFound(w, r)
-				return
-			}
-
-			// Serve file
-			w.Header().Set("Content-Type", "image/jpeg")
-			w.Header().Set("Cache-Control", "public, max-age=3600") // Cache for 1 hour
-			http.ServeFile(w, r, framePath)
-			return
-		}
+	itemID := path[10:] // Remove "/storage/"
+	if itemID == "" {
+		http.NotFound(w, r)
+		return
 	}
 
-	http.NotFound(w, r)
+	// Look up item in database to get file path
+	entry, err := s.db.GetStorageItemInfo(itemID)
+	if err != nil {
+		http.NotFound(w, r)
+		return
+	}
+
+	// Check if file exists on disk
+	if _, err := os.Stat(entry.StoragePath); os.IsNotExist(err) {
+		http.NotFound(w, r)
+		return
+	}
+
+	// Serve file
+	w.Header().Set("Content-Type", entry.ContentType)
+	w.Header().Set("Cache-Control", "public, max-age=3600") // Cache for 1 hour
+	http.ServeFile(w, r, entry.StoragePath)
 }

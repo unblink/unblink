@@ -22,33 +22,32 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
-// Frame metadata
-type Frame struct {
+// StorageItem metadata
+type StorageItem struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
 	ServiceId     string                 `protobuf:"bytes,2,opt,name=service_id,json=serviceId,proto3" json:"service_id,omitempty"`
-	Sequence      int64                  `protobuf:"varint,3,opt,name=sequence,proto3" json:"sequence,omitempty"`
+	Type          string                 `protobuf:"bytes,3,opt,name=type,proto3" json:"type,omitempty"` // Type of storage item (e.g., "frame", "clip")
 	Size          int64                  `protobuf:"varint,4,opt,name=size,proto3" json:"size,omitempty"`
 	Timestamp     *timestamppb.Timestamp `protobuf:"bytes,5,opt,name=timestamp,proto3" json:"timestamp,omitempty"`
-	Path          string                 `protobuf:"bytes,6,opt,name=path,proto3" json:"path,omitempty"` // Relative path for HTTP access
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *Frame) Reset() {
-	*x = Frame{}
+func (x *StorageItem) Reset() {
+	*x = StorageItem{}
 	mi := &file_service_v1_storage_proto_msgTypes[0]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *Frame) String() string {
+func (x *StorageItem) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*Frame) ProtoMessage() {}
+func (*StorageItem) ProtoMessage() {}
 
-func (x *Frame) ProtoReflect() protoreflect.Message {
+func (x *StorageItem) ProtoReflect() protoreflect.Message {
 	mi := &file_service_v1_storage_proto_msgTypes[0]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -60,77 +59,71 @@ func (x *Frame) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use Frame.ProtoReflect.Descriptor instead.
-func (*Frame) Descriptor() ([]byte, []int) {
+// Deprecated: Use StorageItem.ProtoReflect.Descriptor instead.
+func (*StorageItem) Descriptor() ([]byte, []int) {
 	return file_service_v1_storage_proto_rawDescGZIP(), []int{0}
 }
 
-func (x *Frame) GetId() string {
+func (x *StorageItem) GetId() string {
 	if x != nil {
 		return x.Id
 	}
 	return ""
 }
 
-func (x *Frame) GetServiceId() string {
+func (x *StorageItem) GetServiceId() string {
 	if x != nil {
 		return x.ServiceId
 	}
 	return ""
 }
 
-func (x *Frame) GetSequence() int64 {
+func (x *StorageItem) GetType() string {
 	if x != nil {
-		return x.Sequence
+		return x.Type
 	}
-	return 0
+	return ""
 }
 
-func (x *Frame) GetSize() int64 {
+func (x *StorageItem) GetSize() int64 {
 	if x != nil {
 		return x.Size
 	}
 	return 0
 }
 
-func (x *Frame) GetTimestamp() *timestamppb.Timestamp {
+func (x *StorageItem) GetTimestamp() *timestamppb.Timestamp {
 	if x != nil {
 		return x.Timestamp
 	}
 	return nil
 }
 
-func (x *Frame) GetPath() string {
-	if x != nil {
-		return x.Path
-	}
-	return ""
-}
-
-// List frames for a service
-type ListFramesRequest struct {
+// List storage items for a service
+type ListStorageItemsRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	ServiceId     string                 `protobuf:"bytes,1,opt,name=service_id,json=serviceId,proto3" json:"service_id,omitempty"`
-	Limit         int64                  `protobuf:"varint,2,opt,name=limit,proto3" json:"limit,omitempty"`   // Max frames to return (default 100)
-	Offset        int64                  `protobuf:"varint,3,opt,name=offset,proto3" json:"offset,omitempty"` // For pagination
+	Type          string                 `protobuf:"bytes,2,opt,name=type,proto3" json:"type,omitempty"`      // Optional filter by type (empty = all types)
+	Limit         int64                  `protobuf:"varint,3,opt,name=limit,proto3" json:"limit,omitempty"`   // Max items to return (default 100)
+	Offset        int64                  `protobuf:"varint,4,opt,name=offset,proto3" json:"offset,omitempty"` // For pagination
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *ListFramesRequest) Reset() {
-	*x = ListFramesRequest{}
+func (x *ListStorageItemsRequest) Reset() {
+	*x = ListStorageItemsRequest{}
 	mi := &file_service_v1_storage_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *ListFramesRequest) String() string {
+func (x *ListStorageItemsRequest) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*ListFramesRequest) ProtoMessage() {}
+func (*ListStorageItemsRequest) ProtoMessage() {}
 
-func (x *ListFramesRequest) ProtoReflect() protoreflect.Message {
+func (x *ListStorageItemsRequest) ProtoReflect() protoreflect.Message {
 	mi := &file_service_v1_storage_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -142,54 +135,61 @@ func (x *ListFramesRequest) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use ListFramesRequest.ProtoReflect.Descriptor instead.
-func (*ListFramesRequest) Descriptor() ([]byte, []int) {
+// Deprecated: Use ListStorageItemsRequest.ProtoReflect.Descriptor instead.
+func (*ListStorageItemsRequest) Descriptor() ([]byte, []int) {
 	return file_service_v1_storage_proto_rawDescGZIP(), []int{1}
 }
 
-func (x *ListFramesRequest) GetServiceId() string {
+func (x *ListStorageItemsRequest) GetServiceId() string {
 	if x != nil {
 		return x.ServiceId
 	}
 	return ""
 }
 
-func (x *ListFramesRequest) GetLimit() int64 {
+func (x *ListStorageItemsRequest) GetType() string {
+	if x != nil {
+		return x.Type
+	}
+	return ""
+}
+
+func (x *ListStorageItemsRequest) GetLimit() int64 {
 	if x != nil {
 		return x.Limit
 	}
 	return 0
 }
 
-func (x *ListFramesRequest) GetOffset() int64 {
+func (x *ListStorageItemsRequest) GetOffset() int64 {
 	if x != nil {
 		return x.Offset
 	}
 	return 0
 }
 
-type ListFramesResponse struct {
+type ListStorageItemsResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Frames        []*Frame               `protobuf:"bytes,1,rep,name=frames,proto3" json:"frames,omitempty"`
+	Items         []*StorageItem         `protobuf:"bytes,1,rep,name=items,proto3" json:"items,omitempty"`
 	Total         int64                  `protobuf:"varint,2,opt,name=total,proto3" json:"total,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *ListFramesResponse) Reset() {
-	*x = ListFramesResponse{}
+func (x *ListStorageItemsResponse) Reset() {
+	*x = ListStorageItemsResponse{}
 	mi := &file_service_v1_storage_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *ListFramesResponse) String() string {
+func (x *ListStorageItemsResponse) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*ListFramesResponse) ProtoMessage() {}
+func (*ListStorageItemsResponse) ProtoMessage() {}
 
-func (x *ListFramesResponse) ProtoReflect() protoreflect.Message {
+func (x *ListStorageItemsResponse) ProtoReflect() protoreflect.Message {
 	mi := &file_service_v1_storage_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -201,47 +201,47 @@ func (x *ListFramesResponse) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use ListFramesResponse.ProtoReflect.Descriptor instead.
-func (*ListFramesResponse) Descriptor() ([]byte, []int) {
+// Deprecated: Use ListStorageItemsResponse.ProtoReflect.Descriptor instead.
+func (*ListStorageItemsResponse) Descriptor() ([]byte, []int) {
 	return file_service_v1_storage_proto_rawDescGZIP(), []int{2}
 }
 
-func (x *ListFramesResponse) GetFrames() []*Frame {
+func (x *ListStorageItemsResponse) GetItems() []*StorageItem {
 	if x != nil {
-		return x.Frames
+		return x.Items
 	}
 	return nil
 }
 
-func (x *ListFramesResponse) GetTotal() int64 {
+func (x *ListStorageItemsResponse) GetTotal() int64 {
 	if x != nil {
 		return x.Total
 	}
 	return 0
 }
 
-// Get frame metadata
-type GetFrameRequest struct {
+// Get storage item metadata
+type GetStorageItemRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	FrameId       string                 `protobuf:"bytes,1,opt,name=frame_id,json=frameId,proto3" json:"frame_id,omitempty"`
+	ItemId        string                 `protobuf:"bytes,1,opt,name=item_id,json=itemId,proto3" json:"item_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *GetFrameRequest) Reset() {
-	*x = GetFrameRequest{}
+func (x *GetStorageItemRequest) Reset() {
+	*x = GetStorageItemRequest{}
 	mi := &file_service_v1_storage_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *GetFrameRequest) String() string {
+func (x *GetStorageItemRequest) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*GetFrameRequest) ProtoMessage() {}
+func (*GetStorageItemRequest) ProtoMessage() {}
 
-func (x *GetFrameRequest) ProtoReflect() protoreflect.Message {
+func (x *GetStorageItemRequest) ProtoReflect() protoreflect.Message {
 	mi := &file_service_v1_storage_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -253,39 +253,39 @@ func (x *GetFrameRequest) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use GetFrameRequest.ProtoReflect.Descriptor instead.
-func (*GetFrameRequest) Descriptor() ([]byte, []int) {
+// Deprecated: Use GetStorageItemRequest.ProtoReflect.Descriptor instead.
+func (*GetStorageItemRequest) Descriptor() ([]byte, []int) {
 	return file_service_v1_storage_proto_rawDescGZIP(), []int{3}
 }
 
-func (x *GetFrameRequest) GetFrameId() string {
+func (x *GetStorageItemRequest) GetItemId() string {
 	if x != nil {
-		return x.FrameId
+		return x.ItemId
 	}
 	return ""
 }
 
-type GetFrameResponse struct {
+type GetStorageItemResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Frame         *Frame                 `protobuf:"bytes,1,opt,name=frame,proto3" json:"frame,omitempty"`
+	Item          *StorageItem           `protobuf:"bytes,1,opt,name=item,proto3" json:"item,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *GetFrameResponse) Reset() {
-	*x = GetFrameResponse{}
+func (x *GetStorageItemResponse) Reset() {
+	*x = GetStorageItemResponse{}
 	mi := &file_service_v1_storage_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *GetFrameResponse) String() string {
+func (x *GetStorageItemResponse) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*GetFrameResponse) ProtoMessage() {}
+func (*GetStorageItemResponse) ProtoMessage() {}
 
-func (x *GetFrameResponse) ProtoReflect() protoreflect.Message {
+func (x *GetStorageItemResponse) ProtoReflect() protoreflect.Message {
 	mi := &file_service_v1_storage_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -297,191 +297,43 @@ func (x *GetFrameResponse) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use GetFrameResponse.ProtoReflect.Descriptor instead.
-func (*GetFrameResponse) Descriptor() ([]byte, []int) {
+// Deprecated: Use GetStorageItemResponse.ProtoReflect.Descriptor instead.
+func (*GetStorageItemResponse) Descriptor() ([]byte, []int) {
 	return file_service_v1_storage_proto_rawDescGZIP(), []int{4}
 }
 
-func (x *GetFrameResponse) GetFrame() *Frame {
+func (x *GetStorageItemResponse) GetItem() *StorageItem {
 	if x != nil {
-		return x.Frame
+		return x.Item
 	}
 	return nil
 }
 
-// List services with frames for a node
-type ListServicesWithFramesRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	NodeId        string                 `protobuf:"bytes,1,opt,name=node_id,json=nodeId,proto3" json:"node_id,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *ListServicesWithFramesRequest) Reset() {
-	*x = ListServicesWithFramesRequest{}
-	mi := &file_service_v1_storage_proto_msgTypes[5]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *ListServicesWithFramesRequest) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*ListServicesWithFramesRequest) ProtoMessage() {}
-
-func (x *ListServicesWithFramesRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_service_v1_storage_proto_msgTypes[5]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use ListServicesWithFramesRequest.ProtoReflect.Descriptor instead.
-func (*ListServicesWithFramesRequest) Descriptor() ([]byte, []int) {
-	return file_service_v1_storage_proto_rawDescGZIP(), []int{5}
-}
-
-func (x *ListServicesWithFramesRequest) GetNodeId() string {
-	if x != nil {
-		return x.NodeId
-	}
-	return ""
-}
-
-type ListServicesWithFramesResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Services      []*ServiceFrames       `protobuf:"bytes,1,rep,name=services,proto3" json:"services,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *ListServicesWithFramesResponse) Reset() {
-	*x = ListServicesWithFramesResponse{}
-	mi := &file_service_v1_storage_proto_msgTypes[6]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *ListServicesWithFramesResponse) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*ListServicesWithFramesResponse) ProtoMessage() {}
-
-func (x *ListServicesWithFramesResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_service_v1_storage_proto_msgTypes[6]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use ListServicesWithFramesResponse.ProtoReflect.Descriptor instead.
-func (*ListServicesWithFramesResponse) Descriptor() ([]byte, []int) {
-	return file_service_v1_storage_proto_rawDescGZIP(), []int{6}
-}
-
-func (x *ListServicesWithFramesResponse) GetServices() []*ServiceFrames {
-	if x != nil {
-		return x.Services
-	}
-	return nil
-}
-
-type ServiceFrames struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Service       *Service               `protobuf:"bytes,1,opt,name=service,proto3" json:"service,omitempty"`
-	Frames        []*Frame               `protobuf:"bytes,2,rep,name=frames,proto3" json:"frames,omitempty"`
-	TotalFrames   int64                  `protobuf:"varint,3,opt,name=total_frames,json=totalFrames,proto3" json:"total_frames,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *ServiceFrames) Reset() {
-	*x = ServiceFrames{}
-	mi := &file_service_v1_storage_proto_msgTypes[7]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *ServiceFrames) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*ServiceFrames) ProtoMessage() {}
-
-func (x *ServiceFrames) ProtoReflect() protoreflect.Message {
-	mi := &file_service_v1_storage_proto_msgTypes[7]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use ServiceFrames.ProtoReflect.Descriptor instead.
-func (*ServiceFrames) Descriptor() ([]byte, []int) {
-	return file_service_v1_storage_proto_rawDescGZIP(), []int{7}
-}
-
-func (x *ServiceFrames) GetService() *Service {
-	if x != nil {
-		return x.Service
-	}
-	return nil
-}
-
-func (x *ServiceFrames) GetFrames() []*Frame {
-	if x != nil {
-		return x.Frames
-	}
-	return nil
-}
-
-func (x *ServiceFrames) GetTotalFrames() int64 {
-	if x != nil {
-		return x.TotalFrames
-	}
-	return 0
-}
-
-// Delete old frames
-type DeleteOldFramesRequest struct {
+// Delete old storage items
+type DeleteOldStorageItemsRequest struct {
 	state            protoimpl.MessageState `protogen:"open.v1"`
 	ServiceId        string                 `protobuf:"bytes,1,opt,name=service_id,json=serviceId,proto3" json:"service_id,omitempty"`
-	OlderThanSeconds int64                  `protobuf:"varint,2,opt,name=older_than_seconds,json=olderThanSeconds,proto3" json:"older_than_seconds,omitempty"` // Delete frames older than this many seconds
+	OlderThanSeconds int64                  `protobuf:"varint,2,opt,name=older_than_seconds,json=olderThanSeconds,proto3" json:"older_than_seconds,omitempty"` // Delete items older than this many seconds
+	Type             string                 `protobuf:"bytes,3,opt,name=type,proto3" json:"type,omitempty"`                                                    // Optional filter by type (empty = all types)
 	unknownFields    protoimpl.UnknownFields
 	sizeCache        protoimpl.SizeCache
 }
 
-func (x *DeleteOldFramesRequest) Reset() {
-	*x = DeleteOldFramesRequest{}
-	mi := &file_service_v1_storage_proto_msgTypes[8]
+func (x *DeleteOldStorageItemsRequest) Reset() {
+	*x = DeleteOldStorageItemsRequest{}
+	mi := &file_service_v1_storage_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *DeleteOldFramesRequest) String() string {
+func (x *DeleteOldStorageItemsRequest) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*DeleteOldFramesRequest) ProtoMessage() {}
+func (*DeleteOldStorageItemsRequest) ProtoMessage() {}
 
-func (x *DeleteOldFramesRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_service_v1_storage_proto_msgTypes[8]
+func (x *DeleteOldStorageItemsRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_service_v1_storage_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -492,47 +344,54 @@ func (x *DeleteOldFramesRequest) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use DeleteOldFramesRequest.ProtoReflect.Descriptor instead.
-func (*DeleteOldFramesRequest) Descriptor() ([]byte, []int) {
-	return file_service_v1_storage_proto_rawDescGZIP(), []int{8}
+// Deprecated: Use DeleteOldStorageItemsRequest.ProtoReflect.Descriptor instead.
+func (*DeleteOldStorageItemsRequest) Descriptor() ([]byte, []int) {
+	return file_service_v1_storage_proto_rawDescGZIP(), []int{5}
 }
 
-func (x *DeleteOldFramesRequest) GetServiceId() string {
+func (x *DeleteOldStorageItemsRequest) GetServiceId() string {
 	if x != nil {
 		return x.ServiceId
 	}
 	return ""
 }
 
-func (x *DeleteOldFramesRequest) GetOlderThanSeconds() int64 {
+func (x *DeleteOldStorageItemsRequest) GetOlderThanSeconds() int64 {
 	if x != nil {
 		return x.OlderThanSeconds
 	}
 	return 0
 }
 
-type DeleteOldFramesResponse struct {
+func (x *DeleteOldStorageItemsRequest) GetType() string {
+	if x != nil {
+		return x.Type
+	}
+	return ""
+}
+
+type DeleteOldStorageItemsResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	DeletedCount  int64                  `protobuf:"varint,1,opt,name=deleted_count,json=deletedCount,proto3" json:"deleted_count,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *DeleteOldFramesResponse) Reset() {
-	*x = DeleteOldFramesResponse{}
-	mi := &file_service_v1_storage_proto_msgTypes[9]
+func (x *DeleteOldStorageItemsResponse) Reset() {
+	*x = DeleteOldStorageItemsResponse{}
+	mi := &file_service_v1_storage_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *DeleteOldFramesResponse) String() string {
+func (x *DeleteOldStorageItemsResponse) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*DeleteOldFramesResponse) ProtoMessage() {}
+func (*DeleteOldStorageItemsResponse) ProtoMessage() {}
 
-func (x *DeleteOldFramesResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_service_v1_storage_proto_msgTypes[9]
+func (x *DeleteOldStorageItemsResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_service_v1_storage_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -543,12 +402,12 @@ func (x *DeleteOldFramesResponse) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use DeleteOldFramesResponse.ProtoReflect.Descriptor instead.
-func (*DeleteOldFramesResponse) Descriptor() ([]byte, []int) {
-	return file_service_v1_storage_proto_rawDescGZIP(), []int{9}
+// Deprecated: Use DeleteOldStorageItemsResponse.ProtoReflect.Descriptor instead.
+func (*DeleteOldStorageItemsResponse) Descriptor() ([]byte, []int) {
+	return file_service_v1_storage_proto_rawDescGZIP(), []int{6}
 }
 
-func (x *DeleteOldFramesResponse) GetDeletedCount() int64 {
+func (x *DeleteOldStorageItemsResponse) GetDeletedCount() int64 {
 	if x != nil {
 		return x.DeletedCount
 	}
@@ -560,47 +419,38 @@ var File_service_v1_storage_proto protoreflect.FileDescriptor
 const file_service_v1_storage_proto_rawDesc = "" +
 	"\n" +
 	"\x18service/v1/storage.proto\x12\n" +
-	"service.v1\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x18service/v1/service.proto\"\xb4\x01\n" +
-	"\x05Frame\x12\x0e\n" +
+	"service.v1\x1a\x1fgoogle/protobuf/timestamp.proto\"\x9e\x01\n" +
+	"\vStorageItem\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x1d\n" +
 	"\n" +
-	"service_id\x18\x02 \x01(\tR\tserviceId\x12\x1a\n" +
-	"\bsequence\x18\x03 \x01(\x03R\bsequence\x12\x12\n" +
+	"service_id\x18\x02 \x01(\tR\tserviceId\x12\x12\n" +
+	"\x04type\x18\x03 \x01(\tR\x04type\x12\x12\n" +
 	"\x04size\x18\x04 \x01(\x03R\x04size\x128\n" +
-	"\ttimestamp\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampR\ttimestamp\x12\x12\n" +
-	"\x04path\x18\x06 \x01(\tR\x04path\"`\n" +
-	"\x11ListFramesRequest\x12\x1d\n" +
+	"\ttimestamp\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampR\ttimestamp\"z\n" +
+	"\x17ListStorageItemsRequest\x12\x1d\n" +
 	"\n" +
-	"service_id\x18\x01 \x01(\tR\tserviceId\x12\x14\n" +
-	"\x05limit\x18\x02 \x01(\x03R\x05limit\x12\x16\n" +
-	"\x06offset\x18\x03 \x01(\x03R\x06offset\"U\n" +
-	"\x12ListFramesResponse\x12)\n" +
-	"\x06frames\x18\x01 \x03(\v2\x11.service.v1.FrameR\x06frames\x12\x14\n" +
-	"\x05total\x18\x02 \x01(\x03R\x05total\",\n" +
-	"\x0fGetFrameRequest\x12\x19\n" +
-	"\bframe_id\x18\x01 \x01(\tR\aframeId\";\n" +
-	"\x10GetFrameResponse\x12'\n" +
-	"\x05frame\x18\x01 \x01(\v2\x11.service.v1.FrameR\x05frame\"8\n" +
-	"\x1dListServicesWithFramesRequest\x12\x17\n" +
-	"\anode_id\x18\x01 \x01(\tR\x06nodeId\"W\n" +
-	"\x1eListServicesWithFramesResponse\x125\n" +
-	"\bservices\x18\x01 \x03(\v2\x19.service.v1.ServiceFramesR\bservices\"\x8c\x01\n" +
-	"\rServiceFrames\x12-\n" +
-	"\aservice\x18\x01 \x01(\v2\x13.service.v1.ServiceR\aservice\x12)\n" +
-	"\x06frames\x18\x02 \x03(\v2\x11.service.v1.FrameR\x06frames\x12!\n" +
-	"\ftotal_frames\x18\x03 \x01(\x03R\vtotalFrames\"e\n" +
-	"\x16DeleteOldFramesRequest\x12\x1d\n" +
+	"service_id\x18\x01 \x01(\tR\tserviceId\x12\x12\n" +
+	"\x04type\x18\x02 \x01(\tR\x04type\x12\x14\n" +
+	"\x05limit\x18\x03 \x01(\x03R\x05limit\x12\x16\n" +
+	"\x06offset\x18\x04 \x01(\x03R\x06offset\"_\n" +
+	"\x18ListStorageItemsResponse\x12-\n" +
+	"\x05items\x18\x01 \x03(\v2\x17.service.v1.StorageItemR\x05items\x12\x14\n" +
+	"\x05total\x18\x02 \x01(\x03R\x05total\"0\n" +
+	"\x15GetStorageItemRequest\x12\x17\n" +
+	"\aitem_id\x18\x01 \x01(\tR\x06itemId\"E\n" +
+	"\x16GetStorageItemResponse\x12+\n" +
+	"\x04item\x18\x01 \x01(\v2\x17.service.v1.StorageItemR\x04item\"\x7f\n" +
+	"\x1cDeleteOldStorageItemsRequest\x12\x1d\n" +
 	"\n" +
 	"service_id\x18\x01 \x01(\tR\tserviceId\x12,\n" +
-	"\x12older_than_seconds\x18\x02 \x01(\x03R\x10olderThanSeconds\">\n" +
-	"\x17DeleteOldFramesResponse\x12#\n" +
-	"\rdeleted_count\x18\x01 \x01(\x03R\fdeletedCount2\xf1\x02\n" +
-	"\x0eStorageService\x12K\n" +
-	"\n" +
-	"ListFrames\x12\x1d.service.v1.ListFramesRequest\x1a\x1e.service.v1.ListFramesResponse\x12E\n" +
-	"\bGetFrame\x12\x1b.service.v1.GetFrameRequest\x1a\x1c.service.v1.GetFrameResponse\x12o\n" +
-	"\x16ListServicesWithFrames\x12).service.v1.ListServicesWithFramesRequest\x1a*.service.v1.ListServicesWithFramesResponse\x12Z\n" +
-	"\x0fDeleteOldFrames\x12\".service.v1.DeleteOldFramesRequest\x1a#.service.v1.DeleteOldFramesResponseB%Z#unb/server/gen/service/v1;servicev1b\x06proto3"
+	"\x12older_than_seconds\x18\x02 \x01(\x03R\x10olderThanSeconds\x12\x12\n" +
+	"\x04type\x18\x03 \x01(\tR\x04type\"D\n" +
+	"\x1dDeleteOldStorageItemsResponse\x12#\n" +
+	"\rdeleted_count\x18\x01 \x01(\x03R\fdeletedCount2\xb6\x02\n" +
+	"\x0eStorageService\x12]\n" +
+	"\x10ListStorageItems\x12#.service.v1.ListStorageItemsRequest\x1a$.service.v1.ListStorageItemsResponse\x12W\n" +
+	"\x0eGetStorageItem\x12!.service.v1.GetStorageItemRequest\x1a\".service.v1.GetStorageItemResponse\x12l\n" +
+	"\x15DeleteOldStorageItems\x12(.service.v1.DeleteOldStorageItemsRequest\x1a).service.v1.DeleteOldStorageItemsResponseB%Z#unb/server/gen/service/v1;servicev1b\x06proto3"
 
 var (
 	file_service_v1_storage_proto_rawDescOnce sync.Once
@@ -614,41 +464,32 @@ func file_service_v1_storage_proto_rawDescGZIP() []byte {
 	return file_service_v1_storage_proto_rawDescData
 }
 
-var file_service_v1_storage_proto_msgTypes = make([]protoimpl.MessageInfo, 10)
+var file_service_v1_storage_proto_msgTypes = make([]protoimpl.MessageInfo, 7)
 var file_service_v1_storage_proto_goTypes = []any{
-	(*Frame)(nil),                          // 0: service.v1.Frame
-	(*ListFramesRequest)(nil),              // 1: service.v1.ListFramesRequest
-	(*ListFramesResponse)(nil),             // 2: service.v1.ListFramesResponse
-	(*GetFrameRequest)(nil),                // 3: service.v1.GetFrameRequest
-	(*GetFrameResponse)(nil),               // 4: service.v1.GetFrameResponse
-	(*ListServicesWithFramesRequest)(nil),  // 5: service.v1.ListServicesWithFramesRequest
-	(*ListServicesWithFramesResponse)(nil), // 6: service.v1.ListServicesWithFramesResponse
-	(*ServiceFrames)(nil),                  // 7: service.v1.ServiceFrames
-	(*DeleteOldFramesRequest)(nil),         // 8: service.v1.DeleteOldFramesRequest
-	(*DeleteOldFramesResponse)(nil),        // 9: service.v1.DeleteOldFramesResponse
-	(*timestamppb.Timestamp)(nil),          // 10: google.protobuf.Timestamp
-	(*Service)(nil),                        // 11: service.v1.Service
+	(*StorageItem)(nil),                   // 0: service.v1.StorageItem
+	(*ListStorageItemsRequest)(nil),       // 1: service.v1.ListStorageItemsRequest
+	(*ListStorageItemsResponse)(nil),      // 2: service.v1.ListStorageItemsResponse
+	(*GetStorageItemRequest)(nil),         // 3: service.v1.GetStorageItemRequest
+	(*GetStorageItemResponse)(nil),        // 4: service.v1.GetStorageItemResponse
+	(*DeleteOldStorageItemsRequest)(nil),  // 5: service.v1.DeleteOldStorageItemsRequest
+	(*DeleteOldStorageItemsResponse)(nil), // 6: service.v1.DeleteOldStorageItemsResponse
+	(*timestamppb.Timestamp)(nil),         // 7: google.protobuf.Timestamp
 }
 var file_service_v1_storage_proto_depIdxs = []int32{
-	10, // 0: service.v1.Frame.timestamp:type_name -> google.protobuf.Timestamp
-	0,  // 1: service.v1.ListFramesResponse.frames:type_name -> service.v1.Frame
-	0,  // 2: service.v1.GetFrameResponse.frame:type_name -> service.v1.Frame
-	7,  // 3: service.v1.ListServicesWithFramesResponse.services:type_name -> service.v1.ServiceFrames
-	11, // 4: service.v1.ServiceFrames.service:type_name -> service.v1.Service
-	0,  // 5: service.v1.ServiceFrames.frames:type_name -> service.v1.Frame
-	1,  // 6: service.v1.StorageService.ListFrames:input_type -> service.v1.ListFramesRequest
-	3,  // 7: service.v1.StorageService.GetFrame:input_type -> service.v1.GetFrameRequest
-	5,  // 8: service.v1.StorageService.ListServicesWithFrames:input_type -> service.v1.ListServicesWithFramesRequest
-	8,  // 9: service.v1.StorageService.DeleteOldFrames:input_type -> service.v1.DeleteOldFramesRequest
-	2,  // 10: service.v1.StorageService.ListFrames:output_type -> service.v1.ListFramesResponse
-	4,  // 11: service.v1.StorageService.GetFrame:output_type -> service.v1.GetFrameResponse
-	6,  // 12: service.v1.StorageService.ListServicesWithFrames:output_type -> service.v1.ListServicesWithFramesResponse
-	9,  // 13: service.v1.StorageService.DeleteOldFrames:output_type -> service.v1.DeleteOldFramesResponse
-	10, // [10:14] is the sub-list for method output_type
-	6,  // [6:10] is the sub-list for method input_type
-	6,  // [6:6] is the sub-list for extension type_name
-	6,  // [6:6] is the sub-list for extension extendee
-	0,  // [0:6] is the sub-list for field type_name
+	7, // 0: service.v1.StorageItem.timestamp:type_name -> google.protobuf.Timestamp
+	0, // 1: service.v1.ListStorageItemsResponse.items:type_name -> service.v1.StorageItem
+	0, // 2: service.v1.GetStorageItemResponse.item:type_name -> service.v1.StorageItem
+	1, // 3: service.v1.StorageService.ListStorageItems:input_type -> service.v1.ListStorageItemsRequest
+	3, // 4: service.v1.StorageService.GetStorageItem:input_type -> service.v1.GetStorageItemRequest
+	5, // 5: service.v1.StorageService.DeleteOldStorageItems:input_type -> service.v1.DeleteOldStorageItemsRequest
+	2, // 6: service.v1.StorageService.ListStorageItems:output_type -> service.v1.ListStorageItemsResponse
+	4, // 7: service.v1.StorageService.GetStorageItem:output_type -> service.v1.GetStorageItemResponse
+	6, // 8: service.v1.StorageService.DeleteOldStorageItems:output_type -> service.v1.DeleteOldStorageItemsResponse
+	6, // [6:9] is the sub-list for method output_type
+	3, // [3:6] is the sub-list for method input_type
+	3, // [3:3] is the sub-list for extension type_name
+	3, // [3:3] is the sub-list for extension extendee
+	0, // [0:3] is the sub-list for field type_name
 }
 
 func init() { file_service_v1_storage_proto_init() }
@@ -656,14 +497,13 @@ func file_service_v1_storage_proto_init() {
 	if File_service_v1_storage_proto != nil {
 		return
 	}
-	file_service_v1_service_proto_init()
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_service_v1_storage_proto_rawDesc), len(file_service_v1_storage_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   10,
+			NumMessages:   7,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
