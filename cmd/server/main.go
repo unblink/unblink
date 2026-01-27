@@ -103,29 +103,16 @@ func main() {
 	// Create VLM frame client and batch manager
 	var batchManager *webrtc.BatchManager
 	if config.VLMOpenAIBaseURL != "" {
-		vlmTimeout := 30 * time.Second
-		if config.VLMTimeoutSec > 0 {
-			vlmTimeout = time.Duration(config.VLMTimeoutSec) * time.Second
-		}
-
+		vlmTimeout := time.Duration(config.VLMTimeoutSec) * time.Second
 		frameClient := webrtc.NewFrameClient(config.VLMOpenAIBaseURL, config.VLMOpenAIModel, config.VLMOpenAIAPIKey, vlmTimeout, "Summarize the video", modelRegistry)
-
-		frameBatchSize := 2
-		if config.FrameBatchSize > 0 {
-			frameBatchSize = config.FrameBatchSize
-		}
-
-		batchManager = webrtc.NewBatchManager(frameClient, frameBatchSize, config.FramesBaseDir())
-		log.Printf("[Main] Initialized VLM frame client: url=%s, model=%s, batchSize=%d", config.VLMOpenAIBaseURL, config.VLMOpenAIModel, frameBatchSize)
+		batchManager = webrtc.NewBatchManager(frameClient, config.FrameBatchSize, config.FramesBaseDir())
+		log.Printf("[Main] Initialized VLM frame client: url=%s, model=%s, batchSize=%d, timeout=%vs", config.VLMOpenAIBaseURL, config.VLMOpenAIModel, config.FrameBatchSize, config.VLMTimeoutSec)
 	} else {
 		log.Printf("[Main] VLM not configured, frame summaries disabled")
 	}
 
 	// Create service registry for frame extraction
-	frameInterval := 5.0 * time.Second
-	if config.FrameIntervalSeconds > 0 {
-		frameInterval = time.Duration(config.FrameIntervalSeconds * float64(time.Second))
-	}
+	frameInterval := time.Duration(config.FrameIntervalSeconds * float64(time.Second))
 	serviceRegistry := service.NewServiceRegistry(
 		dbClient,
 		frameInterval,

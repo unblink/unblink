@@ -33,18 +33,18 @@ type Config struct {
 	FastOpenAIBaseURL string `json:"fast_openai_base_url"`
 	FastOpenAIAPIKey  string `json:"fast_openai_api_key,omitempty"`
 
-	// Content trimming safety margin (percentage, default 10 if not set)
-	ContentTrimSafetyMargin int `json:"content_trim_safety_margin,omitempty"`
+	// Content trimming safety margin (percentage)
+	ContentTrimSafetyMargin int `json:"content_trim_safety_margin"`
 
 	// Frame extraction settings
-	FrameIntervalSeconds float64 `json:"frame_interval_seconds,omitempty"` // Extraction interval in seconds (default 5)
-	FrameBatchSize       int     `json:"frame_batch_size,omitempty"`        // Frames to batch before sending (default 2)
+	FrameIntervalSeconds float64 `json:"frame_interval_seconds"` // Extraction interval in seconds
+	FrameBatchSize       int     `json:"frame_batch_size"`       // Frames to batch before sending
 
 	// VLM OpenAI settings for frame processing
-	VLMOpenAIModel  string `json:"vlm_openai_model"`
+	VLMOpenAIModel   string `json:"vlm_openai_model"`
 	VLMOpenAIBaseURL string `json:"vlm_openai_base_url"`
 	VLMOpenAIAPIKey  string `json:"vlm_openai_api_key,omitempty"`
-	VLMTimeoutSec    int    `json:"vlm_timeout_sec,omitempty"` // Request timeout in seconds (default 30)
+	VLMTimeoutSec    int    `json:"vlm_timeout_sec"` // Request timeout in seconds
 
 	// App directory for storage (frames, logs, etc.)
 	AppDir string `json:"app_dir"` // Path to application storage directory
@@ -131,6 +131,18 @@ func (c *Config) Validate() error {
 	}
 	if c.AppDir == "" {
 		missing = append(missing, "app_dir")
+	}
+	if c.ContentTrimSafetyMargin <= 0 {
+		missing = append(missing, "content_trim_safety_margin")
+	}
+	if c.FrameIntervalSeconds <= 0 {
+		missing = append(missing, "frame_interval_seconds")
+	}
+	if c.FrameBatchSize <= 0 {
+		missing = append(missing, "frame_batch_size")
+	}
+	if c.VLMTimeoutSec <= 0 {
+		missing = append(missing, "vlm_timeout_sec")
 	}
 
 	if len(missing) > 0 {
