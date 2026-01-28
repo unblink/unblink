@@ -19,7 +19,6 @@ export function useAuth() {
     isInitialized: () => !authState().isLoading,
     isLoading: () => authState().isLoading,
     isAuthenticated: () => authState().isAuthenticated,
-    initGuestUser: initAuth,  // Alias for backwards compatibility
     getUser,
     logout,
   };

@@ -6,6 +6,10 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/google/uuid"
+	"unblink/database"
+	"google.golang.org/protobuf/types/known/structpb"
 )
 
 // rollingContext holds the rolling state for a service
@@ -24,11 +28,12 @@ type BatchManager struct {
 	rollingContexts map[string]*rollingContext // serviceID -> rolling state
 	baseInstruction string                     // Base instruction
 	storage         *Storage                   // Storage for saving annotated frames
+	db              *database.Client           // Database for events
 	mu              sync.Mutex
 }
 
 // NewBatchManager creates a new batch manager
-func NewBatchManager(client *FrameClient, batchSize int, storage *Storage) *BatchManager {
+func NewBatchManager(client *FrameClient, batchSize int, storage *Storage, db *database.Client) *BatchManager {
 	return &BatchManager{
 		client:           client,
 		batchSize:        batchSize,
@@ -36,6 +41,7 @@ func NewBatchManager(client *FrameClient, batchSize int, storage *Storage) *Batc
 		rollingContexts:  make(map[string]*rollingContext),
 		baseInstruction:  "Analyze these video frames for motion, action, emotion, facial expressions, and subtle details. Detect ALL objects and return bounding boxes in NORMALIZED 1000 COORDINATES (0=top/left, 1000=bottom/right).",
 		storage:          storage,
+		db:               db,
 	}
 }
 
@@ -135,6 +141,24 @@ func (m *BatchManager) sendBatch(serviceID string, frames []*Frame, previousResp
 
 	if len(response.Choices) > 0 {
 		newResponse := response.Choices[0].Message.Content
+
+		// Create event for VLM indexing
+		if m.db != nil {
+			payload, _ := structpb.NewValue(&structpb.Value{
+				Kind: &structpb.Value_StructValue{
+					StructValue: &structpb.Struct{
+						Fields: map[string]*structpb.Value{
+							"type":     structpb.NewStringValue("vlm-indexing"),
+							"response": structpb.NewStringValue(newResponse),
+						},
+					},
+				},
+			})
+			eventID := uuid.New().String()
+			if err := m.db.CreateEvent(eventID, serviceID, payload); err != nil {
+				log.Printf("[BatchManager] Failed to create event: %v", err)
+			}
+		}
 
 		// Annotate the last frame with bounding boxes
 		finalFrame := framesToSend[len(framesToSend)-1]

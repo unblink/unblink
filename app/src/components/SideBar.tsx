@@ -2,6 +2,7 @@ import {
   FiChevronLeft,
   FiChevronRight,
   FiMessageCircle,
+  FiSettings,
 } from "solid-icons/fi";
 import { createSignal, For, Show } from "solid-js";
 import { services, activeTab, setActiveTab, type Tab, fetchServices } from "../shared";
@@ -43,7 +44,7 @@ export default function SideBar(props: SideBarProps) {
         class={`${collapsed() ? "w-20" : "w-80"
           } h-screen select-none transition-all duration-300 border-r border-neu-800`}
       >
-        <div class="bg-neu-900 h-full  flex flex-col drop-shadow-2xl">
+        <div class="bg-neu-900 h-full  flex flex-col">
           {/* Head */}
           <div
             class={`mt-4 flex items-center ${collapsed() ? "justify-center" : "space-x-3 mx-4"
@@ -69,6 +70,20 @@ export default function SideBar(props: SideBarProps) {
               <FiMessageCircle class="w-4 h-4 flex-shrink-0" />
               <Show when={!collapsed()}>
                 <div>Chat</div>
+              </Show>
+            </button>
+
+            {/* Settings Tab */}
+            <button
+              onClick={() => setActiveTab({ type: "settings" })}
+              data-active={activeTab().type === "settings"}
+              class={`w-full flex items-center ${collapsed() ? "justify-center px-2" : "space-x-3 px-4"
+                } py-2 rounded-xl text-neu-400 hover:bg-neu-800 data-[active=true]:bg-neu-800 data-[active=true]:text-white`}
+              title={collapsed() ? "Settings" : undefined}
+            >
+              <FiSettings class="w-4 h-4 flex-shrink-0" />
+              <Show when={!collapsed()}>
+                <div>Settings</div>
               </Show>
             </button>
           </div>

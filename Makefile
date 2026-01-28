@@ -11,17 +11,11 @@ vendor:
 	go mod vendor
 
 # Generate code from proto files
-generate: generate-go generate-ts
-
-# Generate Go code from proto
-generate-go:
-	rm -rf server/gen
-	cd proto && npx buf generate --template buf.gen.go.yaml
-
-# Generate TypeScript code from proto
-generate-ts:
+generate: 
 	rm -rf app/gen
 	cd proto && npx buf generate --template buf.gen.ts.yaml
+	rm -rf server/gen
+	cd proto && npx buf generate --template buf.gen.go.yaml
 
 # Drop database schema
 drop:

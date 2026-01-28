@@ -105,7 +105,7 @@ func main() {
 	if config.VLMOpenAIBaseURL != "" {
 		vlmTimeout := time.Duration(config.VLMTimeoutSec) * time.Second
 		frameClient := webrtc.NewFrameClient(config.VLMOpenAIBaseURL, config.VLMOpenAIModel, config.VLMOpenAIAPIKey, vlmTimeout, "Summarize the video", modelRegistry)
-		batchManager = webrtc.NewBatchManager(frameClient, config.FrameBatchSize, storage)
+		batchManager = webrtc.NewBatchManager(frameClient, config.FrameBatchSize, storage, dbClient)
 		log.Printf("[Main] Initialized VLM frame client: url=%s, model=%s, batchSize=%d, timeout=%vs", config.VLMOpenAIBaseURL, config.VLMOpenAIModel, config.FrameBatchSize, config.VLMTimeoutSec)
 	} else {
 		log.Printf("[Main] VLM not configured, frame summaries disabled")

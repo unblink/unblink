@@ -13,6 +13,7 @@ export interface Service {
 export type Tab =
   | { type: 'chat' }
   | { type: 'view'; nodeId: string; serviceId: string; name: string }
+  | { type: 'settings' }
 
 // Services state
 export const [services, setServices] = createSignal<Service[]>([])
