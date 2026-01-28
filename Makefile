@@ -11,7 +11,7 @@ vendor:
 	go mod vendor
 
 # Generate code from proto files
-generate: 
+proto: 
 	rm -rf app/gen
 	cd proto && npx buf generate --template buf.gen.ts.yaml
 	rm -rf server/gen
