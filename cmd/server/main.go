@@ -93,7 +93,7 @@ func main() {
 
 	// Initialize JWT manager and auth interceptor
 	jwtManager := server.NewJWTManager(config.JWTSecret)
-	authInterceptor := server.NewAuthInterceptor(jwtManager)
+	authInterceptor := server.NewAuthInterceptor(jwtManager, dbClient)
 	log.Printf("Initialized auth interceptor")
 
 	// Create storage for frames

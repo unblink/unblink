@@ -25,7 +25,7 @@ generate-ts:
 
 # Drop database schema
 drop:
-	go run cmd/cli/main.go -drop
+	go run cmd/cli/main.go drop
 
 # Typecheck (ts and go)
 typecheck:
@@ -33,4 +33,4 @@ typecheck:
 	go vet ./...
 
 delete-app-dir:
-	go run cmd/cli/main.go -delete-app-dir
+	go run cmd/cli/main.go delete-app-dir

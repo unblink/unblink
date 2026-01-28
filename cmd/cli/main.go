@@ -25,8 +25,8 @@ func main() {
 		fmt.Println("  -config string")
 		fmt.Println("        Path to config file (default: ~/.unblink/server.config.json)")
 		fmt.Println("Commands:")
-		fmt.Println("  -delete-app-dir  Delete the application directory")
-		fmt.Println("  -drop            Drop the database schema")
+		fmt.Println("  delete-app-dir   Delete the application directory")
+		fmt.Println("  drop             Drop the database schema")
 		os.Exit(1)
 	}
 
@@ -46,9 +46,9 @@ func main() {
 	// Handle the command
 	command := flag.Arg(0)
 	switch command {
-	case "-delete-app-dir":
+	case "delete-app-dir":
 		handleDeleteAppDir(config)
-	case "-drop":
+	case "drop":
 		handleDropSchema(dbClient)
 	default:
 		log.Fatalf("Unknown command: %s", command)

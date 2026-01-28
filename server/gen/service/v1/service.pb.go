@@ -530,7 +530,7 @@ const file_service_v1_service_proto_rawDesc = "" +
 	"\rCreateService\x12 .service.v1.CreateServiceRequest\x1a!.service.v1.CreateServiceResponse\x12i\n" +
 	"\x14ListServicesByNodeId\x12'.service.v1.ListServicesByNodeIdRequest\x1a(.service.v1.ListServicesByNodeIdResponse\x12T\n" +
 	"\rUpdateService\x12 .service.v1.UpdateServiceRequest\x1a!.service.v1.UpdateServiceResponse\x12T\n" +
-	"\rDeleteService\x12 .service.v1.DeleteServiceRequest\x1a!.service.v1.DeleteServiceResponseB%Z#unb/server/gen/service/v1;servicev1b\x06proto3"
+	"\rDeleteService\x12 .service.v1.DeleteServiceRequest\x1a!.service.v1.DeleteServiceResponseB)Z'unblink/server/gen/service/v1;servicev1b\x06proto3"
 
 var (
 	file_service_v1_service_proto_rawDescOnce sync.Once

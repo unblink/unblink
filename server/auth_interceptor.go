@@ -7,20 +7,28 @@ import (
 	"net/http"
 	"time"
 
+	"unblink/database"
 	"unblink/server/internal/ctxutil"
 
 	connect "connectrpc.com/connect"
 )
 
+// UserDB interface for user existence checks
+type UserDB interface {
+	GetUser(id string) (*database.User, error)
+}
+
 // AuthInterceptor validates JWT tokens and adds user info to context
 type AuthInterceptor struct {
 	jwtManager *UserJWTManager
+	db         UserDB
 }
 
 // NewAuthInterceptor creates a new auth interceptor
-func NewAuthInterceptor(jwtManager *UserJWTManager) *AuthInterceptor {
+func NewAuthInterceptor(jwtManager *UserJWTManager, db UserDB) *AuthInterceptor {
 	return &AuthInterceptor{
 		jwtManager: jwtManager,
+		db:         db,
 	}
 }
 
@@ -96,6 +104,18 @@ func (i *AuthInterceptor) authenticate(ctx context.Context, header http.Header) 
 		log.Printf("[auth] Token expired for user_id: %s", claims.UserID)
 		return nil, connect.NewError(connect.CodeUnauthenticated, fmt.Errorf("token expired"))
 	}
+
+	// Check if user exists in database
+	user, err := i.db.GetUser(claims.UserID)
+	if err != nil {
+		log.Printf("[auth] Failed to check user existence for user_id %s: %v", claims.UserID, err)
+		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("failed to verify user"))
+	}
+	if user == nil {
+		log.Printf("[auth] User not found in database for user_id: %s", claims.UserID)
+		return nil, connect.NewError(connect.CodeUnauthenticated, fmt.Errorf("user not found"))
+	}
+	log.Printf("[auth] User exists in database: %s", claims.UserID)
 
 	// Add user ID and claims to context
 	newCtx := context.WithValue(ctx, ctxutil.ContextKeyUserID, claims.UserID)
