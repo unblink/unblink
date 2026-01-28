@@ -25,18 +25,14 @@ func generateID() string {
 	return hex.EncodeToString(b)
 }
 
-// GetUserIDFromContext extracts the user ID from the context
-func GetUserIDFromContext(ctx context.Context) (string, bool) {
-	return ctxutil.GetUserIDFromContext(ctx)
-}
-
 // Database defines the interface for service database operations
 type Database interface {
 	CreateService(id, name, url, nodeID string) error
 	GetService(id string) (*servicev1.Service, error)
-	ListServicesByNodeId(nodeID, userID string) ([]*servicev1.Service, error)
-	UpdateService(id, name, url, userID string) error
-	DeleteService(id, userID string) error
+	ListServicesByNodeId(nodeID string) ([]*servicev1.Service, error)
+	UpdateService(id, name, url string) error
+	DeleteService(id string) error
+	CheckNodeAccess(nodeID, userID string) (bool, error)
 }
 
 type Service struct {
@@ -51,8 +47,37 @@ func NewService(db Database, registry *ServiceRegistry) *Service {
 	}
 }
 
+// verifyNodeOwnership checks if the user can access the node.
+// A node is accessible if it's public (no users associated) or the user is associated with it.
+func (s *Service) verifyNodeOwnership(ctx context.Context, nodeID string) error {
+	userID, ok := ctxutil.GetUserIDFromContext(ctx)
+	if !ok {
+		return connect.NewError(connect.CodeUnauthenticated, fmt.Errorf("not authenticated"))
+	}
+
+	hasAccess, err := s.db.CheckNodeAccess(nodeID, userID)
+	if err != nil {
+		return connect.NewError(connect.CodeInternal, fmt.Errorf("failed to verify node access: %w", err))
+	}
+
+	if !hasAccess {
+		return connect.NewError(connect.CodePermissionDenied, fmt.Errorf("you don't have access to this node"))
+	}
+
+	return nil
+}
+
 // CreateService creates a new service
 func (s *Service) CreateService(ctx context.Context, req *connect.Request[servicev1.CreateServiceRequest]) (*connect.Response[servicev1.CreateServiceResponse], error) {
+	if req.Msg.NodeId == "" {
+		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("node_id is required"))
+	}
+
+	// Verify node access first
+	if err := s.verifyNodeOwnership(ctx, req.Msg.NodeId); err != nil {
+		return nil, err
+	}
+
 	id := generateID()
 	now := time.Now()
 
@@ -67,9 +92,6 @@ func (s *Service) CreateService(ctx context.Context, req *connect.Request[servic
 	}
 
 	nodeID := req.Msg.NodeId
-	if nodeID == "" {
-		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("node_id is required"))
-	}
 
 	err := s.db.CreateService(id, name, url, nodeID)
 	if err != nil {
@@ -102,13 +124,16 @@ func (s *Service) CreateService(ctx context.Context, req *connect.Request[servic
 
 // ListServicesByNodeId retrieves all services for a node
 func (s *Service) ListServicesByNodeId(ctx context.Context, req *connect.Request[servicev1.ListServicesByNodeIdRequest]) (*connect.Response[servicev1.ListServicesByNodeIdResponse], error) {
-	userID, _ := GetUserIDFromContext(ctx)
-
 	if req.Msg.NodeId == "" {
 		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("node_id is required"))
 	}
 
-	services, err := s.db.ListServicesByNodeId(req.Msg.NodeId, userID)
+	// Verify node access first
+	if err := s.verifyNodeOwnership(ctx, req.Msg.NodeId); err != nil {
+		return nil, err
+	}
+
+	services, err := s.db.ListServicesByNodeId(req.Msg.NodeId)
 	if err != nil {
 		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("failed to list services: %w", err))
 	}
@@ -120,8 +145,6 @@ func (s *Service) ListServicesByNodeId(ctx context.Context, req *connect.Request
 
 // UpdateService updates an existing service
 func (s *Service) UpdateService(ctx context.Context, req *connect.Request[servicev1.UpdateServiceRequest]) (*connect.Response[servicev1.UpdateServiceResponse], error) {
-	userID, _ := GetUserIDFromContext(ctx)
-
 	if req.Msg.Id == "" {
 		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("id is required"))
 	}
@@ -142,8 +165,13 @@ func (s *Service) UpdateService(ctx context.Context, req *connect.Request[servic
 		return nil, connect.NewError(connect.CodeNotFound, fmt.Errorf("service not found: %w", err))
 	}
 
+	// Verify node access first
+	if err := s.verifyNodeOwnership(ctx, existingService.NodeId); err != nil {
+		return nil, err
+	}
+
 	// Update the service
-	err = s.db.UpdateService(req.Msg.Id, name, url, userID)
+	err = s.db.UpdateService(req.Msg.Id, name, url)
 	if err != nil {
 		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("failed to update service: %w", err))
 	}
@@ -172,15 +200,24 @@ func (s *Service) UpdateService(ctx context.Context, req *connect.Request[servic
 	}), nil
 }
 
-// DeleteService deletes a service by ID (looks up node_id from service)
+// DeleteService deletes a service by ID
 func (s *Service) DeleteService(ctx context.Context, req *connect.Request[servicev1.DeleteServiceRequest]) (*connect.Response[servicev1.DeleteServiceResponse], error) {
-	userID, _ := GetUserIDFromContext(ctx)
-
 	if req.Msg.ServiceId == "" {
 		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("service_id is required"))
 	}
 
-	err := s.db.DeleteService(req.Msg.ServiceId, userID)
+	// Get the service to check node ownership
+	service, err := s.db.GetService(req.Msg.ServiceId)
+	if err != nil {
+		return nil, connect.NewError(connect.CodeNotFound, fmt.Errorf("service not found: %w", err))
+	}
+
+	// Verify node access first
+	if err := s.verifyNodeOwnership(ctx, service.NodeId); err != nil {
+		return nil, err
+	}
+
+	err = s.db.DeleteService(req.Msg.ServiceId)
 	if err != nil {
 		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("failed to delete service: %w", err))
 	}

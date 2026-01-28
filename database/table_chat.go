@@ -64,19 +64,19 @@ func (c *Client) CreateConversation(id, userID, title, systemPrompt string) erro
 	return nil
 }
 
-// GetConversation retrieves a single conversation by ID and verifies ownership
-func (c *Client) GetConversation(id, userID string) (*chatv1.Conversation, error) {
+// GetConversation retrieves a single conversation by ID
+func (c *Client) GetConversation(id string) (*chatv1.Conversation, error) {
 	querySQL := `
 		SELECT id, title, system_prompt, created_at, updated_at
 		FROM conversations
-		WHERE id = $1 AND user_id = $2
+		WHERE id = $1
 	`
 
 	var conv chatv1.Conversation
 	var title, systemPrompt sql.NullString
 	var createdAt, updatedAt time.Time
 
-	err := c.db.QueryRow(querySQL, id, userID).Scan(
+	err := c.db.QueryRow(querySQL, id).Scan(
 		&conv.Id,
 		&title,
 		&systemPrompt,
@@ -156,48 +156,32 @@ func (c *Client) ListConversations(userID string) ([]*chatv1.Conversation, error
 	return conversations, nil
 }
 
-// UpdateConversation updates a conversation's title or system prompt with ownership verification
-func (c *Client) UpdateConversation(id, userID, title, systemPrompt string) error {
+// UpdateConversation updates a conversation's title or system prompt
+func (c *Client) UpdateConversation(id, title, systemPrompt string) error {
 	updateSQL := `
 		UPDATE conversations
 		SET
 			title = COALESCE($1, title),
 			system_prompt = COALESCE($2, system_prompt),
 			updated_at = CURRENT_TIMESTAMP
-		WHERE id = $3 AND user_id = $4
+		WHERE id = $3
 	`
 
-	result, err := c.db.Exec(updateSQL, title, systemPrompt, id, userID)
+	_, err := c.db.Exec(updateSQL, title, systemPrompt, id)
 	if err != nil {
 		return fmt.Errorf("failed to update conversation: %w", err)
-	}
-
-	rows, err := result.RowsAffected()
-	if err != nil {
-		return fmt.Errorf("failed to check rows affected: %w", err)
-	}
-	if rows == 0 {
-		return sql.ErrNoRows
 	}
 
 	return nil
 }
 
-// DeleteConversation removes a conversation and all associated messages/UI blocks with ownership verification
-func (c *Client) DeleteConversation(id, userID string) error {
-	deleteSQL := `DELETE FROM conversations WHERE id = $1 AND user_id = $2`
+// DeleteConversation removes a conversation and all associated messages/UI blocks
+func (c *Client) DeleteConversation(id string) error {
+	deleteSQL := `DELETE FROM conversations WHERE id = $1`
 
-	result, err := c.db.Exec(deleteSQL, id, userID)
+	_, err := c.db.Exec(deleteSQL, id)
 	if err != nil {
 		return fmt.Errorf("failed to delete conversation: %w", err)
-	}
-
-	rows, err := result.RowsAffected()
-	if err != nil {
-		return fmt.Errorf("failed to check rows affected: %w", err)
-	}
-	if rows == 0 {
-		return sql.ErrNoRows
 	}
 
 	return nil
@@ -219,17 +203,16 @@ func (c *Client) StoreMessage(id, conversationID, body string) error {
 	return nil
 }
 
-// ListMessages retrieves all messages for a conversation with ownership verification
-func (c *Client) ListMessages(conversationID, userID string) ([]*chatv1.Message, error) {
+// ListMessages retrieves all messages for a conversation
+func (c *Client) ListMessages(conversationID string) ([]*chatv1.Message, error) {
 	querySQL := `
-		SELECT m.id, m.conversation_id, m.body, m.created_at
-		FROM messages m
-		INNER JOIN conversations c ON m.conversation_id = c.id
-		WHERE m.conversation_id = $1 AND c.user_id = $2
-		ORDER BY m.created_at ASC
+		SELECT id, conversation_id, body, created_at
+		FROM messages
+		WHERE conversation_id = $1
+		ORDER BY created_at ASC
 	`
 
-	rows, err := c.db.Query(querySQL, conversationID, userID)
+	rows, err := c.db.Query(querySQL, conversationID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to list messages: %w", err)
 	}
@@ -285,17 +268,16 @@ func (c *Client) StoreUIBlock(id, conversationID, role, data string) error {
 	return nil
 }
 
-// ListUIBlocks retrieves all UI blocks for a conversation with ownership verification
-func (c *Client) ListUIBlocks(conversationID, userID string) ([]*chatv1.UIBlock, error) {
+// ListUIBlocks retrieves all UI blocks for a conversation
+func (c *Client) ListUIBlocks(conversationID string) ([]*chatv1.UIBlock, error) {
 	querySQL := `
-		SELECT ub.id, ub.conversation_id, ub.role, ub.data, ub.created_at
-		FROM ui_blocks ub
-		INNER JOIN conversations c ON ub.conversation_id = c.id
-		WHERE ub.conversation_id = $1 AND c.user_id = $2
-		ORDER BY ub.created_at ASC
+		SELECT id, conversation_id, role, data, created_at
+		FROM ui_blocks
+		WHERE conversation_id = $1
+		ORDER BY created_at ASC
 	`
 
-	rows, err := c.db.Query(querySQL, conversationID, userID)
+	rows, err := c.db.Query(querySQL, conversationID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to list UI blocks: %w", err)
 	}
@@ -340,9 +322,9 @@ func timestampToProto(t time.Time) *timestamppb.Timestamp {
 }
 
 // GetSystemPrompt retrieves the system prompt for a conversation
-func (c *Client) GetSystemPrompt(conversationID, userID string) (string, error) {
+func (c *Client) GetSystemPrompt(conversationID string) (string, error) {
 	var systemPrompt sql.NullString
-	err := c.db.QueryRow("SELECT system_prompt FROM conversations WHERE id = $1 AND user_id = $2", conversationID, userID).Scan(&systemPrompt)
+	err := c.db.QueryRow("SELECT system_prompt FROM conversations WHERE id = $1", conversationID).Scan(&systemPrompt)
 	if err != nil {
 		return "", err
 	}
@@ -353,16 +335,15 @@ func (c *Client) GetSystemPrompt(conversationID, userID string) (string, error) 
 }
 
 // GetMessagesBody retrieves all message bodies for a conversation
-func (c *Client) GetMessagesBody(conversationID, userID string) ([]string, error) {
+func (c *Client) GetMessagesBody(conversationID string) ([]string, error) {
 	querySQL := `
-		SELECT m.body
-		FROM messages m
-		INNER JOIN conversations c ON m.conversation_id = c.id
-		WHERE m.conversation_id = $1 AND c.user_id = $2
-		ORDER BY m.created_at ASC
+		SELECT body
+		FROM messages
+		WHERE conversation_id = $1
+		ORDER BY created_at ASC
 	`
 
-	rows, err := c.db.Query(querySQL, conversationID, userID)
+	rows, err := c.db.Query(querySQL, conversationID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get message bodies: %w", err)
 	}
@@ -384,4 +365,17 @@ func (c *Client) GetMessagesBody(conversationID, userID string) ([]string, error
 	}
 
 	return bodies, nil
+}
+
+// GetConversationOwner retrieves the user_id for a conversation (for authorization)
+func (c *Client) GetConversationOwner(conversationID string) (string, error) {
+	var userID string
+	err := c.db.QueryRow("SELECT user_id FROM conversations WHERE id = $1", conversationID).Scan(&userID)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return "", nil // Conversation doesn't exist
+		}
+		return "", fmt.Errorf("failed to get conversation owner: %w", err)
+	}
+	return userID, nil
 }

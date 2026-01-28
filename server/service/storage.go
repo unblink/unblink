@@ -12,14 +12,8 @@ import (
 	"unblink/database"
 	servicev1 "unblink/server/gen/service/v1"
 	"unblink/server/gen/service/v1/servicev1connect"
+	"unblink/server/internal/ctxutil"
 )
-
-// StorageDatabase defines the interface for storage database operations
-type StorageDatabase interface {
-	ListStorageItemsForService(serviceID string, storageType string, limit, offset int64) ([]*database.StorageEntry, int64, error)
-	GetStorageItemInfo(itemID string) (*database.StorageEntry, error)
-	DeleteOldStorageItems(serviceID string, storageType string, olderThanSeconds int64) (int64, error)
-}
 
 // StorageConfig holds configuration for storage
 type StorageConfig struct {
@@ -28,21 +22,52 @@ type StorageConfig struct {
 
 // StorageService handles storage operations
 type StorageService struct {
-	db     StorageDatabase
+	db     *database.Client
 	config *StorageConfig
 }
 
-func NewStorageService(db StorageDatabase, config *StorageConfig) *StorageService {
+func NewStorageService(db *database.Client, config *StorageConfig) *StorageService {
 	return &StorageService{
 		db:     db,
 		config: config,
 	}
 }
 
+// verifyServiceAccess checks if the user can access the service via node ownership
+func (s *StorageService) verifyServiceAccess(ctx context.Context, serviceID string) error {
+	userID, ok := ctxutil.GetUserIDFromContext(ctx)
+	if !ok {
+		return connect.NewError(connect.CodeUnauthenticated, fmt.Errorf("not authenticated"))
+	}
+
+	// Get service to find its node
+	service, err := s.db.GetService(serviceID)
+	if err != nil {
+		return connect.NewError(connect.CodeNotFound, fmt.Errorf("service not found"))
+	}
+
+	// Check node access
+	hasAccess, err := s.db.CheckNodeAccess(service.NodeId, userID)
+	if err != nil {
+		return connect.NewError(connect.CodeInternal, fmt.Errorf("failed to verify node access: %w", err))
+	}
+
+	if !hasAccess {
+		return connect.NewError(connect.CodePermissionDenied, fmt.Errorf("you don't have access to this service"))
+	}
+
+	return nil
+}
+
 // ListStorageItems lists storage items for a service
 func (s *StorageService) ListStorageItems(ctx context.Context, req *connect.Request[servicev1.ListStorageItemsRequest]) (*connect.Response[servicev1.ListStorageItemsResponse], error) {
 	if req.Msg.ServiceId == "" {
 		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("service_id is required"))
+	}
+
+	// Verify service access
+	if err := s.verifyServiceAccess(ctx, req.Msg.ServiceId); err != nil {
+		return nil, err
 	}
 
 	limit := req.Msg.Limit
@@ -92,6 +117,11 @@ func (s *StorageService) GetStorageItem(ctx context.Context, req *connect.Reques
 		return nil, connect.NewError(connect.CodeNotFound, fmt.Errorf("storage item not found: %w", err))
 	}
 
+	// Verify service access
+	if err := s.verifyServiceAccess(ctx, entry.ServiceID); err != nil {
+		return nil, err
+	}
+
 	// Verify file exists on disk
 	if _, err := os.Stat(entry.StoragePath); os.IsNotExist(err) {
 		return nil, connect.NewError(connect.CodeNotFound, fmt.Errorf("storage item file not found on disk"))
@@ -116,6 +146,11 @@ func (s *StorageService) GetStorageItem(ctx context.Context, req *connect.Reques
 func (s *StorageService) DeleteOldStorageItems(ctx context.Context, req *connect.Request[servicev1.DeleteOldStorageItemsRequest]) (*connect.Response[servicev1.DeleteOldStorageItemsResponse], error) {
 	if req.Msg.ServiceId == "" {
 		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("service_id is required"))
+	}
+
+	// Verify service access
+	if err := s.verifyServiceAccess(ctx, req.Msg.ServiceId); err != nil {
+		return nil, err
 	}
 
 	if req.Msg.OlderThanSeconds <= 0 {
@@ -148,6 +183,7 @@ func (s *StorageService) RegisterHTTPHandlers(mux *http.ServeMux) {
 
 // serveStorage serves JPEG files via HTTP
 // URL format: /storage/{itemID}
+// NOTE: This HTTP endpoint does NOT have authentication (assuming auth is handled upstream, e.g., reverse proxy)
 func (s *StorageService) serveStorage(w http.ResponseWriter, r *http.Request) {
 	// Extract itemID from path: /storage/{itemID}
 	path := r.URL.Path

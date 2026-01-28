@@ -2,7 +2,6 @@ package chat
 
 import (
 	"context"
-	"fmt"
 
 	"connectrpc.com/connect"
 
@@ -10,15 +9,14 @@ import (
 )
 
 func (s *Service) ListMessages(ctx context.Context, req *connect.Request[chatv1.ListMessagesRequest]) (*connect.Response[chatv1.ListMessagesResponse], error) {
-	// Get user ID from context (set by auth interceptor)
-	userID, ok := GetUserIDFromContext(ctx)
-	if !ok {
-		return nil, connect.NewError(connect.CodeUnauthenticated, fmt.Errorf("not authenticated"))
+	// Verify ownership first
+	if err := s.verifyConversationOwnership(ctx, req.Msg.ConversationId); err != nil {
+		return nil, err
 	}
 
-	messages, err := s.db.ListMessages(req.Msg.ConversationId, userID)
+	messages, err := s.db.ListMessages(req.Msg.ConversationId)
 	if err != nil {
-		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("failed to list messages: %w", err))
+		return nil, connect.NewError(connect.CodeInternal, err)
 	}
 
 	return connect.NewResponse(&chatv1.ListMessagesResponse{

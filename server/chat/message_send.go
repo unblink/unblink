@@ -17,13 +17,13 @@ import (
 )
 
 func (s *Service) SendMessage(ctx context.Context, req *connect.Request[chatv1.SendMessageRequest], stream *connect.ServerStream[chatv1.SendMessageResponse]) error {
-	// Get user ID from context (set by auth interceptor)
-	userID, ok := GetUserIDFromContext(ctx)
-	if !ok {
-		return connect.NewError(connect.CodeUnauthenticated, fmt.Errorf("not authenticated"))
+	conversationID := req.Msg.ConversationId
+
+	// Verify ownership first
+	if err := s.verifyConversationOwnership(ctx, conversationID); err != nil {
+		return err
 	}
 
-	conversationID := req.Msg.ConversationId
 	content := sanitizeForPostgres(req.Msg.Content)
 
 	// 1. Save User Message (as JSON body)
@@ -72,7 +72,7 @@ func (s *Service) SendMessage(ctx context.Context, req *connect.Request[chatv1.S
 	}
 
 	// 3. Fetch History
-	history, err := s.getConversationHistory(conversationID, userID)
+	history, err := s.getConversationHistory(conversationID)
 	if err != nil {
 		return connect.NewError(connect.CodeInternal, fmt.Errorf("failed to get history: %w", err))
 	}
@@ -557,9 +557,11 @@ Assistant: %s`,
 	return result.Topic
 }
 
-func (s *Service) getConversationHistory(conversationID, userID string) ([]openai.ChatCompletionMessageParamUnion, error) {
-	// First get system prompt with ownership verification
-	systemPrompt, err := s.db.GetSystemPrompt(conversationID, userID)
+func (s *Service) getConversationHistory(conversationID string) ([]openai.ChatCompletionMessageParamUnion, error) {
+	// Note: Authorization is already done at the handler level via verifyConversationOwnership
+
+	// Get system prompt
+	systemPrompt, err := s.db.GetSystemPrompt(conversationID)
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		return nil, err
 	}
@@ -569,8 +571,8 @@ func (s *Service) getConversationHistory(conversationID, userID string) ([]opena
 		messages = append(messages, openai.SystemMessage(systemPrompt))
 	}
 
-	// Get messages with ownership verification
-	bodies, err := s.db.GetMessagesBody(conversationID, userID)
+	// Get message bodies
+	bodies, err := s.db.GetMessagesBody(conversationID)
 	if err != nil {
 		return nil, err
 	}

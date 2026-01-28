@@ -7,7 +7,9 @@ import (
 
 	"connectrpc.com/connect"
 
+	"unblink/database"
 	"unblink/server"
+	"unblink/server/internal/ctxutil"
 	webrtcv1 "unblink/server/gen/webrtc/v1"
 )
 
@@ -15,14 +17,36 @@ import (
 type Service struct {
 	server     *server.Server
 	sessionMgr *SessionManager
+	db         *database.Client
 }
 
 // NewService creates a new WebRTC service
-func NewService(srv *server.Server) *Service {
+func NewService(srv *server.Server, db *database.Client) *Service {
 	return &Service{
 		server:     srv,
 		sessionMgr: NewSessionManager(),
+		db:         db,
 	}
+}
+
+// verifyServiceAccess checks if the user can access the service via node ownership
+func (s *Service) verifyServiceAccess(ctx context.Context, nodeID string) error {
+	userID, ok := ctxutil.GetUserIDFromContext(ctx)
+	if !ok {
+		return connect.NewError(connect.CodeUnauthenticated, fmt.Errorf("not authenticated"))
+	}
+
+	// Check node access
+	hasAccess, err := s.db.CheckNodeAccess(nodeID, userID)
+	if err != nil {
+		return connect.NewError(connect.CodeInternal, fmt.Errorf("failed to verify node access: %w", err))
+	}
+
+	if !hasAccess {
+		return connect.NewError(connect.CodePermissionDenied, fmt.Errorf("you don't have access to this node"))
+	}
+
+	return nil
 }
 
 // CreateWebRTCSession implements the CreateWebRTCSession RPC
@@ -45,6 +69,11 @@ func (s *Service) CreateWebRTCSession(
 	}
 	if req.Msg.SdpOffer == "" {
 		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("sdp_offer is required"))
+	}
+
+	// Verify node access first
+	if err := s.verifyServiceAccess(ctx, req.Msg.NodeId); err != nil {
+		return nil, err
 	}
 
 	// Get node connection

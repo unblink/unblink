@@ -40,3 +40,32 @@ func (c *Client) DissociateUserNode(userID, nodeID string) error {
 
 	return nil
 }
+
+// CheckNodeAccess checks if a user can access a node.
+// A node is accessible if:
+// 1. It's public (no users associated), OR
+// 2. The user is explicitly associated with the node
+func (c *Client) CheckNodeAccess(nodeID, userID string) (bool, error) {
+	// Check if node has any users associated (private node)
+	var hasUsers bool
+	checkSQL := `SELECT EXISTS(SELECT 1 FROM user_node WHERE node_id = $1)`
+	err := c.db.QueryRow(checkSQL, nodeID).Scan(&hasUsers)
+	if err != nil {
+		return false, fmt.Errorf("failed to check node status: %w", err)
+	}
+
+	// If node is public (no users associated), allow access
+	if !hasUsers {
+		return true, nil
+	}
+
+	// Node is private - check if user is associated
+	var isAssociated bool
+	assocSQL := `SELECT EXISTS(SELECT 1 FROM user_node WHERE node_id = $1 AND user_id = $2)`
+	err = c.db.QueryRow(assocSQL, nodeID, userID).Scan(&isAssociated)
+	if err != nil {
+		return false, fmt.Errorf("failed to check node association: %w", err)
+	}
+
+	return isAssociated, nil
+}

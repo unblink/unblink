@@ -74,16 +74,17 @@ type Config struct {
 // Database defines the interface for chat database operations
 type Database interface {
 	CreateConversation(id, userID, title, systemPrompt string) error
-	GetConversation(id, userID string) (*chatv1.Conversation, error)
+	GetConversation(id string) (*chatv1.Conversation, error)
+	GetConversationOwner(conversationID string) (string, error)
 	ListConversations(userID string) ([]*chatv1.Conversation, error)
-	UpdateConversation(id, userID, title, systemPrompt string) error
-	DeleteConversation(id, userID string) error
+	UpdateConversation(id, title, systemPrompt string) error
+	DeleteConversation(id string) error
 	StoreMessage(id, conversationID, body string) error
-	ListMessages(conversationID, userID string) ([]*chatv1.Message, error)
+	ListMessages(conversationID string) ([]*chatv1.Message, error)
 	StoreUIBlock(id, conversationID, role, data string) error
-	ListUIBlocks(conversationID, userID string) ([]*chatv1.UIBlock, error)
-	GetSystemPrompt(conversationID, userID string) (string, error)
-	GetMessagesBody(conversationID, userID string) ([]string, error)
+	ListUIBlocks(conversationID string) ([]*chatv1.UIBlock, error)
+	GetSystemPrompt(conversationID string) (string, error)
+	GetMessagesBody(conversationID string) ([]string, error)
 }
 
 func NewService(db Database, cfg *Config, modelRegistry *models.Registry) *Service {

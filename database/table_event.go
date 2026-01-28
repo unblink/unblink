@@ -47,27 +47,12 @@ func (c *Client) CreateEvent(id, serviceID string, payload *structpb.Value) erro
 	return nil
 }
 
-// GetEvent retrieves an event by ID with public/private logic
-func (c *Client) GetEvent(id, userID string) (*servicev1.Event, error) {
+// GetEvent retrieves an event by ID
+func (c *Client) GetEvent(id string) (*servicev1.Event, error) {
 	querySQL := `
-		SELECT e.id, e.service_id, e.payload, e.created_at
-		FROM events e
-		INNER JOIN services s ON e.service_id = s.id
-		WHERE e.id = $1
-		AND (
-			-- Node is public (no users associated)
-			NOT EXISTS (
-				SELECT 1 FROM user_node
-				WHERE user_node.node_id = s.node_id
-			)
-			OR
-			-- OR user has access to this private node
-			EXISTS (
-				SELECT 1 FROM user_node
-				WHERE user_node.node_id = s.node_id
-				AND user_node.user_id = $2
-			)
-		)
+		SELECT id, service_id, payload, created_at
+		FROM events
+		WHERE id = $1
 	`
 
 	var event servicev1.Event
@@ -75,7 +60,7 @@ func (c *Client) GetEvent(id, userID string) (*servicev1.Event, error) {
 	var payloadJSON sql.NullString
 	var createdAt time.Time
 
-	err := c.db.QueryRow(querySQL, id, userID).Scan(
+	err := c.db.QueryRow(querySQL, id).Scan(
 		&event.Id,
 		&serviceID,
 		&payloadJSON,
@@ -105,70 +90,28 @@ func (c *Client) GetEvent(id, userID string) (*servicev1.Event, error) {
 	return &event, nil
 }
 
-// DeleteEvent removes an event by ID with public/private logic
-func (c *Client) DeleteEvent(id, userID string) error {
-	deleteSQL := `
-		DELETE FROM events
-		WHERE id = $1
-		AND (
-			-- Service's node is public (no users associated)
-			NOT EXISTS (
-				SELECT 1 FROM services s
-				INNER JOIN user_node un ON s.node_id = un.node_id
-				WHERE s.id = events.service_id
-			)
-			OR
-			-- OR user has access to this private node
-			EXISTS (
-				SELECT 1 FROM services s
-				INNER JOIN user_node un ON s.node_id = un.node_id
-				WHERE s.id = events.service_id
-				AND un.user_id = $2
-			)
-		)
-	`
+// DeleteEvent removes an event by ID
+func (c *Client) DeleteEvent(id string) error {
+	deleteSQL := `DELETE FROM events WHERE id = $1`
 
-	result, err := c.db.Exec(deleteSQL, id, userID)
+	_, err := c.db.Exec(deleteSQL, id)
 	if err != nil {
 		return fmt.Errorf("failed to delete event: %w", err)
-	}
-
-	rows, err := result.RowsAffected()
-	if err != nil {
-		return fmt.Errorf("failed to check rows affected: %w", err)
-	}
-	if rows == 0 {
-		return sql.ErrNoRows
 	}
 
 	return nil
 }
 
-// ListEventsByServiceId retrieves all events for a service with public/private logic
-func (c *Client) ListEventsByServiceId(serviceID, userID string) ([]*servicev1.Event, error) {
+// ListEventsByServiceId retrieves all events for a service
+func (c *Client) ListEventsByServiceId(serviceID string) ([]*servicev1.Event, error) {
 	querySQL := `
-		SELECT e.id, e.service_id, e.payload, e.created_at
-		FROM events e
-		INNER JOIN services s ON e.service_id = s.id
-		WHERE e.service_id = $1
-		AND (
-			-- Node is public (no users associated)
-			NOT EXISTS (
-				SELECT 1 FROM user_node
-				WHERE user_node.node_id = s.node_id
-			)
-			OR
-			-- OR user has access to this private node
-			EXISTS (
-				SELECT 1 FROM user_node
-				WHERE user_node.node_id = s.node_id
-				AND user_node.user_id = $2
-			)
-		)
-		ORDER BY e.created_at DESC
+		SELECT id, service_id, payload, created_at
+		FROM events
+		WHERE service_id = $1
+		ORDER BY created_at DESC
 	`
 
-	rows, err := c.db.Query(querySQL, serviceID, userID)
+	rows, err := c.db.Query(querySQL, serviceID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to list events: %w", err)
 	}

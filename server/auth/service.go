@@ -21,22 +21,12 @@ type TokenGenerator interface {
 
 // Service implements the AuthService
 type Service struct {
-	db         DB
+	db         *database.Client
 	jwtManager TokenGenerator
 }
 
-// DB interface for user operations - matches database.Client methods
-// We use the actual database package types to avoid duplication
-type DB interface {
-	CreateUser(id string, profile map[string]string) error
-	GetUser(id string) (*database.User, error)
-	IsGuest(userID string) (bool, error)
-	GetAccountByUserID(userID string) (*database.Account, error)
-	UpdateUserProfile(userID string, profile map[string]string) error
-}
-
 // NewService creates a new auth service
-func NewService(db DB, jwtManager TokenGenerator) *Service {
+func NewService(db *database.Client, jwtManager TokenGenerator) *Service {
 	return &Service{
 		db:         db,
 		jwtManager: jwtManager,
@@ -101,7 +91,7 @@ func (s *Service) CreateGuestUser(ctx context.Context, req *connect.Request[auth
 // GetUser returns the current authenticated user
 func (s *Service) GetUser(ctx context.Context, req *connect.Request[authv1.GetUserRequest]) (*connect.Response[authv1.GetUserResponse], error) {
 	// Get user ID from context (set by auth interceptor)
-	userID, ok := GetUserIDFromContext(ctx)
+	userID, ok := ctxutil.GetUserIDFromContext(ctx)
 	if !ok {
 		return nil, connect.NewError(connect.CodeUnauthenticated, fmt.Errorf("not authenticated"))
 	}
@@ -167,7 +157,7 @@ func (s *Service) Login(ctx context.Context, req *connect.Request[authv1.LoginRe
 // UpdateUserProfile updates the current user's profile
 func (s *Service) UpdateUserProfile(ctx context.Context, req *connect.Request[authv1.UpdateUserProfileRequest]) (*connect.Response[authv1.UpdateUserProfileResponse], error) {
 	// Get user ID from context (set by auth interceptor)
-	userID, ok := GetUserIDFromContext(ctx)
+	userID, ok := ctxutil.GetUserIDFromContext(ctx)
 	if !ok {
 		return nil, connect.NewError(connect.CodeUnauthenticated, fmt.Errorf("not authenticated"))
 	}
@@ -223,8 +213,3 @@ func (s *Service) UpdateUserProfile(ctx context.Context, req *connect.Request[au
 	}), nil
 }
 
-// GetUserIDFromContext extracts the user ID from the context
-// This is a convenience wrapper around ctxutil.GetUserIDFromContext for backwards compatibility
-func GetUserIDFromContext(ctx context.Context) (string, bool) {
-	return ctxutil.GetUserIDFromContext(ctx)
-}

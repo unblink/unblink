@@ -184,7 +184,7 @@ func main() {
 	}
 
 	// Mount WebRTCService with auth interceptor
-	webrtcService := webrtc.NewService(nodeServer)
+	webrtcService := webrtc.NewService(nodeServer, dbClient)
 	webrtcPath, webrtcHandler := webrtcv1connect.NewWebRTCServiceHandler(
 		webrtcService,
 		connect.WithInterceptors(authInterceptor),

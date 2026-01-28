@@ -81,38 +81,16 @@ func (c *Client) CreateService(id, name, url, nodeID string) error {
 }
 
 // UpdateService updates an existing service
-func (c *Client) UpdateService(id, name, url, userID string) error {
+func (c *Client) UpdateService(id, name, url string) error {
 	updateSQL := `
 		UPDATE services
 		SET name = $1, url = $2, updated_at = CURRENT_TIMESTAMP
 		WHERE id = $3
-		AND (
-			-- Node is public (no users associated)
-			NOT EXISTS (
-				SELECT 1 FROM user_node
-				WHERE user_node.node_id = services.node_id
-			)
-			OR
-			-- OR user has access to this private node
-			EXISTS (
-				SELECT 1 FROM user_node
-				WHERE user_node.node_id = services.node_id
-				AND user_node.user_id = $4
-			)
-		)
 	`
 
-	result, err := c.db.Exec(updateSQL, name, url, id, userID)
+	_, err := c.db.Exec(updateSQL, name, url, id)
 	if err != nil {
 		return fmt.Errorf("failed to update service: %w", err)
-	}
-
-	rows, err := result.RowsAffected()
-	if err != nil {
-		return fmt.Errorf("failed to check rows affected: %w", err)
-	}
-	if rows == 0 {
-		return sql.ErrNoRows
 	}
 
 	return nil
@@ -163,67 +141,28 @@ func (c *Client) GetService(id string) (*servicev1.Service, error) {
 	return &svc, nil
 }
 
-// DeleteService removes a service by ID with public/private logic
-func (c *Client) DeleteService(id, userID string) error {
-	deleteSQL := `
-		DELETE FROM services
-		WHERE id = $1
-		AND (
-			-- Node is public (no users associated)
-			NOT EXISTS (
-				SELECT 1 FROM user_node
-				WHERE user_node.node_id = services.node_id
-			)
-			OR
-			-- OR user has access to this private node
-			EXISTS (
-				SELECT 1 FROM user_node
-				WHERE user_node.node_id = services.node_id
-				AND user_node.user_id = $2
-			)
-		)
-	`
+// DeleteService removes a service by ID
+func (c *Client) DeleteService(id string) error {
+	deleteSQL := `DELETE FROM services WHERE id = $1`
 
-	result, err := c.db.Exec(deleteSQL, id, userID)
+	_, err := c.db.Exec(deleteSQL, id)
 	if err != nil {
 		return fmt.Errorf("failed to delete service: %w", err)
-	}
-
-	rows, err := result.RowsAffected()
-	if err != nil {
-		return fmt.Errorf("failed to check rows affected: %w", err)
-	}
-	if rows == 0 {
-		return sql.ErrNoRows
 	}
 
 	return nil
 }
 
-// ListServicesByNodeId retrieves all services for a node with public/private logic
-func (c *Client) ListServicesByNodeId(nodeID, userID string) ([]*servicev1.Service, error) {
+// ListServicesByNodeId retrieves all services for a node
+func (c *Client) ListServicesByNodeId(nodeID string) ([]*servicev1.Service, error) {
 	querySQL := `
-		SELECT s.id, s.name, s.url, s.node_id, s.created_at, s.updated_at
-		FROM services s
-		WHERE s.node_id = $1
-		AND (
-			-- Node is public (no users associated)
-			NOT EXISTS (
-				SELECT 1 FROM user_node
-				WHERE user_node.node_id = s.node_id
-			)
-			OR
-			-- OR user has access to this private node
-			EXISTS (
-				SELECT 1 FROM user_node
-				WHERE user_node.node_id = s.node_id
-				AND user_node.user_id = $2
-			)
-		)
-		ORDER BY s.created_at DESC
+		SELECT id, name, url, node_id, created_at, updated_at
+		FROM services
+		WHERE node_id = $1
+		ORDER BY created_at DESC
 	`
 
-	rows, err := c.db.Query(querySQL, nodeID, userID)
+	rows, err := c.db.Query(querySQL, nodeID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to list services: %w", err)
 	}
