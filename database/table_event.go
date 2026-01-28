@@ -22,6 +22,9 @@ const (
 
 		CREATE INDEX IF NOT EXISTS idx_events_service_id ON events(service_id);
 		CREATE INDEX IF NOT EXISTS idx_events_created_at ON events(created_at DESC);
+
+		-- Migration: drop type column if it exists from older schema
+		ALTER TABLE events DROP COLUMN IF EXISTS type;
 	`
 
 	dropEventTablesSQL = `DROP TABLE IF EXISTS events CASCADE`
