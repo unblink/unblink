@@ -1045,7 +1045,6 @@ type SendMessageResponse struct {
 	//	*SendMessageResponse_StatusUpdate
 	//	*SendMessageResponse_ToolCall
 	//	*SendMessageResponse_UiBlock
-	//	*SendMessageResponse_FollowUp
 	Event         isSendMessageResponse_Event `protobuf_oneof:"event"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -1124,15 +1123,6 @@ func (x *SendMessageResponse) GetUiBlock() *UIBlock {
 	return nil
 }
 
-func (x *SendMessageResponse) GetFollowUp() *FollowUp {
-	if x != nil {
-		if x, ok := x.Event.(*SendMessageResponse_FollowUp); ok {
-			return x.FollowUp
-		}
-	}
-	return nil
-}
-
 type isSendMessageResponse_Event interface {
 	isSendMessageResponse_Event()
 }
@@ -1153,10 +1143,6 @@ type SendMessageResponse_UiBlock struct {
 	UiBlock *UIBlock `protobuf:"bytes,4,opt,name=ui_block,json=uiBlock,proto3,oneof"`
 }
 
-type SendMessageResponse_FollowUp struct {
-	FollowUp *FollowUp `protobuf:"bytes,5,opt,name=follow_up,json=followUp,proto3,oneof"`
-}
-
 func (*SendMessageResponse_Delta) isSendMessageResponse_Event() {}
 
 func (*SendMessageResponse_StatusUpdate) isSendMessageResponse_Event() {}
@@ -1164,53 +1150,6 @@ func (*SendMessageResponse_StatusUpdate) isSendMessageResponse_Event() {}
 func (*SendMessageResponse_ToolCall) isSendMessageResponse_Event() {}
 
 func (*SendMessageResponse_UiBlock) isSendMessageResponse_Event() {}
-
-func (*SendMessageResponse_FollowUp) isSendMessageResponse_Event() {}
-
-// Follow-up topic suggestion
-type FollowUp struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Topic         string                 `protobuf:"bytes,1,opt,name=topic,proto3" json:"topic,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *FollowUp) Reset() {
-	*x = FollowUp{}
-	mi := &file_chat_v1_chat_proto_msgTypes[19]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *FollowUp) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*FollowUp) ProtoMessage() {}
-
-func (x *FollowUp) ProtoReflect() protoreflect.Message {
-	mi := &file_chat_v1_chat_proto_msgTypes[19]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use FollowUp.ProtoReflect.Descriptor instead.
-func (*FollowUp) Descriptor() ([]byte, []int) {
-	return file_chat_v1_chat_proto_rawDescGZIP(), []int{19}
-}
-
-func (x *FollowUp) GetTopic() string {
-	if x != nil {
-		return x.Topic
-	}
-	return ""
-}
 
 type Delta struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
@@ -1222,7 +1161,7 @@ type Delta struct {
 
 func (x *Delta) Reset() {
 	*x = Delta{}
-	mi := &file_chat_v1_chat_proto_msgTypes[20]
+	mi := &file_chat_v1_chat_proto_msgTypes[19]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1234,7 +1173,7 @@ func (x *Delta) String() string {
 func (*Delta) ProtoMessage() {}
 
 func (x *Delta) ProtoReflect() protoreflect.Message {
-	mi := &file_chat_v1_chat_proto_msgTypes[20]
+	mi := &file_chat_v1_chat_proto_msgTypes[19]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1247,7 +1186,7 @@ func (x *Delta) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Delta.ProtoReflect.Descriptor instead.
 func (*Delta) Descriptor() ([]byte, []int) {
-	return file_chat_v1_chat_proto_rawDescGZIP(), []int{20}
+	return file_chat_v1_chat_proto_rawDescGZIP(), []int{19}
 }
 
 func (x *Delta) GetBlockId() string {
@@ -1278,7 +1217,7 @@ type ToolCallEvent struct {
 
 func (x *ToolCallEvent) Reset() {
 	*x = ToolCallEvent{}
-	mi := &file_chat_v1_chat_proto_msgTypes[21]
+	mi := &file_chat_v1_chat_proto_msgTypes[20]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1290,7 +1229,7 @@ func (x *ToolCallEvent) String() string {
 func (*ToolCallEvent) ProtoMessage() {}
 
 func (x *ToolCallEvent) ProtoReflect() protoreflect.Message {
-	mi := &file_chat_v1_chat_proto_msgTypes[21]
+	mi := &file_chat_v1_chat_proto_msgTypes[20]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1303,7 +1242,7 @@ func (x *ToolCallEvent) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ToolCallEvent.ProtoReflect.Descriptor instead.
 func (*ToolCallEvent) Descriptor() ([]byte, []int) {
-	return file_chat_v1_chat_proto_rawDescGZIP(), []int{21}
+	return file_chat_v1_chat_proto_rawDescGZIP(), []int{20}
 }
 
 func (x *ToolCallEvent) GetToolName() string {
@@ -1410,16 +1349,13 @@ const file_chat_v1_chat_proto_rawDesc = "" +
 	"\x12SendMessageRequest\x12'\n" +
 	"\x0fconversation_id\x18\x01 \x01(\tR\x0econversationId\x12\x18\n" +
 	"\acontent\x18\x02 \x01(\tR\acontent\x12$\n" +
-	"\x0euse_web_search\x18\x03 \x01(\bR\fuseWebSearch\"\x85\x02\n" +
+	"\x0euse_web_search\x18\x03 \x01(\bR\fuseWebSearch\"\xd3\x01\n" +
 	"\x13SendMessageResponse\x12&\n" +
 	"\x05delta\x18\x01 \x01(\v2\x0e.chat.v1.DeltaH\x00R\x05delta\x12%\n" +
 	"\rstatus_update\x18\x02 \x01(\tH\x00R\fstatusUpdate\x125\n" +
 	"\ttool_call\x18\x03 \x01(\v2\x16.chat.v1.ToolCallEventH\x00R\btoolCall\x12-\n" +
-	"\bui_block\x18\x04 \x01(\v2\x10.chat.v1.UIBlockH\x00R\auiBlock\x120\n" +
-	"\tfollow_up\x18\x05 \x01(\v2\x11.chat.v1.FollowUpH\x00R\bfollowUpB\a\n" +
-	"\x05event\" \n" +
-	"\bFollowUp\x12\x14\n" +
-	"\x05topic\x18\x01 \x01(\tR\x05topic\"8\n" +
+	"\bui_block\x18\x04 \x01(\v2\x10.chat.v1.UIBlockH\x00R\auiBlockB\a\n" +
+	"\x05event\"8\n" +
 	"\x05Delta\x12\x19\n" +
 	"\bblock_id\x18\x01 \x01(\tR\ablockId\x12\x14\n" +
 	"\x05delta\x18\x02 \x01(\tR\x05delta\"\x8e\x01\n" +
@@ -1459,7 +1395,7 @@ func file_chat_v1_chat_proto_rawDescGZIP() []byte {
 }
 
 var file_chat_v1_chat_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_chat_v1_chat_proto_msgTypes = make([]protoimpl.MessageInfo, 22)
+var file_chat_v1_chat_proto_msgTypes = make([]protoimpl.MessageInfo, 21)
 var file_chat_v1_chat_proto_goTypes = []any{
 	(Role)(0),                          // 0: chat.v1.Role
 	(*Conversation)(nil),               // 1: chat.v1.Conversation
@@ -1481,47 +1417,45 @@ var file_chat_v1_chat_proto_goTypes = []any{
 	(*ListUIBlocksResponse)(nil),       // 17: chat.v1.ListUIBlocksResponse
 	(*SendMessageRequest)(nil),         // 18: chat.v1.SendMessageRequest
 	(*SendMessageResponse)(nil),        // 19: chat.v1.SendMessageResponse
-	(*FollowUp)(nil),                   // 20: chat.v1.FollowUp
-	(*Delta)(nil),                      // 21: chat.v1.Delta
-	(*ToolCallEvent)(nil),              // 22: chat.v1.ToolCallEvent
-	(*timestamppb.Timestamp)(nil),      // 23: google.protobuf.Timestamp
+	(*Delta)(nil),                      // 20: chat.v1.Delta
+	(*ToolCallEvent)(nil),              // 21: chat.v1.ToolCallEvent
+	(*timestamppb.Timestamp)(nil),      // 22: google.protobuf.Timestamp
 }
 var file_chat_v1_chat_proto_depIdxs = []int32{
-	23, // 0: chat.v1.Conversation.created_at:type_name -> google.protobuf.Timestamp
-	23, // 1: chat.v1.Conversation.updated_at:type_name -> google.protobuf.Timestamp
-	23, // 2: chat.v1.Message.created_at:type_name -> google.protobuf.Timestamp
-	23, // 3: chat.v1.UIBlock.created_at:type_name -> google.protobuf.Timestamp
+	22, // 0: chat.v1.Conversation.created_at:type_name -> google.protobuf.Timestamp
+	22, // 1: chat.v1.Conversation.updated_at:type_name -> google.protobuf.Timestamp
+	22, // 2: chat.v1.Message.created_at:type_name -> google.protobuf.Timestamp
+	22, // 3: chat.v1.UIBlock.created_at:type_name -> google.protobuf.Timestamp
 	1,  // 4: chat.v1.CreateConversationResponse.conversation:type_name -> chat.v1.Conversation
 	1,  // 5: chat.v1.ListConversationsResponse.conversations:type_name -> chat.v1.Conversation
 	1,  // 6: chat.v1.GetConversationResponse.conversation:type_name -> chat.v1.Conversation
 	1,  // 7: chat.v1.UpdateConversationResponse.conversation:type_name -> chat.v1.Conversation
 	2,  // 8: chat.v1.ListMessagesResponse.messages:type_name -> chat.v1.Message
 	3,  // 9: chat.v1.ListUIBlocksResponse.ui_blocks:type_name -> chat.v1.UIBlock
-	21, // 10: chat.v1.SendMessageResponse.delta:type_name -> chat.v1.Delta
-	22, // 11: chat.v1.SendMessageResponse.tool_call:type_name -> chat.v1.ToolCallEvent
+	20, // 10: chat.v1.SendMessageResponse.delta:type_name -> chat.v1.Delta
+	21, // 11: chat.v1.SendMessageResponse.tool_call:type_name -> chat.v1.ToolCallEvent
 	3,  // 12: chat.v1.SendMessageResponse.ui_block:type_name -> chat.v1.UIBlock
-	20, // 13: chat.v1.SendMessageResponse.follow_up:type_name -> chat.v1.FollowUp
-	4,  // 14: chat.v1.ChatService.CreateConversation:input_type -> chat.v1.CreateConversationRequest
-	6,  // 15: chat.v1.ChatService.ListConversations:input_type -> chat.v1.ListConversationsRequest
-	8,  // 16: chat.v1.ChatService.GetConversation:input_type -> chat.v1.GetConversationRequest
-	10, // 17: chat.v1.ChatService.UpdateConversation:input_type -> chat.v1.UpdateConversationRequest
-	12, // 18: chat.v1.ChatService.DeleteConversation:input_type -> chat.v1.DeleteConversationRequest
-	14, // 19: chat.v1.ChatService.ListMessages:input_type -> chat.v1.ListMessagesRequest
-	16, // 20: chat.v1.ChatService.ListUIBlocks:input_type -> chat.v1.ListUIBlocksRequest
-	18, // 21: chat.v1.ChatService.SendMessage:input_type -> chat.v1.SendMessageRequest
-	5,  // 22: chat.v1.ChatService.CreateConversation:output_type -> chat.v1.CreateConversationResponse
-	7,  // 23: chat.v1.ChatService.ListConversations:output_type -> chat.v1.ListConversationsResponse
-	9,  // 24: chat.v1.ChatService.GetConversation:output_type -> chat.v1.GetConversationResponse
-	11, // 25: chat.v1.ChatService.UpdateConversation:output_type -> chat.v1.UpdateConversationResponse
-	13, // 26: chat.v1.ChatService.DeleteConversation:output_type -> chat.v1.DeleteConversationResponse
-	15, // 27: chat.v1.ChatService.ListMessages:output_type -> chat.v1.ListMessagesResponse
-	17, // 28: chat.v1.ChatService.ListUIBlocks:output_type -> chat.v1.ListUIBlocksResponse
-	19, // 29: chat.v1.ChatService.SendMessage:output_type -> chat.v1.SendMessageResponse
-	22, // [22:30] is the sub-list for method output_type
-	14, // [14:22] is the sub-list for method input_type
-	14, // [14:14] is the sub-list for extension type_name
-	14, // [14:14] is the sub-list for extension extendee
-	0,  // [0:14] is the sub-list for field type_name
+	4,  // 13: chat.v1.ChatService.CreateConversation:input_type -> chat.v1.CreateConversationRequest
+	6,  // 14: chat.v1.ChatService.ListConversations:input_type -> chat.v1.ListConversationsRequest
+	8,  // 15: chat.v1.ChatService.GetConversation:input_type -> chat.v1.GetConversationRequest
+	10, // 16: chat.v1.ChatService.UpdateConversation:input_type -> chat.v1.UpdateConversationRequest
+	12, // 17: chat.v1.ChatService.DeleteConversation:input_type -> chat.v1.DeleteConversationRequest
+	14, // 18: chat.v1.ChatService.ListMessages:input_type -> chat.v1.ListMessagesRequest
+	16, // 19: chat.v1.ChatService.ListUIBlocks:input_type -> chat.v1.ListUIBlocksRequest
+	18, // 20: chat.v1.ChatService.SendMessage:input_type -> chat.v1.SendMessageRequest
+	5,  // 21: chat.v1.ChatService.CreateConversation:output_type -> chat.v1.CreateConversationResponse
+	7,  // 22: chat.v1.ChatService.ListConversations:output_type -> chat.v1.ListConversationsResponse
+	9,  // 23: chat.v1.ChatService.GetConversation:output_type -> chat.v1.GetConversationResponse
+	11, // 24: chat.v1.ChatService.UpdateConversation:output_type -> chat.v1.UpdateConversationResponse
+	13, // 25: chat.v1.ChatService.DeleteConversation:output_type -> chat.v1.DeleteConversationResponse
+	15, // 26: chat.v1.ChatService.ListMessages:output_type -> chat.v1.ListMessagesResponse
+	17, // 27: chat.v1.ChatService.ListUIBlocks:output_type -> chat.v1.ListUIBlocksResponse
+	19, // 28: chat.v1.ChatService.SendMessage:output_type -> chat.v1.SendMessageResponse
+	21, // [21:29] is the sub-list for method output_type
+	13, // [13:21] is the sub-list for method input_type
+	13, // [13:13] is the sub-list for extension type_name
+	13, // [13:13] is the sub-list for extension extendee
+	0,  // [0:13] is the sub-list for field type_name
 }
 
 func init() { file_chat_v1_chat_proto_init() }
@@ -1535,7 +1469,6 @@ func file_chat_v1_chat_proto_init() {
 		(*SendMessageResponse_StatusUpdate)(nil),
 		(*SendMessageResponse_ToolCall)(nil),
 		(*SendMessageResponse_UiBlock)(nil),
-		(*SendMessageResponse_FollowUp)(nil),
 	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
@@ -1543,7 +1476,7 @@ func file_chat_v1_chat_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_chat_v1_chat_proto_rawDesc), len(file_chat_v1_chat_proto_rawDesc)),
 			NumEnums:      1,
-			NumMessages:   22,
+			NumMessages:   21,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

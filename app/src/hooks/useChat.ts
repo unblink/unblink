@@ -11,7 +11,6 @@ import {
   activeConversationId,
   setActiveConversationId,
   setChatInputState,
-  setFollowUpTopic,
   type UIBlock,
   type UIBlockData,
   type UIRole,
@@ -65,8 +64,6 @@ export function useChat() {
 
   createEffect(() => {
     const _ = activeConversationId();
-    setFollowUpTopic(null);
-
   })
 
   const sendMessage = async () => {
@@ -88,7 +85,6 @@ export function useChat() {
     setIsLoading(true);
     setStreamingContent("");
     setChatInputState('user_sent');
-    setFollowUpTopic(null);
     firstChunkReceived = false;
 
     // Set up abort controller for this request
@@ -147,10 +143,6 @@ export function useChat() {
 
           // Upsert the block (same ID = replace, different ID = new)
           upsertBlock(block);
-        } else if (response.event.case === "followUp") {
-          const followUpEvent = response.event.value;
-          setFollowUpTopic(followUpEvent.topic);
-          console.log("[useChat] Follow-up topic:", followUpEvent.topic);
         }
       }
     } catch (error) {
@@ -257,7 +249,6 @@ export function useChat() {
     setStreamingContent("");
     setChatInputState('idle');
     firstChunkReceived = false;
-    setFollowUpTopic(null);
     setInputValue("");
 
     // Switch conversation
@@ -279,7 +270,6 @@ export function useChat() {
     setStreamingContent("");
     setChatInputState('idle');
     firstChunkReceived = false;
-    setFollowUpTopic(null);
     setInputValue("");
 
     // Clear conversation

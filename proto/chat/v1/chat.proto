@@ -135,13 +135,7 @@ message SendMessageResponse {
     string status_update = 2;
     ToolCallEvent tool_call = 3;
     UIBlock ui_block = 4;
-    FollowUp follow_up = 5;
   }
-}
-
-// Follow-up topic suggestion
-message FollowUp {
-  string topic = 1;
 }
 
 message Delta {

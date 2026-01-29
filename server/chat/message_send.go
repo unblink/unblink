@@ -290,23 +290,6 @@ func (s *Service) SendMessage(ctx context.Context, req *connect.Request[chatv1.S
 		// If no tool calls, we're done
 		if len(toolCalls) == 0 {
 			log.Printf("[ChatService] Completed with no tool calls on pass %d", pass+1)
-
-			// Generate follow-up topic using fast model (with timeout)
-			suggestion := s.generateFollowUpSuggestions(ctx, content, sanitizedContent)
-			if suggestion != "" {
-				log.Printf("[ChatService] Follow-up suggestion: %s", suggestion)
-				// Send to client before returning
-				if err := stream.Send(&chatv1.SendMessageResponse{
-					Event: &chatv1.SendMessageResponse_FollowUp{
-						FollowUp: &chatv1.FollowUp{
-							Topic: suggestion,
-						},
-					},
-				}); err != nil {
-					log.Printf("[ChatService] Failed to send follow-up: %v", err)
-				}
-			}
-
 			return nil
 		}
 
@@ -498,63 +481,6 @@ func (s *Service) saveUIBlock(block *chatv1.UIBlock) (*chatv1.UIBlock, error) {
 
 func (s *Service) saveMessage(msg *chatv1.Message) error {
 	return s.db.StoreMessage(msg.Id, msg.ConversationId, msg.Body)
-}
-
-// generateFollowUpSuggestions generates an interesting follow-up topic
-// using the last user and assistant message pair.
-func (s *Service) generateFollowUpSuggestions(ctx context.Context, userContent, assistantContent string) string {
-	// Skip if fast client not configured
-	if s.fastOpenai == nil {
-		return ""
-	}
-
-	// Trim inputs to reasonable length for follow-up generation
-	// We only need the gist, not every detail
-	const maxContentLen = 2000
-	if len(userContent) > maxContentLen {
-		userContent = userContent[:maxContentLen] + "..."
-	}
-	if len(assistantContent) > maxContentLen {
-		assistantContent = assistantContent[:maxContentLen] + "..."
-	}
-
-	// Call fast model
-	resp, err := s.fastOpenai.Chat.Completions.New(ctx, openai.ChatCompletionNewParams{
-		Messages: []openai.ChatCompletionMessageParamUnion{
-			openai.SystemMessage("You output concise follow-up topics as JSON with a 'topic' field."),
-			openai.UserMessage(fmt.Sprintf(
-				`Based on this conversation, suggest ONE interesting follow-up topic that the human can ask AI.
-
-Return JSON like: {"topic": "Your topic here"}
-
-User: %s
-
-Assistant: %s`,
-				userContent, assistantContent,
-			)),
-		},
-		Model: openai.ChatModel(s.cfg.FastOpenAIModel),
-	})
-	if err != nil {
-		log.Printf("[ChatService] Fast model follow-up generation failed: %v", err)
-		return ""
-	}
-
-	// Parse JSON response
-	if len(resp.Choices) == 0 {
-		return ""
-	}
-
-	var result struct {
-		Topic string `json:"topic"`
-	}
-	if err := json.Unmarshal([]byte(resp.Choices[0].Message.Content), &result); err != nil {
-		log.Printf("[ChatService] Failed to parse follow-up suggestion: %v", err)
-		return ""
-	}
-
-	log.Printf("[ChatService] Generated follow-up: %s", result.Topic)
-	return result.Topic
 }
 
 func (s *Service) getConversationHistory(conversationID string) ([]openai.ChatCompletionMessageParamUnion, error) {

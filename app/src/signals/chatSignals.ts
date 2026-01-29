@@ -58,6 +58,3 @@ export const [chatInputState, setChatInputState] = createSignal<ChatInputState>(
 
 // Textarea focus state
 export const [isTextareaFocused, setIsTextareaFocused] = createSignal(false);
-
-// Follow-up topic suggestion
-export const [followUpTopic, setFollowUpTopic] = createSignal<string | null>(null);

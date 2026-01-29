@@ -1,6 +1,6 @@
 import { FiArrowUp, FiSquare } from "solid-icons/fi";
-import { onMount, Show } from "solid-js";
-import { inputValue, isLoading, setInputValue, isTextareaFocused, setIsTextareaFocused, followUpTopic } from "../../signals/chatSignals";
+import { onMount } from "solid-js";
+import { inputValue, isLoading, setInputValue, isTextareaFocused, setIsTextareaFocused } from "../../signals/chatSignals";
 import { useChat } from "../../hooks/useChat";
 import { BsSquareFill } from "solid-icons/bs";
 
@@ -61,27 +61,6 @@ export default function ChatInput() {
         </div>
 
       </div>
-
-      {/* Follow-up topic suggestion */}
-      <Show when={followUpTopic()}>
-        <div class="max-w-4xl mx-auto mt-2">
-          <button
-            class="text-blue-400 hover:text-blue-300 text-sm cursor-pointer transition-colors line-clamp-1 text-left"
-            disabled={isLoading()}
-            onClick={() => {
-              if (!isLoading()) {
-                const topic = followUpTopic();
-                if (topic) {
-                  setInputValue(topic);
-                  sendMessage();
-                }
-              }
-            }}
-          >
-            {followUpTopic()}
-          </button>
-        </div>
-      </Show>
     </div>
   );
 }
