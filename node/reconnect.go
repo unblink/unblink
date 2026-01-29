@@ -11,7 +11,6 @@ import (
 // Reconnector handles automatic reconnection with exponential backoff
 type Reconnector struct {
 	configFile        *ConfigFile
-	maxAttempts       int64
 	initialDelay      time.Duration
 	backoffMultiplier float64
 	jitterFactor      float64
@@ -20,14 +19,9 @@ type Reconnector struct {
 
 // NewReconnector creates a new reconnector with the given config
 func NewReconnector(configFile *ConfigFile) *Reconnector {
-	maxAttempts := int64(configFile.Config.Reconnect.MaxNumAttempts)
-	if maxAttempts <= 0 {
-		maxAttempts = 10 // Default to 10 attempts if not specified or invalid
-	}
 	return &Reconnector{
 		configFile:        configFile,
-		maxAttempts:       maxAttempts,
-		initialDelay:      1 * time.Second,
+		initialDelay:      10 * time.Second,
 		backoffMultiplier: 2.0,
 		jitterFactor:      0.1,
 		shutdown:          make(chan struct{}),
@@ -84,14 +78,9 @@ func (r *Reconnector) Run(createConn func() *Conn) {
 
 		log.Printf("[Node] Error is retryable, will attempt reconnection")
 
-		// Check max attempts
-		if attempt >= r.maxAttempts {
-			log.Fatalf("[Node] Max reconnection attempts (%d) reached: %v", r.maxAttempts, err)
-		}
-
 		// Calculate backoff delay
 		delay := r.calculateDelay(attempt)
-		log.Printf("[Node] Connection failed: %v. Reconnecting in %v (attempt %d/%d)...", err, delay, attempt, r.maxAttempts)
+		log.Printf("[Node] Connection failed: %v. Reconnecting in %v (attempt %d)...", err, delay, attempt)
 
 		// Wait for delay or shutdown
 		select {
@@ -104,16 +93,19 @@ func (r *Reconnector) Run(createConn func() *Conn) {
 	}
 }
 
-// calculateDelay calculates the exponential backoff delay with jitter
+// calculateDelay calculates the backoff delay
+// First 3 attempts: exponential backoff with jitter
+// After 3 attempts: uniform 5-minute interval (no jitter)
 func (r *Reconnector) calculateDelay(attempt int64) time.Duration {
-	// Exponential backoff: initialDelay * (multiplier ^ (attempt - 1))
-	delay := float64(r.initialDelay) * math.Pow(r.backoffMultiplier, float64(attempt-1))
-
-	// Add jitter (±jitterFactor)
-	jitter := 1.0 + (rand.Float64()*2-1)*r.jitterFactor
-	delay *= jitter
-
-	return time.Duration(delay)
+	// First 3 attempts: exponential backoff with jitter
+	if attempt <= 3 {
+		delay := float64(r.initialDelay) * math.Pow(r.backoffMultiplier, float64(attempt-1))
+		jitter := 1.0 + (rand.Float64()*2-1)*r.jitterFactor
+		delay *= jitter
+		return time.Duration(delay)
+	}
+	// After 3 attempts: uniform 5-minute interval (no jitter)
+	return 5 * time.Minute
 }
 
 // Close signals the reconnector to stop

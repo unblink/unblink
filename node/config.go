@@ -21,8 +21,7 @@ type Config struct {
 
 // ReconnectConf defines reconnection behavior
 type ReconnectConf struct {
-	Enabled        bool `json:"enabled"`
-	MaxNumAttempts int  `json:"max_num_attempts"`
+	Enabled bool `json:"enabled"`
 }
 
 // ConfigFile bundles a config with its file path
@@ -65,8 +64,7 @@ func Load(customPath string) (*ConfigFile, error) {
 			NodeID:       uuid.New().String(),
 			Token:        "",
 			Reconnect: ReconnectConf{
-				Enabled:        true,
-				MaxNumAttempts: 10,
+				Enabled: true,
 			},
 		}
 
