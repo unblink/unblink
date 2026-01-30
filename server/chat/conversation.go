@@ -49,18 +49,17 @@ func (s *Service) CreateConversation(ctx context.Context, req *connect.Request[c
 		title = "New Chat"
 	}
 
-	err := s.db.CreateConversation(id, userID, title, req.Msg.SystemPrompt)
+	err := s.db.CreateConversation(id, userID, title)
 	if err != nil {
 		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("failed to create conversation: %w", err))
 	}
 
 	return connect.NewResponse(&chatv1.CreateConversationResponse{
 		Conversation: &chatv1.Conversation{
-			Id:           id,
-			Title:        title,
-			SystemPrompt: req.Msg.SystemPrompt,
-			CreatedAt:    timestamppb.New(now),
-			UpdatedAt:    timestamppb.New(now),
+			Id:        id,
+			Title:     title,
+			CreatedAt: timestamppb.New(now),
+			UpdatedAt: timestamppb.New(now),
 		},
 	}), nil
 }
@@ -89,15 +88,11 @@ func (s *Service) UpdateConversation(ctx context.Context, req *connect.Request[c
 		return nil, err
 	}
 
-	var title, systemPrompt string
-	if req.Msg.Title != nil {
-		title = *req.Msg.Title
-	}
-	if req.Msg.SystemPrompt != nil {
-		systemPrompt = *req.Msg.SystemPrompt
+	if req.Msg.Title == nil {
+		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("title is required"))
 	}
 
-	if err := s.db.UpdateConversation(req.Msg.ConversationId, title, systemPrompt); err != nil {
+	if err := s.db.UpdateConversation(req.Msg.ConversationId, *req.Msg.Title); err != nil {
 		return nil, connect.NewError(connect.CodeInternal, err)
 	}
 

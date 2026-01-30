@@ -6,8 +6,12 @@ import (
 	"time"
 
 	chatv1 "unblink/server/gen/chat/v1"
+
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
+
+// DefaultSystemPrompt is the default system prompt for all conversations
+const DefaultSystemPrompt = "You are a helpful assistant named Unblink. You are created by Zapdos Labs. You have access to camera events and can help users analyze and summarize their video footages."
 
 const (
 	createChatTablesSQL = `
@@ -45,7 +49,8 @@ const (
 )
 
 // CreateConversation creates a new conversation
-func (c *Client) CreateConversation(id, userID, title, systemPrompt string) error {
+func (c *Client) CreateConversation(id, userID, title string) error {
+	// Always use DefaultSystemPrompt from chat package
 	insertSQL := `
 		INSERT INTO conversations (id, user_id, title, system_prompt)
 		VALUES ($1, $2, $3, $4)
@@ -56,7 +61,7 @@ func (c *Client) CreateConversation(id, userID, title, systemPrompt string) erro
 			updated_at = CURRENT_TIMESTAMP
 	`
 
-	_, err := c.db.Exec(insertSQL, id, userID, title, systemPrompt)
+	_, err := c.db.Exec(insertSQL, id, userID, title, DefaultSystemPrompt)
 	if err != nil {
 		return fmt.Errorf("failed to create conversation: %w", err)
 	}
@@ -67,19 +72,18 @@ func (c *Client) CreateConversation(id, userID, title, systemPrompt string) erro
 // GetConversation retrieves a single conversation by ID
 func (c *Client) GetConversation(id string) (*chatv1.Conversation, error) {
 	querySQL := `
-		SELECT id, title, system_prompt, created_at, updated_at
+		SELECT id, title, created_at, updated_at
 		FROM conversations
 		WHERE id = $1
 	`
 
 	var conv chatv1.Conversation
-	var title, systemPrompt sql.NullString
+	var title sql.NullString
 	var createdAt, updatedAt time.Time
 
 	err := c.db.QueryRow(querySQL, id).Scan(
 		&conv.Id,
 		&title,
-		&systemPrompt,
 		&createdAt,
 		&updatedAt,
 	)
@@ -94,9 +98,6 @@ func (c *Client) GetConversation(id string) (*chatv1.Conversation, error) {
 	if title.Valid {
 		conv.Title = title.String
 	}
-	if systemPrompt.Valid {
-		conv.SystemPrompt = systemPrompt.String
-	}
 
 	conv.CreatedAt = timestampToProto(createdAt)
 	conv.UpdatedAt = timestampToProto(updatedAt)
@@ -107,7 +108,7 @@ func (c *Client) GetConversation(id string) (*chatv1.Conversation, error) {
 // ListConversations retrieves all conversations for a user ordered by updated_at
 func (c *Client) ListConversations(userID string) ([]*chatv1.Conversation, error) {
 	querySQL := `
-		SELECT id, title, system_prompt, created_at, updated_at
+		SELECT id, title, created_at, updated_at
 		FROM conversations
 		WHERE user_id = $1
 		ORDER BY updated_at DESC
@@ -123,13 +124,12 @@ func (c *Client) ListConversations(userID string) ([]*chatv1.Conversation, error
 
 	for rows.Next() {
 		var conv chatv1.Conversation
-		var title, systemPrompt sql.NullString
+		var title sql.NullString
 		var createdAt, updatedAt time.Time
 
 		if err := rows.Scan(
 			&conv.Id,
 			&title,
-			&systemPrompt,
 			&createdAt,
 			&updatedAt,
 		); err != nil {
@@ -138,9 +138,6 @@ func (c *Client) ListConversations(userID string) ([]*chatv1.Conversation, error
 
 		if title.Valid {
 			conv.Title = title.String
-		}
-		if systemPrompt.Valid {
-			conv.SystemPrompt = systemPrompt.String
 		}
 
 		conv.CreatedAt = timestampToProto(createdAt)
@@ -157,17 +154,16 @@ func (c *Client) ListConversations(userID string) ([]*chatv1.Conversation, error
 }
 
 // UpdateConversation updates a conversation's title or system prompt
-func (c *Client) UpdateConversation(id, title, systemPrompt string) error {
+func (c *Client) UpdateConversation(id, title string) error {
 	updateSQL := `
 		UPDATE conversations
 		SET
-			title = COALESCE($1, title),
-			system_prompt = COALESCE($2, system_prompt),
+			title = $1,
 			updated_at = CURRENT_TIMESTAMP
-		WHERE id = $3
+		WHERE id = $2
 	`
 
-	_, err := c.db.Exec(updateSQL, title, systemPrompt, id)
+	_, err := c.db.Exec(updateSQL, title, id)
 	if err != nil {
 		return fmt.Errorf("failed to update conversation: %w", err)
 	}

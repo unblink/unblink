@@ -74,7 +74,7 @@ export default function UIBlockList(props: UIBlockListProps) {
                 <Match when={block.role === "reasoning"}>
                   <div class="mt-4 p-3 bg-neu-850 rounded-lg">
                     <ArkCollapsible toggle={<span class="text-neu-300 hover:text-white">Thinking</span>} defaultOpen={true}>
-                      <div class="text-sm text-neu-300 whitespace-pre-wrap">
+                      <div class="text-sm text-neu-300 whitespace-pre-wrap mt-2">
                         {(block.data as any).content}
                       </div>
                     </ArkCollapsible>

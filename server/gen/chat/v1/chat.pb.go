@@ -81,9 +81,8 @@ type Conversation struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
 	Title         string                 `protobuf:"bytes,2,opt,name=title,proto3" json:"title,omitempty"`
-	SystemPrompt  string                 `protobuf:"bytes,3,opt,name=system_prompt,json=systemPrompt,proto3" json:"system_prompt,omitempty"`
-	CreatedAt     *timestamppb.Timestamp `protobuf:"bytes,4,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
-	UpdatedAt     *timestamppb.Timestamp `protobuf:"bytes,5,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`
+	CreatedAt     *timestamppb.Timestamp `protobuf:"bytes,3,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
+	UpdatedAt     *timestamppb.Timestamp `protobuf:"bytes,4,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -128,13 +127,6 @@ func (x *Conversation) GetId() string {
 func (x *Conversation) GetTitle() string {
 	if x != nil {
 		return x.Title
-	}
-	return ""
-}
-
-func (x *Conversation) GetSystemPrompt() string {
-	if x != nil {
-		return x.SystemPrompt
 	}
 	return ""
 }
@@ -300,7 +292,6 @@ func (x *UIBlock) GetCreatedAt() *timestamppb.Timestamp {
 type CreateConversationRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Title         string                 `protobuf:"bytes,1,opt,name=title,proto3" json:"title,omitempty"`
-	SystemPrompt  string                 `protobuf:"bytes,2,opt,name=system_prompt,json=systemPrompt,proto3" json:"system_prompt,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -338,13 +329,6 @@ func (*CreateConversationRequest) Descriptor() ([]byte, []int) {
 func (x *CreateConversationRequest) GetTitle() string {
 	if x != nil {
 		return x.Title
-	}
-	return ""
-}
-
-func (x *CreateConversationRequest) GetSystemPrompt() string {
-	if x != nil {
-		return x.SystemPrompt
 	}
 	return ""
 }
@@ -589,7 +573,6 @@ type UpdateConversationRequest struct {
 	state          protoimpl.MessageState `protogen:"open.v1"`
 	ConversationId string                 `protobuf:"bytes,1,opt,name=conversation_id,json=conversationId,proto3" json:"conversation_id,omitempty"`
 	Title          *string                `protobuf:"bytes,2,opt,name=title,proto3,oneof" json:"title,omitempty"`
-	SystemPrompt   *string                `protobuf:"bytes,3,opt,name=system_prompt,json=systemPrompt,proto3,oneof" json:"system_prompt,omitempty"`
 	unknownFields  protoimpl.UnknownFields
 	sizeCache      protoimpl.SizeCache
 }
@@ -634,13 +617,6 @@ func (x *UpdateConversationRequest) GetConversationId() string {
 func (x *UpdateConversationRequest) GetTitle() string {
 	if x != nil && x.Title != nil {
 		return *x.Title
-	}
-	return ""
-}
-
-func (x *UpdateConversationRequest) GetSystemPrompt() string {
-	if x != nil && x.SystemPrompt != nil {
-		return *x.SystemPrompt
 	}
 	return ""
 }
@@ -1284,15 +1260,14 @@ var File_chat_v1_chat_proto protoreflect.FileDescriptor
 
 const file_chat_v1_chat_proto_rawDesc = "" +
 	"\n" +
-	"\x12chat/v1/chat.proto\x12\achat.v1\x1a\x1fgoogle/protobuf/timestamp.proto\"\xcf\x01\n" +
+	"\x12chat/v1/chat.proto\x12\achat.v1\x1a\x1fgoogle/protobuf/timestamp.proto\"\xaa\x01\n" +
 	"\fConversation\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x14\n" +
-	"\x05title\x18\x02 \x01(\tR\x05title\x12#\n" +
-	"\rsystem_prompt\x18\x03 \x01(\tR\fsystemPrompt\x129\n" +
+	"\x05title\x18\x02 \x01(\tR\x05title\x129\n" +
 	"\n" +
-	"created_at\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\x129\n" +
+	"created_at\x18\x03 \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\x129\n" +
 	"\n" +
-	"updated_at\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedAt\"\x91\x01\n" +
+	"updated_at\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedAt\"\x91\x01\n" +
 	"\aMessage\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12'\n" +
 	"\x0fconversation_id\x18\x02 \x01(\tR\x0econversationId\x12\x12\n" +
@@ -1305,10 +1280,9 @@ const file_chat_v1_chat_proto_rawDesc = "" +
 	"\x04role\x18\x03 \x01(\tR\x04role\x12\x12\n" +
 	"\x04data\x18\x04 \x01(\tR\x04data\x129\n" +
 	"\n" +
-	"created_at\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\"V\n" +
+	"created_at\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\"1\n" +
 	"\x19CreateConversationRequest\x12\x14\n" +
-	"\x05title\x18\x01 \x01(\tR\x05title\x12#\n" +
-	"\rsystem_prompt\x18\x02 \x01(\tR\fsystemPrompt\"W\n" +
+	"\x05title\x18\x01 \x01(\tR\x05title\"W\n" +
 	"\x1aCreateConversationResponse\x129\n" +
 	"\fconversation\x18\x01 \x01(\v2\x15.chat.v1.ConversationR\fconversation\"V\n" +
 	"\x18ListConversationsRequest\x12\x1b\n" +
@@ -1321,13 +1295,11 @@ const file_chat_v1_chat_proto_rawDesc = "" +
 	"\x16GetConversationRequest\x12'\n" +
 	"\x0fconversation_id\x18\x01 \x01(\tR\x0econversationId\"T\n" +
 	"\x17GetConversationResponse\x129\n" +
-	"\fconversation\x18\x01 \x01(\v2\x15.chat.v1.ConversationR\fconversation\"\xa5\x01\n" +
+	"\fconversation\x18\x01 \x01(\v2\x15.chat.v1.ConversationR\fconversation\"i\n" +
 	"\x19UpdateConversationRequest\x12'\n" +
 	"\x0fconversation_id\x18\x01 \x01(\tR\x0econversationId\x12\x19\n" +
-	"\x05title\x18\x02 \x01(\tH\x00R\x05title\x88\x01\x01\x12(\n" +
-	"\rsystem_prompt\x18\x03 \x01(\tH\x01R\fsystemPrompt\x88\x01\x01B\b\n" +
-	"\x06_titleB\x10\n" +
-	"\x0e_system_prompt\"W\n" +
+	"\x05title\x18\x02 \x01(\tH\x00R\x05title\x88\x01\x01B\b\n" +
+	"\x06_title\"W\n" +
 	"\x1aUpdateConversationResponse\x129\n" +
 	"\fconversation\x18\x01 \x01(\v2\x15.chat.v1.ConversationR\fconversation\"D\n" +
 	"\x19DeleteConversationRequest\x12'\n" +

@@ -29,9 +29,8 @@ service ChatService {
 message Conversation {
   string id = 1;
   string title = 2;
-  string system_prompt = 3;
-  google.protobuf.Timestamp created_at = 4;
-  google.protobuf.Timestamp updated_at = 5;
+  google.protobuf.Timestamp created_at = 3;
+  google.protobuf.Timestamp updated_at = 4;
 }
 
 enum Role {
@@ -61,7 +60,6 @@ message UIBlock {
 
 message CreateConversationRequest {
   string title = 1;
-  string system_prompt = 2;
 }
 
 message CreateConversationResponse {
@@ -89,7 +87,6 @@ message GetConversationResponse {
 message UpdateConversationRequest {
   string conversation_id = 1;
   optional string title = 2;
-  optional string system_prompt = 3;
 }
 
 message UpdateConversationResponse {

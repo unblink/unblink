@@ -9,9 +9,9 @@ import (
 	"github.com/openai/openai-go/v3"
 	"github.com/openai/openai-go/v3/option"
 
-	"unblink/server/models"
 	chatv1 "unblink/server/gen/chat/v1"
 	"unblink/server/gen/chat/v1/chatv1connect"
+	"unblink/server/models"
 )
 
 // generateID creates a unique ID using crypto/rand
@@ -58,12 +58,12 @@ type Service struct {
 // Config holds the chat service configuration
 type Config struct {
 	// Main chat model (for responses)
-	ChatOpenAIModel  string
+	ChatOpenAIModel   string
 	ChatOpenAIBaseURL string
 	ChatOpenAIAPIKey  string
 
 	// Fast model (for follow-up suggestions, etc.)
-	FastOpenAIModel  string
+	FastOpenAIModel   string
 	FastOpenAIBaseURL string
 	FastOpenAIAPIKey  string
 
@@ -73,11 +73,11 @@ type Config struct {
 
 // Database defines the interface for chat database operations
 type Database interface {
-	CreateConversation(id, userID, title, systemPrompt string) error
+	CreateConversation(id, userID, title string) error
 	GetConversation(id string) (*chatv1.Conversation, error)
 	GetConversationOwner(conversationID string) (string, error)
 	ListConversations(userID string) ([]*chatv1.Conversation, error)
-	UpdateConversation(id, title, systemPrompt string) error
+	UpdateConversation(id, title string) error
 	DeleteConversation(id string) error
 	StoreMessage(id, conversationID, body string) error
 	ListMessages(conversationID string) ([]*chatv1.Message, error)
@@ -130,7 +130,12 @@ func NewService(db Database, cfg *Config, modelRegistry *models.Registry) *Servi
 	}
 
 	// Create trimmer for main chat model
-	maxTokens := modelRegistry.GetMaxTokensOr(cfg.ChatOpenAIModel, 32000)
+	log.Printf("Calling modelRegistry.GetMaxTokensOr for model %s", cfg.ChatOpenAIModel)
+	maxTokens, err := modelRegistry.GetMaxTokens(cfg.ChatOpenAIModel)
+	if err != nil {
+		log.Printf("[ChatService] Warning: failed to get max tokens for model %s: %v", cfg.ChatOpenAIModel, err)
+		maxTokens = 32000 // fallback
+	}
 	service.contentTrimmer = models.NewTrimmer(maxTokens, cfg.ContentTrimSafetyMargin)
 	log.Printf("[ChatService] Main model %s: max_tokens=%d, margin=%d%%",
 		cfg.ChatOpenAIModel, maxTokens, cfg.ContentTrimSafetyMargin)

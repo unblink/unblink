@@ -23,6 +23,7 @@ const (
 
 		CREATE INDEX IF NOT EXISTS idx_events_service_id ON events(service_id);
 		CREATE INDEX IF NOT EXISTS idx_events_created_at ON events(created_at DESC);
+		CREATE INDEX IF NOT EXISTS idx_events_payload_gin ON events USING gin(payload);
 	`
 
 	dropEventTablesSQL = `DROP TABLE IF EXISTS events CASCADE`
@@ -233,4 +234,79 @@ func (c *Client) CountEventsForUser(userID string) (int64, error) {
 	}
 
 	return count, nil
+}
+
+// SearchEventsByPayload searches events by keywords in JSONB payload
+// Filters for events where type = "vlm-indexing" and any keyword matches the payload text
+func (c *Client) SearchEventsByPayload(keywords []string) ([]*servicev1.Event, error) {
+	const limit = 10
+
+	// Build ILIKE query for each keyword (OR condition)
+	// Also filter for type = "vlm-indexing"
+	querySQL := `
+		SELECT e.id, e.service_id, e.payload, e.created_at
+		FROM events e
+		WHERE e.payload->>'type' = 'vlm-indexing'
+		AND (`
+
+	// Add ILIKE conditions for each keyword
+	conditions := make([]string, len(keywords))
+	args := make([]interface{}, 0, len(keywords))
+	for i, kw := range keywords {
+		conditions[i] = `e.payload::text ILIKE $` + fmt.Sprint(i+1)
+		args = append(args, "%"+kw+"%")
+	}
+	querySQL += fmt.Sprint(conditions[0])
+	for i := 1; i < len(conditions); i++ {
+		querySQL += " OR " + conditions[i]
+	}
+	querySQL += `)
+		ORDER BY e.created_at DESC
+		LIMIT $` + fmt.Sprint(len(keywords)+1)
+	args = append(args, limit)
+
+	rows, err := c.db.Query(querySQL, args...)
+	if err != nil {
+		return nil, fmt.Errorf("failed to search events: %w", err)
+	}
+	defer rows.Close()
+
+	var events []*servicev1.Event
+
+	for rows.Next() {
+		var event servicev1.Event
+		var svcID sql.NullString
+		var payloadJSON sql.NullString
+		var createdAt time.Time
+
+		if err := rows.Scan(
+			&event.Id,
+			&svcID,
+			&payloadJSON,
+			&createdAt,
+		); err != nil {
+			return nil, fmt.Errorf("failed to scan event: %w", err)
+		}
+
+		if svcID.Valid {
+			event.ServiceId = svcID.String
+		}
+		if payloadJSON.Valid {
+			payload, err := jsonToProtoStruct(payloadJSON.String)
+			if err != nil {
+				return nil, fmt.Errorf("failed to convert payload: %w", err)
+			}
+			event.Payload = payload
+		}
+
+		event.CreatedAt = timestampToProto(createdAt)
+
+		events = append(events, &event)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("error iterating events: %w", err)
+	}
+
+	return events, nil
 }

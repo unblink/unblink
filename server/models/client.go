@@ -3,6 +3,7 @@ package models
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 	"time"
 )
@@ -18,8 +19,9 @@ type Client struct {
 type modelsResponse struct {
 	Object string `json:"object"`
 	Data   []struct {
-		ID         string `json:"id"`
-		MaxModelLen int    `json:"max_model_len"`
+		ID            string `json:"id"`
+		MaxModelLen   int    `json:"max_model_len,omitempty"`
+		ContextLength int    `json:"context_length,omitempty"`
 	} `json:"data"`
 }
 
@@ -67,9 +69,14 @@ func (c *Client) GetModels() ([]ModelInfo, error) {
 
 	models := make([]ModelInfo, len(modelsResp.Data))
 	for i, m := range modelsResp.Data {
+		// Prefer context_length (OpenRouter), fall back to max_model_len (others)
+		maxLen := m.ContextLength
+		if maxLen == 0 {
+			maxLen = m.MaxModelLen
+		}
 		models[i] = ModelInfo{
 			ID:          m.ID,
-			MaxModelLen: m.MaxModelLen,
+			MaxModelLen: maxLen,
 		}
 	}
 
@@ -83,8 +90,10 @@ func (c *Client) GetModelInfo(modelID string) (*ModelInfo, error) {
 		return nil, err
 	}
 
+	log.Printf("[models.Client] Looking for model=%s, got %d models from API", modelID, len(models))
 	for _, m := range models {
 		if m.ID == modelID {
+			log.Printf("[models.Client] Found model=%s, MaxModelLen=%d", m.ID, m.MaxModelLen)
 			return &m, nil
 		}
 	}

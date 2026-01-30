@@ -98,11 +98,3 @@ func (r *Registry) GetMaxTokens(modelID string) (int, error) {
 	}
 	return info.MaxModelLen, nil
 }
-
-// GetMaxTokensOr returns max tokens or fallback if not found
-func (r *Registry) GetMaxTokensOr(modelID string, fallback int) int {
-	if info, err := r.GetModelInfo(modelID); err == nil {
-		return info.MaxModelLen
-	}
-	return fallback
-}
