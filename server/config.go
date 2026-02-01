@@ -52,6 +52,9 @@ type Config struct {
 
 	// App directory for storage (frames, logs, etc.)
 	AppDir string `json:"app_dir"` // Path to application storage directory
+
+	// Frame indexing settings
+	EnableIndexing bool `json:"enable_indexing"` // Enable frame indexing (default true). When true, batch manager is not created.
 }
 
 // ConfigPath returns the default config file path

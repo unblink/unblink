@@ -161,7 +161,6 @@ export function useChat() {
     try {
       const response = await chatClient.createConversation({
         title: "",
-        systemPrompt: `You are a helpful assistant.`,
       });
       const conv = response.conversation;
       if (conv) {

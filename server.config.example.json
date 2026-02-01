@@ -18,5 +18,6 @@
   "vlm_timeout_sec": 120,
   "bridge_idle_timeout_sec": 300,
   "bridge_max_retries": 3,
-  "app_dir": "/path/to/data/directory"
+  "app_dir": "/path/to/data/directory",
+  "enable_indexing": true
 }

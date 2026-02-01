@@ -1,4 +1,4 @@
-.PHONY: install proto proto-go proto-ts run-server dev drop-schema
+.PHONY: install proto proto-go proto-ts dev drop-schema typecheck
 
 # Install dependencies
 install:
@@ -25,6 +25,10 @@ drop:
 typecheck:
 	cd app && bunx tsc --noEmit
 	go vet ./...
+
+# Development (tmux session with server + node + app)
+dev:
+	./tmux.dev.sh
 
 delete-app-dir:
 	go run cmd/cli/main.go delete-app-dir

@@ -105,15 +105,19 @@ func main() {
 	eventService := service.NewEventService(dbClient)
 
 	// Create VLM frame client and batch manager
+	// Only create batch manager if indexing is disabled (for frame summarization)
 	var batchManager *webrtc.BatchManager
-	if config.VLMOpenAIBaseURL != "" {
+	if !config.EnableIndexing {
 		vlmTimeout := time.Duration(config.VLMTimeoutSec) * time.Second
 		frameClient := webrtc.NewFrameClient(config.VLMOpenAIBaseURL, config.VLMOpenAIModel, config.VLMOpenAIAPIKey, vlmTimeout, "Summarize the video", modelRegistry)
 		batchManager = webrtc.NewBatchManager(frameClient, config.FrameBatchSize, storage, dbClient, eventService.GetBroadcaster())
 		log.Printf("[Main] Initialized VLM frame client: url=%s, model=%s, batchSize=%d, timeout=%vs", config.VLMOpenAIBaseURL, config.VLMOpenAIModel, config.FrameBatchSize, config.VLMTimeoutSec)
 	} else {
-		log.Printf("[Main] VLM not configured, frame summaries disabled")
+		log.Printf("[Main] Indexing enabled, frame summaries disabled (batch manager not created)")
 	}
+
+	// Initialize node server for WebSocket connections
+	nodeServer := server.NewServer(config)
 
 	// Create service registry for managing services
 	frameInterval := time.Duration(config.FrameIntervalSeconds * float64(time.Second))
@@ -122,11 +126,20 @@ func main() {
 		dbClient,
 		frameInterval,
 		storage,
-		nil, // will be set after nodeServer is created
+		nodeServer,
 		batchManager,
 		idleTimeout,
 		config.BridgeMaxRetries,
 	)
+
+	// Wire up node event callbacks
+	nodeServer.OnNodeReady(serviceRegistry.SetNodeOnline)
+	nodeServer.OnNodeOffline(serviceRegistry.SetNodeOffline)
+
+	// Load existing services from database
+	if err := serviceRegistry.LoadServices(); err != nil {
+		log.Printf("Failed to load services: %v", err)
+	}
 
 	serviceService := service.NewService(dbClient, serviceRegistry)
 
@@ -179,21 +192,6 @@ func main() {
 	)
 	mux.Handle(eventPath, eventHandler)
 	log.Printf("Mounted EventService at %s (with auth)", eventPath)
-
-	// Initialize node server for WebSocket connections
-	nodeServer := server.NewServer(config)
-
-	// Set server reference in service registry
-	serviceRegistry.SetServer(nodeServer)
-
-	// Wire up node event callbacks
-	nodeServer.OnNodeReady(serviceRegistry.SetNodeOnline)
-	nodeServer.OnNodeOffline(serviceRegistry.SetNodeOffline)
-
-	// Load existing services from database
-	if err := serviceRegistry.LoadServices(); err != nil {
-		log.Printf("Failed to load services: %v", err)
-	}
 
 	// Mount WebRTCService with auth interceptor
 	webrtcService := webrtc.NewService(nodeServer, dbClient)
