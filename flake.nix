@@ -23,6 +23,9 @@
             nodejs
 
             buf
+            protoc-gen-es
+            protoc-gen-go
+            protoc-gen-connect-go
 
             tmux
 

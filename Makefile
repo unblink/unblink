@@ -1,4 +1,4 @@
-.PHONY: install generate generate-go generate-ts run-server dev drop-schema
+.PHONY: install proto proto-go proto-ts run-server dev drop-schema
 
 # Install dependencies
 install:
@@ -13,9 +13,9 @@ vendor:
 # Generate code from proto files
 proto: 
 	rm -rf app/gen
-	cd proto && npx buf generate --template buf.gen.ts.yaml
+	cd proto && buf generate --template buf.gen.ts.yaml
 	rm -rf server/gen
-	cd proto && npx buf generate --template buf.gen.go.yaml
+	cd proto && buf generate --template buf.gen.go.yaml
 
 # Drop database schema
 drop:
@@ -23,7 +23,7 @@ drop:
 
 # Typecheck (ts and go)
 typecheck:
-	cd app && npx tsc --noEmit
+	cd app && bunx tsc --noEmit
 	go vet ./...
 
 delete-app-dir:
