@@ -104,17 +104,11 @@ func main() {
 	// Create event service BEFORE batch manager (batch manager needs the broadcaster)
 	eventService := service.NewEventService(dbClient)
 
-	// Create VLM frame client and batch manager
-	// Only create batch manager if indexing is disabled (for frame summarization)
-	var batchManager *webrtc.BatchManager
-	if !config.EnableIndexing {
-		vlmTimeout := time.Duration(config.VLMTimeoutSec) * time.Second
-		frameClient := webrtc.NewFrameClient(config.VLMOpenAIBaseURL, config.VLMOpenAIModel, config.VLMOpenAIAPIKey, vlmTimeout, "Summarize the video", modelRegistry)
-		batchManager = webrtc.NewBatchManager(frameClient, config.FrameBatchSize, storage, dbClient, eventService.GetBroadcaster())
-		log.Printf("[Main] Initialized VLM frame client: url=%s, model=%s, batchSize=%d, timeout=%vs", config.VLMOpenAIBaseURL, config.VLMOpenAIModel, config.FrameBatchSize, config.VLMTimeoutSec)
-	} else {
-		log.Printf("[Main] Indexing enabled, frame summaries disabled (batch manager not created)")
-	}
+	// Create VLM frame client and batch manager (for VLM summarization)
+	vlmTimeout := time.Duration(config.VLMTimeoutSec) * time.Second
+	frameClient := webrtc.NewFrameClient(config.VLMOpenAIBaseURL, config.VLMOpenAIModel, config.VLMOpenAIAPIKey, vlmTimeout, "Summarize the video", modelRegistry)
+	batchManager := webrtc.NewBatchManager(frameClient, config.FrameBatchSize, storage, dbClient, eventService.GetBroadcaster())
+	log.Printf("[Main] Initialized VLM frame client: url=%s, model=%s, batchSize=%d, timeout=%vs", config.VLMOpenAIBaseURL, config.VLMOpenAIModel, config.FrameBatchSize, config.VLMTimeoutSec)
 
 	// Initialize node server for WebSocket connections
 	nodeServer := server.NewServer(config)
@@ -130,6 +124,7 @@ func main() {
 		batchManager,
 		idleTimeout,
 		config.BridgeMaxRetries,
+		config.EnableIndexing,
 	)
 
 	// Wire up node event callbacks

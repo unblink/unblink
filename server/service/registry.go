@@ -35,11 +35,12 @@ type reconnectRequest struct {
 
 // ServiceRegistry manages all services and their handlers
 type ServiceRegistry struct {
-	db            *database.Client
-	storage       *webrtc.Storage
-	batchManager  *webrtc.BatchManager
-	frameInterval time.Duration
-	srv           *server.Server
+	db             *database.Client
+	storage        *webrtc.Storage
+	batchManager   *webrtc.BatchManager
+	frameInterval  time.Duration
+	srv            *server.Server
+	enableIndexing bool // Enable frame indexing/extraction
 
 	mu          sync.RWMutex
 	services    map[string]*ServiceState   // serviceID -> ServiceState
@@ -57,7 +58,7 @@ type ServiceRegistry struct {
 }
 
 // NewServiceRegistry creates a new service registry
-func NewServiceRegistry(db *database.Client, frameInterval time.Duration, storage *webrtc.Storage, srv *server.Server, batchMgr *webrtc.BatchManager, idleTimeout time.Duration, maxRetries int) *ServiceRegistry {
+func NewServiceRegistry(db *database.Client, frameInterval time.Duration, storage *webrtc.Storage, srv *server.Server, batchMgr *webrtc.BatchManager, idleTimeout time.Duration, maxRetries int, enableIndexing bool) *ServiceRegistry {
 	// Wire up callback to save frame metadata to database when frames are saved to disk
 	storage.SetOnSaved(func(serviceID, frameID, framePath string, timestamp time.Time, fileSize int64) {
 		metadata := &database.FrameMetadata{}
@@ -72,6 +73,7 @@ func NewServiceRegistry(db *database.Client, frameInterval time.Duration, storag
 		batchManager:   batchMgr,
 		frameInterval:  frameInterval,
 		srv:            srv,
+		enableIndexing: enableIndexing,
 		services:       make(map[string]*ServiceState),
 		nodes:          make(map[string]map[string]bool),
 		onlineNodes:    make(map[string]bool),
@@ -248,8 +250,17 @@ func (r *ServiceRegistry) SetNodeOffline(nodeID string) {
 	}
 }
 
+// NOTE: Currently, the only logic in a handler is indexing.
+// That's why we can skip starting handlers if indexing is disabled.
+// If there are other functionalities in the future, we might need to revisit this.
 // startHandlerLocked starts the service handler for a service (caller must hold lock)
 func (r *ServiceRegistry) startHandlerLocked(state *ServiceState) {
+	// Skip handler start if indexing is disabled
+	if !r.enableIndexing {
+		log.Printf("[ServiceRegistry] Indexing disabled, skipping handler start for service %s", state.ID)
+		return
+	}
+
 	// Create handler with configuration
 	handler := NewServiceHandler(ServiceHandlerConfig{
 		ServiceID:     state.ID,
